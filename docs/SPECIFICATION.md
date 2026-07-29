@@ -287,6 +287,36 @@ real execution date. Nearly all tests should look like this.
 
 ---
 
+## 8.5 (correction) Gross margin
+
+The specification gives the formula as:
+
+```
+margin = net_revenue − cost_of_goods − discount_applied
+```
+
+**This subtracts the discount twice.** WooCommerce's own reporting reaches gross
+sales by *adding* the discount back to net revenue — `total_sales - tax_total -
+shipping_total + discount_amount` — which is only coherent if net revenue is
+already net of the discount. It is: an order's total is the sum of its line
+totals, and WooCommerce applies coupon discounts to line totals.
+
+The implemented formula is therefore:
+
+```
+margin = net_revenue − cost_of_goods
+```
+
+which is identical to `gross_sales − discount − cost_of_goods`. Both are
+computed and a test asserts they agree. Following the original literally would
+have understated every margin by exactly the discount, on the one number this
+product exists to report.
+
+Everything else in §8.5 stands: amounts are integers in the currency's minor
+unit, floats are never used for money, and currencies are aggregated separately.
+
+---
+
 ## 12. Naming conventions
 
 ### Internal prefix: `dfxcaaw`
