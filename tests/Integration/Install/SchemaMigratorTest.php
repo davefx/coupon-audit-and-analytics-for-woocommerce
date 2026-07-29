@@ -52,21 +52,27 @@ final class SchemaMigratorTest extends WP_UnitTestCase {
 	/**
 	 * Whether the aggregates table exists right now.
 	 *
-	 * Asked of information_schema rather than with `SHOW TABLES LIKE`, which
-	 * does not answer the same way on MySQL and MariaDB — the column tests below
-	 * passed on both while this one reported the table missing on MySQL alone,
-	 * which is a property of the question and not of the schema.
+	 * Asked by describing it, not by looking it up in `SHOW TABLES` or
+	 * `information_schema`. Neither of those can see it: the WordPress test
+	 * suite wraps each test in a transaction and filters every query so that
+	 * `CREATE TABLE` becomes `CREATE TEMPORARY TABLE`, and a temporary table is
+	 * fully usable while appearing in no catalogue.
+	 *
+	 * That is why the tests describing the table's columns and inserting rows
+	 * into it passed on MySQL while this one insisted the table was missing.
+	 * Describing it asks the only question that holds for both.
 	 */
 	private function table_exists(): bool {
 		global $wpdb;
 
+		$suppressed = $wpdb->suppress_errors( true );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return 1 === (int) $wpdb->get_var(
-			$wpdb->prepare(
-				'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = %s',
-				$this->migrator->table_name()
-			)
-		);
+		$described = $wpdb->get_results( $wpdb->prepare( 'DESCRIBE %i', $this->migrator->table_name() ) );
+
+		$wpdb->suppress_errors( $suppressed );
+
+		return is_array( $described ) && array() !== $described;
 	}
 
 	/**

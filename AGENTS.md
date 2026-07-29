@@ -95,6 +95,25 @@ defaults to `/tmp/wordpress-tests-lib` + `/tmp/wordpress`; `/tmp` does not
 survive a reboot, so re-run `bin/install-wp-tests.sh` rather than debugging the
 bootstrap. Never point it at a database behind a site anyone cares about.
 
+**The test suite makes tables temporary.** WordPress wraps each test in a
+transaction and filters every query so `CREATE TABLE` becomes `CREATE TEMPORARY
+TABLE`. Such a table is fully usable but appears in neither `SHOW TABLES` nor
+`information_schema`, so "does this table exist" has to be asked by describing
+it. This cost an afternoon once; it will not announce itself.
+
+**CI runs MySQL 8; a dev machine may well run MariaDB.** They disagree about
+integer display widths, zero-date defaults and more, so a schema change that
+passes locally can still fail CI. To check against MySQL before pushing:
+
+```bash
+docker run -d --name dfxcaaw-mysql -e MYSQL_ROOT_PASSWORD=root \
+	-e MYSQL_DATABASE=wordpress_test -p 3307:3306 mysql:8.0
+cp -r /tmp/wordpress-tests-lib /tmp/wordpress-tests-mysql   # then point its
+                                                            # wp-tests-config.php
+                                                            # at 127.0.0.1:3307
+WP_TESTS_DIR=/tmp/wordpress-tests-mysql composer run test:integration
+```
+
 The project is pinned to **PHPUnit 9.6**, not 10 or 11. The WordPress core test
 library still calls `PHPUnit\Util\Test::parseTestMethodAnnotations()`, removed in
 PHPUnit 10. This is a constraint, not a preference — do not "upgrade" it.
