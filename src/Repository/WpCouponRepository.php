@@ -89,14 +89,16 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	 * @return list<CouponSnapshot>
 	 */
 	public function all(): array {
-		$posts = get_posts(
-			array(
-				'post_type'        => self::POST_TYPE,
-				'post_status'      => $this->listed_statuses(),
-				'numberposts'      => -1,
-				'orderby'          => 'title',
-				'order'            => 'ASC',
-				'suppress_filters' => false,
+		/*
+		 * Only real posts survive. The query arguments are filterable, so a
+		 * plugin could set `fields` and hand back bare IDs; dropping anything
+		 * that is not a post keeps that from becoming a fatal error deep in the
+		 * mapping.
+		 */
+		$posts = array_values(
+			array_filter(
+				get_posts( $this->query_args() ),
+				static fn ( $post ): bool => $post instanceof WP_Post
 			)
 		);
 
@@ -121,14 +123,45 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	 * How many coupons exist.
 	 */
 	public function count(): int {
-		$counts = (array) wp_count_posts( self::POST_TYPE );
-		$total  = 0;
+		$args           = $this->query_args();
+		$args['fields'] = 'ids';
 
-		foreach ( $this->listed_statuses() as $status ) {
-			$total += (int) ( $counts[ $status ] ?? 0 );
-		}
+		return count( get_posts( $args ) );
+	}
 
-		return $total;
+	/**
+	 * The query behind the inventory.
+	 *
+	 * Filterable because some plugins mint a coupon per customer. A points-and-
+	 * rewards shop can hold tens of thousands of generated codes, and they are
+	 * not an inventory anybody audits: they would bury the real coupons, and
+	 * past a few hundred they would silently switch overlap detection off for
+	 * everything else. Excluding them belongs in the query rather than in a
+	 * filter applied afterwards, or the shop pays to load them first.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function query_args(): array {
+		$args = array(
+			'post_type'        => self::POST_TYPE,
+			'post_status'      => $this->listed_statuses(),
+			'numberposts'      => -1,
+			'orderby'          => 'title',
+			'order'            => 'ASC',
+			'suppress_filters' => false,
+		);
+
+		/**
+		 * Filters the query that lists coupons for the audit.
+		 *
+		 * Adding a meta query here is how an integration keeps machine-generated
+		 * coupons out of the inventory.
+		 *
+		 * @since 0.2.0
+		 *
+		 * @param array<string, mixed> $args Arguments for get_posts().
+		 */
+		return apply_filters( 'dfxcaaw_coupon_query_args', $args );
 	}
 
 	/**

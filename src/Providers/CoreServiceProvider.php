@@ -21,6 +21,9 @@ use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
 use DFX\CouponAAW\Domain\Coupon\StatusResolver;
 use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
 use DFX\CouponAAW\Domain\Overlap\ScopeIndex;
+use DFX\CouponAAW\Integration\IntegrationRegistry;
+use DFX\CouponAAW\Integration\WjecfIntegration;
+use DFX\CouponAAW\Integration\YithPointsIntegration;
 use DFX\CouponAAW\Install\Activator;
 use DFX\CouponAAW\Install\Aggregator;
 use DFX\CouponAAW\Install\SchemaMigrator;
@@ -190,11 +193,20 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 
 		$container->bind(
 			CatalogRepositoryInterface::class,
-			static function (): CatalogRepositoryInterface {
-				global $wpdb;
+			static fn (): CatalogRepositoryInterface => new WcCatalogRepository(
+				get_woocommerce_currency(),
+				wc_get_price_decimals()
+			)
+		);
 
-				return new WcCatalogRepository( $wpdb, get_woocommerce_currency(), wc_get_price_decimals() );
-			}
+		$container->bind(
+			IntegrationRegistry::class,
+			static fn (): IntegrationRegistry => new IntegrationRegistry(
+				array(
+					new WjecfIntegration(),
+					new YithPointsIntegration(),
+				)
+			)
 		);
 
 		$container->bind( ConfigurationAuditor::class, static fn (): ConfigurationAuditor => new ConfigurationAuditor() );
@@ -228,6 +240,12 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 	 * @param ContainerInterface $container Service container.
 	 */
 	public function boot( ContainerInterface $container ): void {
+		/*
+		 * Support for other coupon plugins, attached before anything reads a
+		 * coupon. Each stays inert unless its plugin is actually running.
+		 */
+		$container->get( IntegrationRegistry::class )->register_all();
+
 		/*
 		 * An order reaching a state whose revenue counts, or leaving one, means
 		 * its day's figures are stale. The day is queued rather than recomputed

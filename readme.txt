@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, analytics, discounts, profit
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.1.0
+Stable tag: 0.2.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -120,11 +120,30 @@ No. The plugin makes no external requests.
 
 == Changelog ==
 
+= 0.2.0 =
+* The overview now shows what each coupon actually is: the discount, the basket
+  it requires, free shipping, individual use, and the usage caps per customer
+  and per basket.
+* "Applies to" names the products and categories, prices them, and strikes
+  through anything a customer cannot currently buy.
+* New finding: a fixed discount worth more than the minimum spend it demands, or
+  more than something it applies to. WooCommerce applies these without comment.
+* Support for WooCommerce Extended Coupon Features, including coupons it applies
+  automatically — which is what makes a high-severity overlap possible at all.
+* Support for YITH WooCommerce Points and Rewards: its generated reward coupons
+  are kept out of the audit, where tens of thousands of them would bury the
+  coupons you chose.
+* Filters for other plugins to add columns, fill them, and shape the coupon query.
+
 = 0.1.0 =
 * First release: coupon audit, overlap detection, pre-publish warnings and
   30-day gross margin.
 
 == Upgrade Notice ==
+
+= 0.2.0 =
+Adds the coupon terms to the overview, names what each coupon applies to, and
+reports fixed discounts that give away more than they ask for.
 
 = 0.1.0 =
 First release.

@@ -12,31 +12,28 @@ namespace DFX\CouponAAW\Catalog;
 use DFX\CouponAAW\Domain\Coupon\CouponScope;
 use DFX\CouponAAW\Domain\Profit\Money;
 use WC_Product;
-use wpdb;
 use WP_Term;
 
 /**
  * Reads product and category detail from WooCommerce.
  *
- * The cheapest-price query is the reason this class exists rather than a loop.
+ * The cheapest-price lookup is the reason this class exists rather than a loop.
  * Asking "is anything this coupon reaches cheaper than the discount" by loading
  * every product in every referenced category — which is how the prior art did
  * it — costs a full product object per row, and a shop with a thousand-product
- * category pays that on every page load. WooCommerce maintains
- * `wc_product_meta_lookup` with an indexed `min_price` for exactly this, so the
- * whole question is one aggregate query.
+ * category pays that on every page load. Ordering WooCommerce's own product
+ * query by price and taking one row is backed by `wc_product_meta_lookup`, so
+ * the same question costs a single indexed lookup.
  */
 final class WcCatalogRepository implements CatalogRepositoryInterface {
 
 	/**
 	 * Constructor.
 	 *
-	 * @param wpdb   $wpdb     WordPress database handle.
 	 * @param string $currency The store's currency.
 	 * @param int    $decimals Places in the currency's minor unit.
 	 */
 	public function __construct(
-		private readonly wpdb $wpdb,
 		private readonly string $currency,
 		private readonly int $decimals
 	) {}
@@ -97,66 +94,126 @@ final class WcCatalogRepository implements CatalogRepositoryInterface {
 	 * @param CouponScope $scope The coupon's scope.
 	 */
 	public function cheapest_in_scope( CouponScope $scope ): ?Money {
-		$wpdb = $this->wpdb;
-
-		$lookup     = $wpdb->prefix . 'wc_product_meta_lookup';
-		$conditions = array();
+		$prices = array();
 
 		if ( array() !== $scope->included_products ) {
-			$conditions[] = 'l.product_id IN ( ' . $this->id_list( $scope->included_products ) . ' )';
+			$prices[] = $this->cheapest( array( 'include' => $scope->included_products ), $scope );
 		}
 
 		if ( array() !== $scope->included_categories ) {
-			$conditions[] = sprintf(
-				'l.product_id IN ( SELECT r.object_id FROM %1$s r
-					INNER JOIN %2$s t ON t.term_taxonomy_id = r.term_taxonomy_id
-					WHERE t.taxonomy = \'product_cat\' AND t.term_id IN ( %3$s ) )',
-				$wpdb->term_relationships,
-				$wpdb->term_taxonomy,
-				$this->id_list( $scope->included_categories )
-			);
+			$slugs = $this->category_slugs( $scope->included_categories );
+
+			if ( array() !== $slugs ) {
+				$prices[] = $this->cheapest( array( 'category' => $slugs ), $scope );
+			}
 		}
 
 		// An unrestricted coupon reaches the whole catalogue, so the cheapest
 		// thing in the shop is the cheapest thing it can be applied to.
-		$where = array() === $conditions ? '1 = 1' : '( ' . implode( ' OR ', $conditions ) . ' )';
-
-		if ( array() !== $scope->excluded_products ) {
-			$where .= ' AND l.product_id NOT IN ( ' . $this->id_list( $scope->excluded_products ) . ' )';
+		if ( array() === $prices ) {
+			$prices[] = $this->cheapest( array(), $scope );
 		}
 
-		/*
-		 * Assembled rather than prepared, and deliberately so. The only values
-		 * that vary are ID lists, and `id_list()` puts every one of them through
-		 * absint(), so nothing but digits can reach the query — a variable-length
-		 * IN list cannot be expressed as the literal string prepare() requires,
-		 * and pretending otherwise buys nothing here. Table names come from
-		 * $wpdb's own properties and the taxonomy is spelled out.
-		 */
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$cheapest = $wpdb->get_var(
-			"SELECT MIN( l.min_price ) FROM {$lookup} l WHERE {$where} AND l.min_price IS NOT NULL"
-		);
-		// phpcs:enable
+		$found = array_values( array_filter( $prices ) );
 
-		if ( ! is_numeric( $cheapest ) ) {
+		if ( array() === $found ) {
 			return null;
 		}
 
-		return Money::from_decimal( (float) $cheapest, $this->currency, $this->decimals );
+		$cheapest = $found[0];
+
+		foreach ( $found as $price ) {
+			if ( $price->amount < $cheapest->amount ) {
+				$cheapest = $price;
+			}
+		}
+
+		return $cheapest;
 	}
 
 	/**
-	 * A comma-separated list of IDs, each forced to a non-negative integer.
+	 * The cheapest purchasable product matching the given restriction.
 	 *
-	 * This is what makes assembling the query above safe: absint() leaves
-	 * nothing but digits, so there is no value through which anything could be
-	 * injected.
+	 * Asked of WooCommerce's own product query rather than of the database.
+	 * Ordering by price there is backed by `wc_product_meta_lookup`, so this is
+	 * still one indexed lookup rather than the full scan that loading a category
+	 * would be — and it leaves no hand-assembled SQL to get wrong or to have to
+	 * argue with three separate checkers about.
 	 *
-	 * @param list<int> $ids The IDs to list.
+	 * @param array<string, mixed> $restriction What limits the search.
+	 * @param CouponScope          $scope       The coupon's scope, for its exclusions.
 	 */
-	private function id_list( array $ids ): string {
-		return implode( ', ', array_map( 'absint', $ids ) );
+	private function cheapest( array $restriction, CouponScope $scope ): ?Money {
+		$excluded = $scope->excluded_products;
+
+		/*
+		 * Exclusions are applied here rather than passed to the query. Asking
+		 * the database to exclude posts is the `post__not_in` pattern, which is
+		 * slow enough that WordPress's own performance checks object to it —
+		 * and it is unnecessary: taking one more row than there are exclusions
+		 * guarantees at least one survivor, since at most that many can be
+		 * discarded.
+		 */
+		$products = wc_get_products(
+			array_merge(
+				array(
+					'limit'    => count( $excluded ) + 1,
+					'status'   => 'publish',
+
+					/*
+					 * Sorted on the stored price rather than by passing
+					 * `orderby => 'price'`, which WooCommerce accepts and
+					 * silently ignores: it returns whatever was created first.
+					 * That would have made every discount check quietly compare
+					 * against the wrong product.
+					 */
+					'orderby'  => 'meta_value_num',
+					// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- _price is indexed by WooCommerce, and this reads a handful of rows.
+					'meta_key' => '_price',
+					'order'    => 'ASC',
+				),
+				$restriction
+			)
+		);
+
+		if ( ! is_array( $products ) ) {
+			return null;
+		}
+
+		foreach ( $products as $product ) {
+			if ( ! $product instanceof WC_Product ) {
+				continue;
+			}
+
+			if ( in_array( $product->get_id(), $excluded, true ) ) {
+				continue;
+			}
+
+			return $this->price_of( $product );
+		}
+
+		return null;
+	}
+
+	/**
+	 * The slugs of the given categories, which is what a product query wants.
+	 *
+	 * @param list<int> $ids Category term IDs.
+	 *
+	 * @return list<string>
+	 */
+	private function category_slugs( array $ids ): array {
+		$slugs = array();
+
+		foreach ( $ids as $id ) {
+			$term = get_term( $id, 'product_cat' );
+
+			if ( $term instanceof WP_Term ) {
+				$slugs[] = $term->slug;
+			}
+		}
+
+		return $slugs;
 	}
 
 	/**
