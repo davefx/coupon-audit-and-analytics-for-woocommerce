@@ -10,6 +10,10 @@
 	     class twice. -->
 	<exclude-pattern>/build/*</exclude-pattern>
 	<exclude-pattern>/node_modules/*</exclude-pattern>
+	<!-- Screenshot tooling. It never ships (.distignore excludes /bin), it runs
+	     once per release against a throwaway shop, and holding a demo seeder to
+	     the standards of shipped code buys nothing. -->
+	<exclude-pattern>/bin/screenshots/*</exclude-pattern>
 	<exclude-pattern>/assets/build/*</exclude-pattern>
 
 	<arg name="extensions" value="php"/>

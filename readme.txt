@@ -113,9 +113,10 @@ No. The plugin makes no external requests.
 
 == Screenshots ==
 
-1. The coupon audit: every coupon, its real status, what it applies to, and what is wrong with it.
-2. Per-coupon margin, with cost coverage stated rather than assumed.
-3. Warnings on the coupon edit screen, which never block a save.
+1. The coupon audit: every coupon, its real status, what it applies to, and what is wrong with it — expired, exhausted, dormant, dead campaign, no expiry date, and overlapping.
+2. Per-coupon margin. Cost coverage is stated rather than assumed: one coupon's margin is exact, one is an estimate over half its lines, and one has no cost recorded at all and so shows no margin.
+3. Warnings on the coupon edit screen, against the coupon in front of you. They never block a save.
+4. Settings: which cost-of-goods system to read, and whether uninstalling should take the data with it.
 
 == Changelog ==
 

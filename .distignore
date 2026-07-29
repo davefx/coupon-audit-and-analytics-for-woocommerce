@@ -13,6 +13,7 @@
 /tests
 /bin
 /docs
+/.wordpress-org
 /node_modules
 
 /phpunit.xml.dist
