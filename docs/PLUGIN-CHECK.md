@@ -23,30 +23,42 @@ need this repository's test harness, and shipping it enlarges the attack surface
 for nothing. `composer.json` does ship, because Plugin Check reasonably queries a
 `vendor` directory that arrives without one.
 
-## The remaining finding: `WordPress.Security.EscapeOutput.ExceptionNotEscaped`
+## Exception messages carry no context
 
-Fourteen occurrences, all of the same shape:
+Plugin Check reports nothing at all, which took giving something up.
+
+`WordPress.Security.EscapeOutput` treats anything reaching an exception
+constructor as output, and it means anything: a `sprintf()`, a bare variable, a
+class constant. Only two forms satisfy it — a literal string, or assembling the
+exception into a variable and throwing that. The second changes nothing about
+safety and exists purely to defeat the heuristic, so it was not used.
+
+Exception messages are therefore fixed strings, and the values that used to be
+in them are gone:
 
 ```php
+// before
 throw new InvalidArgumentException(
     sprintf( 'A coupon ID must be a positive integer, got %d.', $value )
 );
+
+// now
+throw new InvalidArgumentException( 'A coupon ID must be a positive integer.' );
 ```
 
-**This is deliberate and will not be "fixed".** Two reasons.
+The container's two exceptions carry their own message in their constructor, so
+the throw site passes no argument at all.
 
-Escaping it would be wrong on its own terms. `esc_html()` produces HTML entities;
-an exception message goes to a log file or a stack trace, and encoding it there
-turns `<` into `&lt;` in `debug.log` for no benefit to anyone. The sniff assumes
-the message reaches a browser. These do not: nothing in this plugin catches one
-of these exceptions and prints it, and WordPress does not display exception
-messages to visitors with `WP_DEBUG` off.
+**This is a real loss and worth knowing about.** A container error no longer
+names the service it could not resolve, and a circular dependency no longer
+spells out the chain. Both are still one frame away in the stack trace — the
+caller and its arguments are right there — but the message alone no longer tells
+you. Two container tests used to assert exactly that detail and now assert only
+the exception type; their docblocks say why.
 
-And every one of them is thrown from the domain layer, where §5 forbids calling a
-WordPress function at all. That rule is what keeps the unit suite free of a
-bootstrap and running in half a second. Trading it away to satisfy a sniff about
-output that never happens would be a poor bargain.
-
-All of these exceptions signal a programming error — an ID that is not a
-positive integer, two cost sources claiming one identifier, a service resolved
-before it was registered. None of them can be triggered by a request.
+The escaping guidance exists to stop unescaped values reaching a browser, and
+none of these ever did: nothing here catches one of these exceptions and prints
+it, and every one signals a programming error no request can trigger. Escaping
+them would also have been wrong on its own terms, since `esc_html()` on a message
+bound for `debug.log` just puts entities in the log. Given the choice between
+arguing that in a review and giving up some diagnostic text, the text went.

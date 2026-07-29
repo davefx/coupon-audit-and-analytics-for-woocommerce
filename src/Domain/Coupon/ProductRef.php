@@ -42,9 +42,7 @@ final class ProductRef {
 		public readonly bool $is_on_sale = false
 	) {
 		if ( $id < 1 ) {
-			throw new InvalidArgumentException(
-				sprintf( 'A product ID must be a positive integer, got %d.', $id )
-			);
+			throw new InvalidArgumentException( 'A product ID must be a positive integer.' );
 		}
 
 		$unique = array_values( array_unique( $category_ids ) );

@@ -18,16 +18,13 @@ namespace DFX\CouponAAW\Container\Exception;
 final class CircularDependencyException extends ContainerException {
 
 	/**
-	 * Build the exception from the resolution chain that closed the loop.
+	 * Constructor.
 	 *
-	 * @param list<string> $chain Identifiers currently being resolved, outermost first.
-	 * @param string       $id    The identifier that reappeared.
+	 * The resolution chain used to be spelled out in the message. See the note on
+	 * ServiceNotFoundException for why it no longer is; the chain is still
+	 * readable in the stack trace, one frame per service being resolved.
 	 */
-	public static function for_chain( array $chain, string $id ): self {
-		$chain[] = $id;
-
-		return new self(
-			sprintf( 'Circular dependency detected while resolving: %s.', implode( ' -> ', $chain ) )
-		);
+	public function __construct() {
+		parent::__construct( 'Circular dependency detected: resolving a service required that same service.' );
 	}
 }

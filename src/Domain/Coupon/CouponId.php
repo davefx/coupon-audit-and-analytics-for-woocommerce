@@ -28,9 +28,7 @@ final class CouponId {
 	 */
 	public function __construct( public readonly int $value ) {
 		if ( $value < 1 ) {
-			throw new InvalidArgumentException(
-				sprintf( 'A coupon ID must be a positive integer, got %d.', $value )
-			);
+			throw new InvalidArgumentException( 'A coupon ID must be a positive integer.' );
 		}
 	}
 

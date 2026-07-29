@@ -18,11 +18,18 @@ namespace DFX\CouponAAW\Container\Exception;
 final class ServiceNotFoundException extends ContainerException {
 
 	/**
-	 * Build the exception for a given identifier.
+	 * Constructor.
 	 *
-	 * @param string $id The identifier that could not be resolved.
+	 * The exception carries its own message so that the throw site passes no
+	 * argument at all. The identifier used to be interpolated, which was more
+	 * helpful, and which WordPress.Security.EscapeOutput rejects: it treats
+	 * anything reaching an exception constructor as output, a class constant
+	 * included. The sniff can be satisfied by assembling the exception into a
+	 * variable first, but that defeats the check without changing anything, so
+	 * the message is simply fixed. The identifier is still one frame away in the
+	 * stack trace.
 	 */
-	public static function for_id( string $id ): self {
-		return new self( sprintf( 'Service "%s" is not registered in the container.', $id ) );
+	public function __construct() {
+		parent::__construct( 'A service was resolved that is not registered in the container.' );
 	}
 }

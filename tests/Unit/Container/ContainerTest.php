@@ -149,23 +149,30 @@ final class ContainerTest extends TestCase {
 	/**
 	 * Resolving something that was never bound is a programming error, not a
 	 * null return.
+	 *
+	 * This used to assert that the message named the missing service, which was
+	 * more useful. WordPress.Security.EscapeOutput rejects any variable reaching
+	 * an exception constructor, so the message is now fixed and the identifier
+	 * lives in the stack trace instead.
 	 */
 	public function test_it_throws_when_resolving_an_unbound_identifier(): void {
 		$this->expectException( ServiceNotFoundException::class );
-		$this->expectExceptionMessage( DummyService::class );
 
 		$this->container->get( DummyService::class );
 	}
 
 	/**
 	 * A dependency cycle is reported rather than exhausting the stack.
+	 *
+	 * The message used to spell the chain out. It no longer can, for the reason
+	 * given on the test above; the chain is still readable in the stack trace,
+	 * one frame per service being resolved.
 	 */
 	public function test_it_detects_a_circular_dependency(): void {
 		$this->container->bind( 'a', static fn ( ContainerInterface $c ): mixed => $c->get( 'b' ) );
 		$this->container->bind( 'b', static fn ( ContainerInterface $c ): mixed => $c->get( 'a' ) );
 
 		$this->expectException( CircularDependencyException::class );
-		$this->expectExceptionMessage( 'a -> b -> a' );
 
 		$this->container->get( 'a' );
 	}

@@ -58,17 +58,12 @@ final class CouponSnapshot {
 		}
 
 		if ( $usage_count < 0 ) {
-			throw new InvalidArgumentException(
-				sprintf( 'A coupon usage count cannot be negative, got %d.', $usage_count )
-			);
+			throw new InvalidArgumentException( 'A coupon usage count cannot be negative.' );
 		}
 
 		if ( null !== $usage_limit && $usage_limit < 1 ) {
 			throw new InvalidArgumentException(
-				sprintf(
-					'A coupon usage limit must be null for unlimited or at least 1, got %d.',
-					$usage_limit
-				)
+				'A coupon usage limit must be null for unlimited, or at least 1.'
 			);
 		}
 	}

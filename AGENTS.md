@@ -160,8 +160,10 @@ with runtime dependencies only and everything in `.distignore` removed.
 Checking the repository reports the test harness as a bundled application;
 checking a copy named anything else reports eighty text-domain mismatches and a
 trademark violation that do not exist, because both rules compare against the
-folder name. See [docs/PLUGIN-CHECK.md](docs/PLUGIN-CHECK.md), which also records
-the one finding that is deliberate and must not be "fixed".
+folder name. Plugin Check currently reports **nothing** across every category. Keep it that
+way. [docs/PLUGIN-CHECK.md](docs/PLUGIN-CHECK.md) records what that cost —
+exception messages carry no interpolated values, because the escaping sniff
+rejects any variable reaching an exception constructor.
 
 ## Where the build is
 

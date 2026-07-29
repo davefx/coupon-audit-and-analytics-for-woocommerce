@@ -42,12 +42,7 @@ final class OrphanDetector {
 		private readonly int $dormant_after_days = 90
 	) {
 		if ( $dormant_after_days < 1 ) {
-			throw new InvalidArgumentException(
-				sprintf(
-					'The dormancy threshold must be at least one day, got %d.',
-					$dormant_after_days
-				)
-			);
+			throw new InvalidArgumentException( 'The dormancy threshold must be at least one day.' );
 		}
 	}
 

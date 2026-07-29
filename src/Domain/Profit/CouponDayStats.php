@@ -56,13 +56,7 @@ final class CouponDayStats {
 		}
 
 		if ( $covered_lines > $total_lines ) {
-			throw new InvalidArgumentException(
-				sprintf(
-					'More lines have a cost (%1$d) than exist (%2$d).',
-					$covered_lines,
-					$total_lines
-				)
-			);
+			throw new InvalidArgumentException( 'More lines have a cost than exist.' );
 		}
 	}
 

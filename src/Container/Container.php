@@ -123,11 +123,11 @@ final class Container implements ContainerInterface {
 		}
 
 		if ( ! isset( $this->factories[ $id ] ) ) {
-			throw ServiceNotFoundException::for_id( $id );
+			throw new ServiceNotFoundException();
 		}
 
 		if ( in_array( $id, $this->resolving, true ) ) {
-			throw CircularDependencyException::for_chain( $this->resolving, $id );
+			throw new CircularDependencyException();
 		}
 
 		$this->resolving[] = $id;

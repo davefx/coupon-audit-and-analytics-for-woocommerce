@@ -46,9 +46,7 @@ final class Money {
 		$normalised = strtoupper( trim( $currency ) );
 
 		if ( 1 !== preg_match( '/^[A-Z]{3}$/', $normalised ) ) {
-			throw new InvalidArgumentException(
-				sprintf( 'A currency must be a three-letter code, got "%s".', $currency )
-			);
+			throw new InvalidArgumentException( 'A currency must be a three-letter ISO 4217 code.' );
 		}
 
 		$this->currency = $normalised;
@@ -150,11 +148,7 @@ final class Money {
 	private function assert_same_currency( self $other ): void {
 		if ( $this->currency !== $other->currency ) {
 			throw new InvalidArgumentException(
-				sprintf(
-					'Cannot combine %1$s with %2$s; mixed currencies are aggregated separately.',
-					$this->currency,
-					$other->currency
-				)
+				'Cannot combine two different currencies; they are aggregated separately.'
 			);
 		}
 	}

@@ -51,10 +51,7 @@ final class CostSourceRegistry {
 
 			if ( isset( $seen[ $identifier ] ) ) {
 				throw new InvalidArgumentException(
-					sprintf(
-						'Two cost sources claim the identifier "%s"; a report must be able to say where its figures came from.',
-						$identifier
-					)
+					'Two cost sources claim the same identifier; a report must be able to say where its figures came from.'
 				);
 			}
 
