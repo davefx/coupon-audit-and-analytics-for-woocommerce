@@ -108,9 +108,32 @@ found along the way.
 **Never add `Co-Authored-By` or `Claude-Session` trailers.** Commits are signed
 only by David Marín Carreño.
 
+## Cost sources
+
+Cost of goods is read through `CostSourceInterface`, one implementation per
+source, resolved in priority order by `CostSourceRegistry` (§7).
+
+**Native COGS is not enough on its own.** It arrived only in WooCommerce 10.3,
+and stores that have been tracking cost for years are the ones with data worth
+reporting on — their cost lives in whichever plugin they adopted before core had
+an answer. A store that gets "no cost data" from this plugin while plainly having
+cost data will not file a bug, it will uninstall. So v1 ships adapters for the
+popular third-party sources alongside the native one, not just the native one.
+
+The verified landscape — which plugin stores what, under which key, and which
+of them record cost at the time of sale rather than only current cost — is in
+[docs/COST-SOURCES.md](docs/COST-SOURCES.md). Read it before touching an
+adapter. Every adapter is verified against that plugin's actual storage before
+being written — never from documentation or memory. Where a source cannot be verified
+(a paid extension whose code is not available), say so plainly rather than
+shipping a guess: an adapter that reads the wrong meta key reports a confident,
+wrong margin, which §6.3 is explicit is worse than reporting nothing.
+
+Adding an adapter must stay cheap: register it in the container, and the registry
+picks it up. That is the plugin's most likely extension point.
+
 ## Where the build is
 
 Milestones 1–6 of §15 are done: scaffolding, coupon domain, repository,
-inventory screen, overlap detection, pre-publish warning. Next is cost adapters,
-which is blocked on verifying WooCommerce 10.3+ native COGS meta keys against
-source — the same discipline as above, and the last open question gating phase 1.
+inventory screen, overlap detection, pre-publish warning. Next is cost adapters
+(§16 q1 — the last open question gating phase 1).
