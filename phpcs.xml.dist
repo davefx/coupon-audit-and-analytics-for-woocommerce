@@ -64,6 +64,20 @@
 	</rule>
 
 	<!--
+		The integration bootstrap has to speak WordPress's language, not ours:
+		WP_TESTS_PHPUNIT_POLYFILLS_PATH is the name the core test suite looks
+		for, and clearing $GLOBALS['wp_roles'] is how WooCommerce's own bootstrap
+		makes the roles it just installed visible. Neither is negotiable, and
+		neither ships.
+	-->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.WP.GlobalVariablesOverride">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
 		Exception messages are developer-facing wiring errors, never rendered to
 		a browser. Escaping them would mean calling esc_html() from the domain
 		layer, which §5 forbids outright: no WordPress below the boundary.

@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-		bootstrap="tests/bootstrap.php"
-		cacheResultFile=".phpunit.cache/unit.result"
+		bootstrap="tests/bootstrap-integration.php"
+		cacheResultFile=".phpunit.cache/integration.result"
 		colors="true"
-		executionOrder="depends,defects"
-		beStrictAboutOutputDuringTests="true"
 		beStrictAboutTestsThatDoNotTestAnything="true"
-		convertDeprecationsToExceptions="true"
 		failOnRisky="true"
 		failOnWarning="true">
 
 	<testsuites>
-		<testsuite name="unit">
-			<directory>tests/Unit</directory>
+		<testsuite name="integration">
+			<directory>tests/Integration</directory>
 		</testsuite>
 	</testsuites>
 

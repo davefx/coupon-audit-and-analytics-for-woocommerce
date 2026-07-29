@@ -16,6 +16,7 @@ use DFX\CouponAAW\Domain\Clock\SystemClock;
 use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
 use DFX\CouponAAW\Domain\Coupon\StatusResolver;
 use DFX\CouponAAW\Providers\CoreServiceProvider;
+use DFX\CouponAAW\Repository\CouponRepositoryInterface;
 use DFX\CouponAAW\Support\PluginContext;
 use PHPUnit\Framework\TestCase;
 
@@ -149,5 +150,17 @@ final class CoreServiceProviderTest extends TestCase {
 			$this->container->get( StatusResolver::class ),
 			$this->container->get( StatusResolver::class )
 		);
+	}
+
+	/**
+	 * The database seam of §10.4. The binding is asserted as registered rather
+	 * than resolved: building it needs a live $wpdb, and the whole point of the
+	 * unit suite is that it never has one. The integration suite resolves it
+	 * for real.
+	 */
+	public function test_it_registers_the_coupon_repository(): void {
+		( new CoreServiceProvider( $this->context, $this->timezone ) )->register( $this->container );
+
+		$this->assertTrue( $this->container->has( CouponRepositoryInterface::class ) );
 	}
 }

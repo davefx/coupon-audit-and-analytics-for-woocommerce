@@ -16,7 +16,10 @@ use DFX\CouponAAW\Domain\Clock\ClockInterface;
 use DFX\CouponAAW\Domain\Clock\SystemClock;
 use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
 use DFX\CouponAAW\Domain\Coupon\StatusResolver;
+use DFX\CouponAAW\Repository\CouponRepositoryInterface;
+use DFX\CouponAAW\Repository\WpCouponRepository;
 use DFX\CouponAAW\Support\PluginContext;
+use wpdb;
 
 /**
  * Contributes the bindings that every other slice of the plugin depends on.
@@ -65,6 +68,20 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 			static fn ( ContainerInterface $c ): StatusResolver => new StatusResolver(
 				$c->get( ClockInterface::class )
 			)
+		);
+
+		/*
+		 * The database handle is fetched when the repository is first resolved
+		 * rather than when this provider is built, so that constructing the
+		 * provider — which the unit suite does — never needs a live $wpdb.
+		 */
+		$container->bind(
+			CouponRepositoryInterface::class,
+			function (): CouponRepositoryInterface {
+				global $wpdb;
+
+				return new WpCouponRepository( $wpdb, $this->timezone );
+			}
 		);
 
 		$container->bind(

@@ -62,5 +62,41 @@ jobs:
       - name: PHPUnit
         run: composer run test:unit
 
-  # The integration suite arrives with milestone 3, when the first repository
-  # needs a real database. It runs on wp-env against WooCommerce (§10.1).
+  integration:
+    name: Integration tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.4']
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysqli, zip, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v4
+
+      - name: Install WordPress, WooCommerce and the test library
+        run: bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1:3306
+
+      - name: PHPUnit
+        run: composer run test:integration

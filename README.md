@@ -36,12 +36,40 @@ composer run check      # coding standards, static analysis, unit tests
 
 Individual tasks:
 
-| Command                       | What it does                                      |
-|-------------------------------|---------------------------------------------------|
-| `composer run test:unit`      | Pure-domain suite — no WordPress, no database     |
-| `composer run lint`           | PHPCS (WordPress + WooCommerce Marketplace rules) |
-| `composer run lint:fix`       | PHPCBF auto-fixes                                 |
-| `composer run analyse`        | PHPStan level 8                                   |
+| Command                        | What it does                                      |
+|--------------------------------|---------------------------------------------------|
+| `composer run test:unit`       | Pure-domain suite — no WordPress, no database     |
+| `composer run test:integration`| Repositories against a real WordPress + WooCommerce|
+| `composer run lint`            | PHPCS (WordPress + WooCommerce Marketplace rules) |
+| `composer run lint:fix`        | PHPCBF auto-fixes                                 |
+| `composer run analyse`         | PHPStan level 8                                   |
+
+### Running the integration suite
+
+It needs a WordPress install, the WordPress core test library, a database and
+WooCommerce. To build all four from scratch:
+
+```bash
+bin/install-wp-tests.sh wordpress_test <db-user> <db-pass> localhost
+composer run test:integration
+```
+
+If you already have a working setup, point the suite at it instead — nothing is
+downloaded and nothing is overwritten:
+
+```bash
+export WP_TESTS_DIR=/path/to/wordpress-tests-lib   # default /tmp/wordpress-tests-lib
+export WP_CORE_DIR=/path/to/wordpress              # default /tmp/wordpress
+export WC_PLUGIN_DIR=/path/to/woocommerce          # default inside WP_CORE_DIR
+```
+
+**The database you point it at gets dropped and reinstalled on every run.** That
+is how the WordPress test suite works; give it a database of its own and never
+the one behind a site you care about.
+
+The suite runs on PHPUnit 9.6 rather than 10 or 11. That is not a preference:
+the WordPress core test library still calls `PHPUnit\Util\Test::parseTestMethodAnnotations()`,
+which PHPUnit removed in 10. One PHPUnit for both suites beats two.
 
 The `*.dist` configuration files are committed; drop an un-suffixed copy
 (`phpunit.xml`, `phpcs.xml`, `phpstan.neon`) beside them to override locally

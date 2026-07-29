@@ -17,9 +17,12 @@
 		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
 		"php-stubs/woocommerce-stubs": "^10.3",
 		"phpstan/phpstan": "^2.0",
-		"phpunit/phpunit": "^10.5",
+		"phpstan/phpstan-phpunit": "^2.0",
+		"phpunit/phpunit": "^9.6",
 		"szepeviktor/phpstan-wordpress": "^2.0",
-		"woocommerce/woocommerce-sniffs": "^1.0"
+		"woocommerce/woocommerce-sniffs": "^1.0",
+		"wp-phpunit/wp-phpunit": "^7.0",
+		"yoast/phpunit-polyfills": "^2.0"
 	},
 	"autoload": {
 		"psr-4": {
@@ -45,7 +48,7 @@
 	"scripts": {
 		"test": "phpunit",
 		"test:unit": "phpunit --testsuite unit",
-		"test:integration": "phpunit --testsuite integration",
+		"test:integration": "phpunit -c phpunit-integration.xml.dist",
 		"lint": "phpcs",
 		"lint:fix": "phpcbf",
 		"lint:boundary": "phpcs --standard=PHPCompatibility --runtime-set testVersion 7.0- coupon-audit-and-analytics-for-woocommerce.php uninstall.php",
