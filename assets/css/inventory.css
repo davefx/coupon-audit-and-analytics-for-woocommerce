@@ -101,3 +101,18 @@
 	background: #f0f0f1;
 	color: #50575e;
 }
+
+.dfxcaaw-unknown {
+	color: #757575;
+	font-style: italic;
+}
+
+.dfxcaaw-coverage,
+.dfxcaaw-share {
+	color: #757575;
+	font-size: 12px;
+}
+
+.dfxcaaw-negative {
+	color: #8a2424;
+}

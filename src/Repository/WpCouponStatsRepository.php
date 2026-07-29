@@ -85,14 +85,27 @@ final class WpCouponStatsRepository implements CouponStatsRepositoryInterface {
 	 * @return list<CouponDayStats>
 	 */
 	public function for_day( DateTimeImmutable $day ): array {
+		return $this->between( $day, $day );
+	}
+
+	/**
+	 * Everything stored between two days, inclusive.
+	 *
+	 * @param DateTimeImmutable $from First day.
+	 * @param DateTimeImmutable $to   Last day.
+	 *
+	 * @return list<CouponDayStats>
+	 */
+	public function between( DateTimeImmutable $from, DateTimeImmutable $to ): array {
 		$wpdb = $this->wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT * FROM %i WHERE stat_date = %s ORDER BY coupon_id, currency',
+				'SELECT * FROM %i WHERE stat_date BETWEEN %s AND %s ORDER BY stat_date, coupon_id, currency',
 				$this->schema->table_name(),
-				$day->format( 'Y-m-d' )
+				$from->format( 'Y-m-d' ),
+				$to->format( 'Y-m-d' )
 			),
 			ARRAY_A
 		);

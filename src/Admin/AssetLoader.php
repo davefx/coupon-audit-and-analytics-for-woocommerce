@@ -51,7 +51,7 @@ final class AssetLoader {
 	}
 
 	/**
-	 * Whether the given screen is the inventory page.
+	 * Whether the given screen is one of this plugin's own.
 	 *
 	 * The hook suffix WordPress generates for a submenu page depends on the
 	 * parent menu's own slug, so it is matched by suffix rather than spelled out.
@@ -59,6 +59,7 @@ final class AssetLoader {
 	 * @param string $hook_suffix The screen currently being loaded.
 	 */
 	private function is_inventory_screen( string $hook_suffix ): bool {
-		return str_ends_with( $hook_suffix, '_page_' . MenuRegistrar::PAGE_SLUG );
+		return str_ends_with( $hook_suffix, '_page_' . MenuRegistrar::PAGE_SLUG )
+			|| str_ends_with( $hook_suffix, '_page_' . MarginPage::PAGE_SLUG );
 	}
 }

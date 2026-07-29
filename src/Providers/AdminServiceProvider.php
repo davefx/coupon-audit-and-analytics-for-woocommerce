@@ -13,14 +13,22 @@ use DFX\CouponAAW\Admin\AssetLoader;
 use DFX\CouponAAW\Admin\CouponEditorNotices;
 use DFX\CouponAAW\Admin\InventoryListTable;
 use DFX\CouponAAW\Admin\InventoryPage;
+use DFX\CouponAAW\Admin\MarginListTable;
+use DFX\CouponAAW\Admin\MarginPage;
 use DFX\CouponAAW\Admin\MenuRegistrar;
 use DFX\CouponAAW\Container\ContainerInterface;
 use DFX\CouponAAW\Container\ServiceProviderInterface;
+use DFX\CouponAAW\Domain\Clock\ClockInterface;
 use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
 use DFX\CouponAAW\Domain\Coupon\StatusResolver;
 use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
 use DFX\CouponAAW\Repository\CouponRepositoryInterface;
+use DFX\CouponAAW\Install\Aggregator;
+use DFX\CouponAAW\Licensing\FeatureGateInterface;
+use DFX\CouponAAW\Licensing\LocalFeatureGate;
+use DFX\CouponAAW\Repository\CouponStatsRepositoryInterface;
 use DFX\CouponAAW\Service\InventoryService;
+use DFX\CouponAAW\Service\MarginService;
 use DFX\CouponAAW\Service\PrePublishValidator;
 use DFX\CouponAAW\Support\PluginContext;
 
@@ -71,9 +79,45 @@ final class AdminServiceProvider implements ServiceProviderInterface {
 		);
 
 		$container->bind(
+			FeatureGateInterface::class,
+			static fn (): FeatureGateInterface => new LocalFeatureGate()
+		);
+
+		$container->bind(
+			MarginService::class,
+			static fn ( ContainerInterface $c ): MarginService => new MarginService(
+				$c->get( CouponStatsRepositoryInterface::class ),
+				$c->get( CouponRepositoryInterface::class ),
+				$c->get( ClockInterface::class ),
+				$c->get( FeatureGateInterface::class )
+			)
+		);
+
+		$container->bind(
+			MarginListTable::class,
+			static function (): MarginListTable {
+				if ( ! class_exists( 'WP_List_Table' ) ) {
+					require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+				}
+
+				return new MarginListTable();
+			}
+		);
+
+		$container->bind(
+			MarginPage::class,
+			static fn ( ContainerInterface $c ): MarginPage => new MarginPage(
+				$c->get( MarginService::class ),
+				$c->get( MarginListTable::class ),
+				$c->get( Aggregator::class )
+			)
+		);
+
+		$container->bind(
 			MenuRegistrar::class,
 			static fn ( ContainerInterface $c ): MenuRegistrar => new MenuRegistrar(
-				$c->get( InventoryPage::class )
+				$c->get( InventoryPage::class ),
+				$c->get( MarginPage::class )
 			)
 		);
 

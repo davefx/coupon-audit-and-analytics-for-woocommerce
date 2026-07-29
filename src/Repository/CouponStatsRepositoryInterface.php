@@ -39,4 +39,14 @@ interface CouponStatsRepositoryInterface {
 	 * @return list<CouponDayStats>
 	 */
 	public function for_day( DateTimeImmutable $day ): array;
+
+	/**
+	 * Everything stored between two days, inclusive.
+	 *
+	 * @param DateTimeImmutable $from First day.
+	 * @param DateTimeImmutable $to   Last day.
+	 *
+	 * @return list<CouponDayStats>
+	 */
+	public function between( DateTimeImmutable $from, DateTimeImmutable $to ): array;
 }

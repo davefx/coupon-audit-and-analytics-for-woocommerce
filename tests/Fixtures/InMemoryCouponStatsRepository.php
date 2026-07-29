@@ -63,4 +63,24 @@ final class InMemoryCouponStatsRepository implements CouponStatsRepositoryInterf
 	public function for_day( DateTimeImmutable $day ): array {
 		return $this->days[ $day->format( 'Y-m-d' ) ] ?? array();
 	}
+
+	/**
+	 * Everything stored between two days.
+	 *
+	 * @param DateTimeImmutable $from First day.
+	 * @param DateTimeImmutable $to   Last day.
+	 *
+	 * @return list<CouponDayStats>
+	 */
+	public function between( DateTimeImmutable $from, DateTimeImmutable $to ): array {
+		$found = array();
+
+		foreach ( $this->days as $day => $rows ) {
+			if ( $day >= $from->format( 'Y-m-d' ) && $day <= $to->format( 'Y-m-d' ) ) {
+				$found = array_merge( $found, $rows );
+			}
+		}
+
+		return $found;
+	}
 }

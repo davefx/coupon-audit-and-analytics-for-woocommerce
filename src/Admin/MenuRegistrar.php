@@ -28,9 +28,13 @@ final class MenuRegistrar {
 	/**
 	 * Constructor.
 	 *
-	 * @param InventoryPage $page The screen to render.
+	 * @param InventoryPage $inventory The audit screen.
+	 * @param MarginPage    $margins   The analytics screen.
 	 */
-	public function __construct( private readonly InventoryPage $page ) {}
+	public function __construct(
+		private readonly InventoryPage $inventory,
+		private readonly MarginPage $margins
+	) {}
 
 	/**
 	 * Register the submenu page.
@@ -42,7 +46,16 @@ final class MenuRegistrar {
 			__( 'Coupon Audit', 'coupon-audit-and-analytics-for-woocommerce' ),
 			InventoryPage::CAPABILITY,
 			self::PAGE_SLUG,
-			array( $this->page, 'render' )
+			array( $this->inventory, 'render' )
+		);
+
+		add_submenu_page(
+			self::PARENT_SLUG,
+			__( 'Coupon Margin', 'coupon-audit-and-analytics-for-woocommerce' ),
+			__( 'Coupon Margin', 'coupon-audit-and-analytics-for-woocommerce' ),
+			InventoryPage::CAPABILITY,
+			MarginPage::PAGE_SLUG,
+			array( $this->margins, 'render' )
 		);
 	}
 }
