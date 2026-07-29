@@ -22,8 +22,10 @@ parameters:
 	scanDirectories:
 		- vendor/wp-phpunit/wp-phpunit/includes
 
-	# The distribution build is a copy of the plugin.
+	# The distribution build is a copy of the plugin. Marked optional with (?)
+	# because a fresh checkout has not built one, and PHPStan treats a missing
+	# exclusion as a configuration error.
 	excludePaths:
-		- build
+		- build (?)
 
 	treatPhpDocTypesAsCertain: false
