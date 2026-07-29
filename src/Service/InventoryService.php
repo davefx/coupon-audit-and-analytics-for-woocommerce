@@ -25,18 +25,6 @@ use DFX\CouponAAW\Repository\CouponRepositoryInterface;
 final class InventoryService {
 
 	/**
-	 * Above this many coupons, overlap detection is skipped on page load.
-	 *
-	 * §8.3 requires overlap detection to run in the background rather than on
-	 * page load for large inventories. The background runner belongs to a later
-	 * milestone; until it exists, the honest thing is to say the check was not
-	 * run rather than to hang the screen pretending otherwise. The index makes
-	 * a narrowly-scoped inventory of this size cheap, but one where every coupon
-	 * applies to everything is quadratic however it is indexed.
-	 */
-	public const OVERLAP_LIMIT = 300;
-
-	/**
 	 * Constructor.
 	 *
 	 * @param CouponRepositoryInterface $coupons  Source of coupons.
@@ -62,7 +50,7 @@ final class InventoryService {
 	public function build(): Inventory {
 		$coupons = $this->coupons->all();
 
-		$overlaps = count( $coupons ) > self::OVERLAP_LIMIT
+		$overlaps = count( $coupons ) > OverlapDetector::SYNCHRONOUS_LIMIT
 			? null
 			: $this->overlaps->detect( $coupons );
 

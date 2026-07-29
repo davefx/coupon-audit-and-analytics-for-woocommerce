@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace DFX\CouponAAW\Providers;
 
 use DFX\CouponAAW\Admin\AssetLoader;
+use DFX\CouponAAW\Admin\CouponEditorNotices;
 use DFX\CouponAAW\Admin\InventoryListTable;
 use DFX\CouponAAW\Admin\InventoryPage;
 use DFX\CouponAAW\Admin\MenuRegistrar;
@@ -20,6 +21,7 @@ use DFX\CouponAAW\Domain\Coupon\StatusResolver;
 use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
 use DFX\CouponAAW\Repository\CouponRepositoryInterface;
 use DFX\CouponAAW\Service\InventoryService;
+use DFX\CouponAAW\Service\PrePublishValidator;
 use DFX\CouponAAW\Support\PluginContext;
 
 /**
@@ -76,6 +78,22 @@ final class AdminServiceProvider implements ServiceProviderInterface {
 		);
 
 		$container->bind(
+			PrePublishValidator::class,
+			static fn ( ContainerInterface $c ): PrePublishValidator => new PrePublishValidator(
+				$c->get( CouponRepositoryInterface::class ),
+				$c->get( OverlapDetector::class )
+			)
+		);
+
+		$container->bind(
+			CouponEditorNotices::class,
+			static fn ( ContainerInterface $c ): CouponEditorNotices => new CouponEditorNotices(
+				$c->get( PrePublishValidator::class ),
+				$c->get( CouponRepositoryInterface::class )
+			)
+		);
+
+		$container->bind(
 			AssetLoader::class,
 			static fn ( ContainerInterface $c ): AssetLoader => new AssetLoader(
 				$c->get( PluginContext::class )
@@ -97,6 +115,13 @@ final class AdminServiceProvider implements ServiceProviderInterface {
 			'admin_menu',
 			static function () use ( $container ): void {
 				$container->get( MenuRegistrar::class )->register();
+			}
+		);
+
+		add_action(
+			'admin_notices',
+			static function () use ( $container ): void {
+				$container->get( CouponEditorNotices::class )->render();
 			}
 		);
 

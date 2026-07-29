@@ -22,6 +22,17 @@ use DFX\CouponAAW\Domain\Coupon\StatusResolver;
 final class OverlapDetector {
 
 	/**
+	 * The largest inventory worth comparing while somebody waits.
+	 *
+	 * §8.3 requires overlap detection to run in the background rather than on
+	 * page load for large inventories. The background runner belongs to a later
+	 * milestone; until it exists, callers report the check as not run rather
+	 * than hanging a screen pretending otherwise. The number lives here because
+	 * it bounds this class's cost, and because two callers now share it.
+	 */
+	public const SYNCHRONOUS_LIMIT = 300;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param StatusResolver $status Decides which coupons are worth comparing.

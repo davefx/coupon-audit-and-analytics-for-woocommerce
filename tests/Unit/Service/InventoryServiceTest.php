@@ -299,7 +299,7 @@ final class InventoryServiceTest extends TestCase {
 	public function test_overlap_detection_is_skipped_on_a_large_inventory(): void {
 		$coupons = array();
 
-		for ( $i = 1; $i <= InventoryService::OVERLAP_LIMIT + 1; $i++ ) {
+		for ( $i = 1; $i <= OverlapDetector::SYNCHRONOUS_LIMIT + 1; $i++ ) {
 			$coupons[] = $this->healthy( $i, 'c' . $i );
 		}
 
@@ -317,7 +317,7 @@ final class InventoryServiceTest extends TestCase {
 	public function test_overlap_detection_runs_at_the_limit(): void {
 		$coupons = array();
 
-		for ( $i = 1; $i <= InventoryService::OVERLAP_LIMIT; $i++ ) {
+		for ( $i = 1; $i <= OverlapDetector::SYNCHRONOUS_LIMIT; $i++ ) {
 			$coupons[] = $this->healthy( $i, 'c' . $i );
 		}
 

@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace DFX\CouponAAW\Admin;
 
 use DFX\CouponAAW\Domain\Coupon\CouponStatus;
+use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
 use DFX\CouponAAW\Service\InventoryService;
 use DFX\CouponAAW\Service\InventorySummary;
 
@@ -134,7 +135,7 @@ final class InventoryPage {
 							'Overlap detection was skipped: comparing every coupon against every other is too slow to do while you wait above %d coupons.',
 							'coupon-audit-and-analytics-for-woocommerce'
 						),
-						InventoryService::OVERLAP_LIMIT
+						OverlapDetector::SYNCHRONOUS_LIMIT
 					)
 				)
 			);

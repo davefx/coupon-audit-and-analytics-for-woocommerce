@@ -36,6 +36,9 @@ status, what it actually applies to, and what is wrong with it:
 Status is derived, never stored, so a coupon that expired overnight says so the
 next morning. None of this needs cost data.
 
+The same findings appear on the coupon edit screen itself, against the coupon in
+front of you. **They never block a save** — they inform, and you decide.
+
 ## Design
 
 The architectural half of the technical specification is published as
