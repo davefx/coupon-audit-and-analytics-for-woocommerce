@@ -73,6 +73,19 @@
 	</rule>
 
 	<!--
+		This sniff predates enums and reads a method on an enum as a plain
+		function, then rejects the `$this` inside it as a PHP 7.1 error. Enums
+		are PHP 8.1 and the floor is PHP 8.1, so the report cannot be right.
+
+		The exclusion is scoped to this ruleset only. `composer run lint:boundary`
+		invokes the PHPCompatibility standard directly against the two root files,
+		which contain no enums, so the PHP 7 check there keeps its full strength.
+	-->
+	<rule ref="PHPCompatibility.Variables.ForbiddenThisUseContexts">
+		<severity>0</severity>
+	</rule>
+
+	<!--
 		This sniff predates generics and rejects `list<string>` or
 		`array<string, callable>` as a mismatch for an `array` type hint.
 		PHPStan at level 8 checks the same thing properly, so it wins here.

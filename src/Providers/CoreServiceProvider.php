@@ -9,24 +9,43 @@ declare( strict_types=1 );
 
 namespace DFX\CouponAAW\Providers;
 
+use DateTimeZone;
 use DFX\CouponAAW\Container\ContainerInterface;
 use DFX\CouponAAW\Container\ServiceProviderInterface;
+use DFX\CouponAAW\Domain\Clock\ClockInterface;
+use DFX\CouponAAW\Domain\Clock\SystemClock;
+use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
+use DFX\CouponAAW\Domain\Coupon\StatusResolver;
 use DFX\CouponAAW\Support\PluginContext;
 
 /**
  * Contributes the bindings that every other slice of the plugin depends on.
  *
- * The mandatory test seams of §10.4 — clock, repositories, feature gate,
- * options — are registered here as each is built.
+ * This is where the mandatory test seams of §10.4 are wired. The clock is the
+ * first of them; repositories, the feature gate and the options wrapper join it
+ * as each is built.
  */
 final class CoreServiceProvider implements ServiceProviderInterface {
 
 	/**
+	 * Days without a redemption before a coupon counts as dormant.
+	 *
+	 * §8.4 requires this to be configurable. Until the settings wrapper exists
+	 * it is bound to the documented default rather than read from an option,
+	 * because §10.4 forbids reaching for `get_option()` from here.
+	 */
+	private const DEFAULT_DORMANCY_DAYS = 90;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param PluginContext $context Values supplied by the main plugin file.
+	 * @param PluginContext $context  Values supplied by the main plugin file.
+	 * @param DateTimeZone  $timezone The site's timezone.
 	 */
-	public function __construct( private readonly PluginContext $context ) {}
+	public function __construct(
+		private readonly PluginContext $context,
+		private readonly DateTimeZone $timezone
+	) {}
 
 	/**
 	 * Register bindings.
@@ -35,6 +54,27 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 	 */
 	public function register( ContainerInterface $container ): void {
 		$container->instance( PluginContext::class, $this->context );
+
+		$container->bind(
+			ClockInterface::class,
+			fn (): ClockInterface => new SystemClock( $this->timezone )
+		);
+
+		$container->bind(
+			StatusResolver::class,
+			static fn ( ContainerInterface $c ): StatusResolver => new StatusResolver(
+				$c->get( ClockInterface::class )
+			)
+		);
+
+		$container->bind(
+			OrphanDetector::class,
+			static fn ( ContainerInterface $c ): OrphanDetector => new OrphanDetector(
+				$c->get( StatusResolver::class ),
+				$c->get( ClockInterface::class ),
+				self::DEFAULT_DORMANCY_DAYS
+			)
+		);
 	}
 
 	/**

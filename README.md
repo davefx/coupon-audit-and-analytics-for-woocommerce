@@ -55,12 +55,22 @@ src/
   Container/        service container and provider contract
   Providers/        wiring, one provider per slice of the plugin
   Support/          values the main file alone knows (paths, version, slug)
+  Domain/
+    Clock/          the only way anything learns what time it is
+    Coupon/         status, scope, orphans — pure logic, no WordPress
 ```
 
-The domain, repository, cost-adapter, admin and REST layers land in later
-milestones. The rule that shapes all of them: the domain never sees WordPress,
-so its tests need neither a database nor a bootstrap and the full unit suite
-stays under two seconds.
+The repository, cost-adapter, admin and REST layers land in later milestones.
+The rule that shapes all of them: the domain never sees WordPress, so its tests
+need neither a database nor a bootstrap and the full unit suite stays under two
+seconds.
+
+`Domain/` is the part to read first. `StatusResolver` derives a coupon's status
+rather than storing it, `CouponScope` resolves what a coupon really applies to,
+and `OrphanDetector` finds coupons that are still live but shouldn't be. None of
+them can be constructed without a `ClockInterface`, which is deliberate: `time()`
+and `current_time()` are never called anywhere in the codebase, so "expires
+today" is a test you can actually write.
 
 ### Test-driven development
 

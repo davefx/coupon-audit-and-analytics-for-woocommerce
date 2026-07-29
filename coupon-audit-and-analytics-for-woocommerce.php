@@ -145,7 +145,7 @@ function dfxcaaw_bootstrap() {
 	);
 
 	\DFX\CouponAAW\Plugin::get_instance()
-		->add_provider( new \DFX\CouponAAW\Providers\CoreServiceProvider( $context ) )
+		->add_provider( new \DFX\CouponAAW\Providers\CoreServiceProvider( $context, wp_timezone() ) )
 		->boot();
 }
 
