@@ -51,14 +51,22 @@ final class SchemaMigratorTest extends WP_UnitTestCase {
 
 	/**
 	 * Whether the aggregates table exists right now.
+	 *
+	 * Asked of information_schema rather than with `SHOW TABLES LIKE`, which
+	 * does not answer the same way on MySQL and MariaDB — the column tests below
+	 * passed on both while this one reported the table missing on MySQL alone,
+	 * which is a property of the question and not of the schema.
 	 */
 	private function table_exists(): bool {
 		global $wpdb;
 
-		$table = $this->migrator->table_name();
-
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return $table === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		return 1 === (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = %s',
+				$this->migrator->table_name()
+			)
+		);
 	}
 
 	/**
