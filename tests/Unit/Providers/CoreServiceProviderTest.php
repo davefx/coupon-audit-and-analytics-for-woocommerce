@@ -18,6 +18,10 @@ use DFX\CouponAAW\Domain\Coupon\StatusResolver;
 use DFX\CouponAAW\Providers\CoreServiceProvider;
 use DFX\CouponAAW\Repository\CouponRepositoryInterface;
 use DFX\CouponAAW\Support\PluginContext;
+use Brain\Monkey;
+use Brain\Monkey\Actions;
+use DFX\CouponAAW\Install\Aggregator;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -26,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  * seams of §10.4 land here as they are built.
  */
 final class CoreServiceProviderTest extends TestCase {
+
+	use MockeryPHPUnitIntegration;
 
 	/**
 	 * A fresh container per test.
@@ -54,6 +60,8 @@ final class CoreServiceProviderTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 
+		Monkey\setUp();
+
 		$this->container = new Container();
 		$this->timezone  = new DateTimeZone( 'Europe/Madrid' );
 		$this->context   = new PluginContext(
@@ -63,6 +71,15 @@ final class CoreServiceProviderTest extends TestCase {
 			base_url: 'https://shop.test/wp-content/plugins/cpn/',
 			slug: 'coupon-audit-and-analytics-for-woocommerce'
 		);
+	}
+
+	/**
+	 * Tear down.
+	 */
+	protected function tearDown(): void {
+		Monkey\tearDown();
+
+		parent::tearDown();
 	}
 
 	/**
@@ -89,7 +106,7 @@ final class CoreServiceProviderTest extends TestCase {
 	}
 
 	/**
-	 * Booting has nothing to hook yet, and must stay harmless.
+	 * Booting leaves what registration bound alone.
 	 */
 	public function test_booting_leaves_the_registered_bindings_intact(): void {
 		$provider = new CoreServiceProvider( $this->context, $this->timezone );
@@ -98,6 +115,22 @@ final class CoreServiceProviderTest extends TestCase {
 		$provider->boot( $this->container );
 
 		$this->assertSame( $this->context, $this->container->get( PluginContext::class ) );
+	}
+
+	/**
+	 * Aggregation is driven entirely by hooks, so the hooks being attached is
+	 * the whole of the wiring. An order changing state must reach the queue, and
+	 * the queue's own actions must reach the aggregator.
+	 */
+	public function test_booting_hooks_aggregation_into_wordpress(): void {
+		Actions\expectAdded( 'woocommerce_order_status_changed' )->once();
+		Actions\expectAdded( 'woocommerce_order_refunded' )->once();
+		Actions\expectAdded( Aggregator::AGGREGATE_DAY )->once();
+		Actions\expectAdded( Aggregator::BACKFILL_STEP )->once();
+
+		$provider = new CoreServiceProvider( $this->context, $this->timezone );
+		$provider->register( $this->container );
+		$provider->boot( $this->container );
 	}
 
 	/**

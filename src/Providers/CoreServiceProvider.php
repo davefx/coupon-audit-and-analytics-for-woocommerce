@@ -18,7 +18,15 @@ use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
 use DFX\CouponAAW\Domain\Coupon\StatusResolver;
 use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
 use DFX\CouponAAW\Domain\Overlap\ScopeIndex;
+use DFX\CouponAAW\Install\Activator;
+use DFX\CouponAAW\Install\Aggregator;
+use DFX\CouponAAW\Install\SchemaMigrator;
 use DFX\CouponAAW\Repository\CouponRepositoryInterface;
+use DFX\CouponAAW\Repository\CouponStatsRepositoryInterface;
+use DFX\CouponAAW\Repository\OrderStatsRepositoryInterface;
+use DFX\CouponAAW\Repository\WcOrderStatsRepository;
+use DFX\CouponAAW\Repository\WpCouponStatsRepository;
+use DFX\CouponAAW\Service\AggregationService;
 use DFX\CouponAAW\Repository\WpCouponRepository;
 use DFX\CouponAAW\Cost\BoosterCogsSource;
 use DFX\CouponAAW\Cost\CostSourceRegistry;
@@ -122,6 +130,61 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 			}
 		);
 
+		$container->bind(
+			SchemaMigrator::class,
+			function ( ContainerInterface $c ): SchemaMigrator {
+				global $wpdb;
+
+				return new SchemaMigrator( $wpdb, $c->get( SettingsInterface::class ) );
+			}
+		);
+
+		$container->bind(
+			OrderStatsRepositoryInterface::class,
+			function (): OrderStatsRepositoryInterface {
+				global $wpdb;
+
+				return new WcOrderStatsRepository( $wpdb, $this->timezone, wc_get_price_decimals() );
+			}
+		);
+
+		$container->bind(
+			CouponStatsRepositoryInterface::class,
+			function ( ContainerInterface $c ): CouponStatsRepositoryInterface {
+				global $wpdb;
+
+				return new WpCouponStatsRepository( $wpdb, $c->get( SchemaMigrator::class ), $this->timezone );
+			}
+		);
+
+		$container->bind(
+			AggregationService::class,
+			static fn ( ContainerInterface $c ): AggregationService => new AggregationService(
+				$c->get( OrderStatsRepositoryInterface::class ),
+				$c->get( CouponStatsRepositoryInterface::class ),
+				$c->get( CostSourceRegistry::class )
+			)
+		);
+
+		$container->bind(
+			Aggregator::class,
+			fn ( ContainerInterface $c ): Aggregator => new Aggregator(
+				$c->get( AggregationService::class ),
+				$c->get( OrderStatsRepositoryInterface::class ),
+				$c->get( SettingsInterface::class ),
+				$c->get( ClockInterface::class ),
+				$this->timezone
+			)
+		);
+
+		$container->bind(
+			Activator::class,
+			static fn ( ContainerInterface $c ): Activator => new Activator(
+				$c->get( SchemaMigrator::class ),
+				$c->get( Aggregator::class )
+			)
+		);
+
 		$container->bind( ScopeIndex::class, static fn (): ScopeIndex => new ScopeIndex() );
 
 		$container->bind(
@@ -150,5 +213,40 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 	 *
 	 * @param ContainerInterface $container Service container.
 	 */
-	public function boot( ContainerInterface $container ): void {}
+	public function boot( ContainerInterface $container ): void {
+		/*
+		 * An order reaching a state whose revenue counts, or leaving one, means
+		 * its day's figures are stale. The day is queued rather than recomputed
+		 * inline: a shop owner marking twenty orders complete should not wait for
+		 * twenty aggregations, and §8.3's reasoning about background work applies
+		 * here just as much.
+		 */
+		add_action(
+			'woocommerce_order_status_changed',
+			static function ( $order_id ) use ( $container ): void {
+				$container->get( Aggregator::class )->queue_order( (int) $order_id );
+			}
+		);
+
+		add_action(
+			'woocommerce_order_refunded',
+			static function ( $order_id ) use ( $container ): void {
+				$container->get( Aggregator::class )->queue_order( (int) $order_id );
+			}
+		);
+
+		add_action(
+			Aggregator::AGGREGATE_DAY,
+			static function ( $day ) use ( $container ): void {
+				$container->get( Aggregator::class )->run_day( (string) $day );
+			}
+		);
+
+		add_action(
+			Aggregator::BACKFILL_STEP,
+			static function () use ( $container ): void {
+				$container->get( Aggregator::class )->run_backfill_step();
+			}
+		);
+	}
 }

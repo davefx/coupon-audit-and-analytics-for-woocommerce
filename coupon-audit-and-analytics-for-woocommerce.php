@@ -151,3 +151,26 @@ function dfxcaaw_bootstrap() {
 }
 
 add_action( 'plugins_loaded', 'dfxcaaw_bootstrap', 20 );
+
+/**
+ * Prepare the store when the plugin is switched on.
+ *
+ * Activation runs before `plugins_loaded`, so the plugin is booted here on
+ * demand rather than assumed to be running already.
+ *
+ * @return void
+ */
+function dfxcaaw_activate() {
+	if ( ! dfxcaaw_woocommerce_is_supported() ) {
+		return;
+	}
+
+	dfxcaaw_bootstrap();
+
+	\DFX\CouponAAW\Plugin::get_instance()
+		->container()
+		->get( \DFX\CouponAAW\Install\Activator::class )
+		->activate();
+}
+
+register_activation_hook( DFXCAAW_FILE, 'dfxcaaw_activate' );

@@ -17,10 +17,15 @@ if ( ! is_array( $dfxcaaw_settings ) || empty( $dfxcaaw_settings['delete_data_on
 	return;
 }
 
+global $wpdb;
+
+$dfxcaaw_table = $wpdb->prefix . 'dfxcaaw_coupon_stats';
+$dfxcaaw_sql   = $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $dfxcaaw_table );
+
+if ( is_string( $dfxcaaw_sql ) ) {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared
+	$wpdb->query( $dfxcaaw_sql );
+}
+
 delete_option( 'dfxcaaw_settings' );
 delete_option( 'dfxcaaw_db_version' );
-
-/*
- * The aggregates table arrives with milestone 8; its removal belongs here, and
- * under the same opt-in guard.
- */
