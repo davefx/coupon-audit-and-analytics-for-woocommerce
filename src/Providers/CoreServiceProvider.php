@@ -32,6 +32,7 @@ use DFX\CouponAAW\Repository\CouponStatsRepositoryInterface;
 use DFX\CouponAAW\Repository\OrderStatsRepositoryInterface;
 use DFX\CouponAAW\Repository\WcOrderStatsRepository;
 use DFX\CouponAAW\Repository\WpCouponStatsRepository;
+use DFX\CouponAAW\Service\AggregationInterface;
 use DFX\CouponAAW\Service\AggregationService;
 use DFX\CouponAAW\Repository\WpCouponRepository;
 use DFX\CouponAAW\Cost\BoosterCogsSource;
@@ -164,8 +165,8 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 		);
 
 		$container->bind(
-			AggregationService::class,
-			static fn ( ContainerInterface $c ): AggregationService => new AggregationService(
+			AggregationInterface::class,
+			static fn ( ContainerInterface $c ): AggregationInterface => new AggregationService(
 				$c->get( OrderStatsRepositoryInterface::class ),
 				$c->get( CouponStatsRepositoryInterface::class ),
 				$c->get( CostSourceRegistry::class )
@@ -175,7 +176,7 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 		$container->bind(
 			Aggregator::class,
 			fn ( ContainerInterface $c ): Aggregator => new Aggregator(
-				$c->get( AggregationService::class ),
+				$c->get( AggregationInterface::class ),
 				$c->get( OrderStatsRepositoryInterface::class ),
 				$c->get( SettingsInterface::class ),
 				$c->get( ClockInterface::class ),

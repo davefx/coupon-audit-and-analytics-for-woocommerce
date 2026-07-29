@@ -249,4 +249,67 @@ final class CostSourceTest extends WP_UnitTestCase {
 			'The two systems disagree, which is exactly why a report must read only one.'
 		);
 	}
+
+	/**
+	 * Every source names itself and says what it is.
+	 *
+	 * The identifier is stored in settings and the label is what a shop owner
+	 * picks from, so an empty one leaves a blank radio button that cannot be told
+	 * from its neighbour. The identifiers must differ, too — the registry refuses
+	 * duplicates, because a report has to be able to say where its figures came
+	 * from.
+	 */
+	public function test_every_source_names_itself(): void {
+		$sources = array(
+			new NativeCogsSource( 'EUR', 2 ),
+			new WpFactoryCogsSource( 'EUR', 2 ),
+			new SkyvergeCogsSource( 'EUR', 2 ),
+			new BoosterCogsSource( 'EUR', 2 ),
+		);
+
+		$identifiers = array();
+
+		foreach ( $sources as $source ) {
+			$this->assertNotSame( '', trim( $source->get_identifier() ), get_class( $source ) );
+			$this->assertNotSame( '', trim( $source->get_label() ), get_class( $source ) );
+
+			$identifiers[] = $source->get_identifier();
+		}
+
+		$this->assertSame( $identifiers, array_unique( $identifiers ), 'Two sources share an identifier.' );
+	}
+
+	/**
+	 * Each source knows whether its figures are the cost as of the sale or the
+	 * cost today. §7 orders them by that, since a cost read today against an
+	 * order from last year reports a margin the shop never made.
+	 */
+	public function test_sources_declare_whether_they_record_cost_at_sale(): void {
+		$this->assertTrue(
+			( new NativeCogsSource( 'EUR', 2 ) )->records_cost_at_sale(),
+			'Core stores the cost on the order line.'
+		);
+
+		$this->assertFalse(
+			( new BoosterCogsSource( 'EUR', 2 ) )->records_cost_at_sale(),
+			'Booster stores a current product cost, not a historical one.'
+		);
+	}
+
+	/**
+	 * An order that does not exist has no cost, rather than nothing-as-zero.
+	 * Orders are deleted, and the aggregator walks history long after the fact.
+	 */
+	public function test_a_missing_order_has_no_cost(): void {
+		$this->assertNull( ( new NativeCogsSource( 'EUR', 2 ) )->get_line_cost( 999999, 1 ) );
+	}
+
+	/**
+	 * Nor does a line that is not on the order it was asked about.
+	 */
+	public function test_a_line_that_is_not_on_the_order_has_no_cost(): void {
+		list( $order_id ) = $this->create_order( $this->create_product() );
+
+		$this->assertNull( ( new NativeCogsSource( 'EUR', 2 ) )->get_line_cost( $order_id, 999999 ) );
+	}
 }

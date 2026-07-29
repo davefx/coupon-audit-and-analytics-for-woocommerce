@@ -86,6 +86,48 @@ final class OverlapDetectorTest extends TestCase {
 	}
 
 	/**
+	 * A coupon that both lists a product and excludes it reaches nothing there,
+	 * so it collides with nobody over it.
+	 *
+	 * The index cannot see this: it groups coupons by the products they name, so
+	 * it proposes the pair and the comparison has to throw it out. Without that
+	 * second check the screen reports a collision between a coupon and one that
+	 * cannot apply.
+	 */
+	public function test_a_product_a_coupon_excludes_is_not_shared_ground(): void {
+		$overlaps = $this->detector()->detect(
+			array(
+				$this->live(
+					1,
+					'alpha',
+					new CouponScope( included_products: array( 10 ), excluded_products: array( 10 ) )
+				)->build(),
+				$this->live( 2, 'beta', new CouponScope( included_products: array( 10 ) ) )->build(),
+			)
+		);
+
+		$this->assertSame( array(), $overlaps );
+	}
+
+	/**
+	 * The same for a category listed and then excluded.
+	 */
+	public function test_a_category_a_coupon_excludes_is_not_shared_ground(): void {
+		$overlaps = $this->detector()->detect(
+			array(
+				$this->live(
+					1,
+					'alpha',
+					new CouponScope( included_categories: array( 5 ), excluded_categories: array( 5 ) )
+				)->build(),
+				$this->live( 2, 'beta', new CouponScope( included_categories: array( 5 ) ) )->build(),
+			)
+		);
+
+		$this->assertSame( array(), $overlaps );
+	}
+
+	/**
 	 * Coupons sharing a product do overlap.
 	 */
 	public function test_coupons_sharing_a_product_overlap(): void {

@@ -90,6 +90,23 @@ product touches only the file header, the directory name and the text domain.
 WordPress test suite. Fixtures live in `tests/Fixtures/` — prefer
 `CouponSnapshotBuilder` and `FrozenClock` over constructing snapshots by hand.
 
+**Coverage is 94.6%, and the gap is deliberate.** Measure it with pcov enabled
+explicitly — `php -d pcov.enabled=1 -d pcov.directory=. vendor/bin/phpunit` —
+and merge the two suites, or the half each covers reads as the half the other
+does not. What is knowingly left uncovered: the markup inside the list tables and
+the service providers' inner closures, which are exercised through the screens
+rather than directly; and defensive guards that cannot be reached, such as
+`DiscountAmount`'s check that a discount is not both fixed and a percentage,
+which its private constructor makes unreachable. Do not chase those numbers by
+asserting on markup — a test that pins the exact HTML of a cell fails on every
+wording change and catches nothing.
+
+**Where a rule has a batch and a single-item entry point, test that they agree.**
+`OrphanDetector::reasons_for_all()` against `reasons()`, and the overlap index
+against comparing every pair. The batch versions exist only because the others
+are too slow in a loop, so a divergence would be invisible in the fast path that
+production actually uses.
+
 **The integration suite drops and reinstalls the database it points at.** It
 defaults to `/tmp/wordpress-tests-lib` + `/tmp/wordpress`; `/tmp` does not
 survive a reboot, so re-run `bin/install-wp-tests.sh` rather than debugging the

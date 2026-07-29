@@ -10,9 +10,20 @@ declare( strict_types=1 );
 namespace DFX\CouponAAW\Tests\Integration\Admin;
 
 use DFX\CouponAAW\Admin\AssetLoader;
+use DFX\CouponAAW\Admin\InventoryListTable;
 use DFX\CouponAAW\Admin\InventoryPage;
 use DFX\CouponAAW\Admin\MenuRegistrar;
+use DFX\CouponAAW\Catalog\CatalogRepositoryInterface;
+use DFX\CouponAAW\Domain\Coupon\ConfigurationAuditor;
+use DFX\CouponAAW\Domain\Coupon\CouponScope;
+use DFX\CouponAAW\Domain\Coupon\CouponSnapshot;
+use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
+use DFX\CouponAAW\Domain\Coupon\StatusResolver;
+use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
 use DFX\CouponAAW\Plugin;
+use DFX\CouponAAW\Service\InventoryService;
+use DFX\CouponAAW\Tests\Fixtures\CouponSnapshotBuilder;
+use DFX\CouponAAW\Tests\Fixtures\InMemoryCouponRepository;
 use WC_Coupon;
 use WP_UnitTestCase;
 
@@ -223,5 +234,123 @@ final class InventoryPageTest extends WP_UnitTestCase {
 		$loader->enqueue( 'edit.php' );
 
 		$this->assertFalse( wp_style_is( 'dfxcaaw-inventory-page', 'enqueued' ) );
+	}
+
+	/**
+	 * A page built over a given set of coupons, without touching the database.
+	 *
+	 * The states worth testing here are about the size and shape of an inventory,
+	 * and building three hundred coupons through WooCommerce to reach one of them
+	 * would cost more than the rest of the suite put together.
+	 *
+	 * @param list<CouponSnapshot> $coupons The inventory to render.
+	 */
+	private function page_over( array $coupons ): InventoryPage {
+		$container = Plugin::get_instance()->container();
+
+		return new InventoryPage(
+			new InventoryService(
+				new InMemoryCouponRepository( $coupons ),
+				$container->get( StatusResolver::class ),
+				$container->get( OrphanDetector::class ),
+				$container->get( OverlapDetector::class ),
+				$container->get( ConfigurationAuditor::class ),
+				$container->get( CatalogRepositoryInterface::class )
+			),
+			$container->get( InventoryListTable::class )
+		);
+	}
+
+	/**
+	 * Render a page built over the given coupons.
+	 *
+	 * @param list<CouponSnapshot> $coupons The inventory to render.
+	 */
+	private function render_over( array $coupons ): string {
+		$this->login_as( 'administrator' );
+
+		ob_start();
+
+		try {
+			$this->page_over( $coupons )->render();
+		} finally {
+			$html = (string) ob_get_clean();
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Above the limit, overlap detection is skipped and the screen says so.
+	 *
+	 * Comparing every coupon against every other is quadratic, so past a few
+	 * hundred coupons it is too slow to do while somebody waits. A store that hit
+	 * that limit and was shown a bare "0" would read it as "no overlaps", which
+	 * is the one thing it does not mean.
+	 */
+	public function test_a_large_inventory_says_overlaps_were_not_checked(): void {
+		$coupons = array();
+
+		for ( $i = 0; $i <= OverlapDetector::SYNCHRONOUS_LIMIT; $i++ ) {
+			$coupons[] = CouponSnapshotBuilder::make()
+				->with_id( $i + 1 )
+				->with_code( 'bulk' . $i )
+				->expiring( '2027-01-01' )
+				->build();
+		}
+
+		$html = $this->render_over( $coupons );
+
+		$this->assertStringContainsString( 'Not checked', $html );
+		$this->assertStringContainsString( 'Overlap detection was skipped', $html );
+	}
+
+	/**
+	 * Below it, they are checked and counted.
+	 */
+	public function test_a_small_inventory_counts_its_overlaps(): void {
+		$html = $this->render_over(
+			array(
+				CouponSnapshotBuilder::make()->with_id( 1 )->with_code( 'one' )->expiring( '2027-01-01' )->build(),
+				CouponSnapshotBuilder::make()->with_id( 2 )->with_code( 'two' )->expiring( '2027-01-01' )->build(),
+			)
+		);
+
+		$this->assertStringNotContainsString( 'Not checked', $html );
+		$this->assertStringNotContainsString( 'Overlap detection was skipped', $html );
+	}
+
+	/**
+	 * A shop with nothing wrong is told so, rather than being left to read three
+	 * zeroes and work it out.
+	 */
+	public function test_a_clean_inventory_is_told_nothing_needs_attention(): void {
+		$html = $this->render_over(
+			array(
+				CouponSnapshotBuilder::make()
+					->with_id( 1 )
+					->with_code( 'tidy' )
+					->created( '2026-07-20' )
+					->last_used( '2026-07-27' )
+					->expiring( '2027-01-01' )
+					->with_scope( new CouponScope( included_products: array( 10 ) ) )
+					->build(),
+			)
+		);
+
+		$this->assertStringContainsString( 'Nothing needs attention', $html );
+	}
+
+	/**
+	 * A shop with something wrong is not.
+	 */
+	public function test_an_inventory_with_findings_is_not_told_it_is_clean(): void {
+		$html = $this->render_over(
+			array(
+				CouponSnapshotBuilder::make()->with_id( 1 )->with_code( 'forever' )->build(),
+			)
+		);
+
+		$this->assertStringNotContainsString( 'Nothing needs attention', $html );
 	}
 }

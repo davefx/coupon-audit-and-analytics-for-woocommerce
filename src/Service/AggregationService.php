@@ -28,7 +28,7 @@ use DFX\CouponAAW\Repository\OrderStatsRepositoryInterface;
  * Adding to existing rows instead would double-count in every one of those
  * cases, and the error would be invisible.
  */
-final class AggregationService {
+final class AggregationService implements AggregationInterface {
 
 	/**
 	 * Constructor.

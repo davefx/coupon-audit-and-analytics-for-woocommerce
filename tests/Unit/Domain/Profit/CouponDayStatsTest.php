@@ -199,4 +199,20 @@ final class CouponDayStatsTest extends TestCase {
 
 		$this->stats( covered_lines: -1, total_lines: 4 );
 	}
+
+	/**
+	 * The covered share as a whole percentage, which is what the §6.3 notice
+	 * puts on screen.
+	 */
+	public function test_coverage_percentage_is_taken_over_the_lines(): void {
+		$this->assertSame( 25, $this->stats( covered_lines: 1, total_lines: 4 )->coverage_percentage() );
+	}
+
+	/**
+	 * A day with no lines is nought per cent covered rather than a division by
+	 * zero. A day on which nothing sold still gets rendered.
+	 */
+	public function test_coverage_percentage_of_a_day_with_no_lines_is_zero(): void {
+		$this->assertSame( 0, $this->stats( covered_lines: 0, total_lines: 0 )->coverage_percentage() );
+	}
 }

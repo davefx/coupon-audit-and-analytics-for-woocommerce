@@ -17,6 +17,7 @@ use DFX\CouponAAW\Domain\Profit\CouponDayStats;
 use DFX\CouponAAW\Domain\Profit\Money;
 use DFX\CouponAAW\Install\SchemaMigrator;
 use DFX\CouponAAW\Plugin;
+use DFX\CouponAAW\Support\SettingsInterface;
 use DFX\CouponAAW\Repository\CouponStatsRepositoryInterface;
 use WC_Coupon;
 use WP_UnitTestCase;
@@ -182,5 +183,92 @@ final class MarginPageTest extends WP_UnitTestCase {
 		$this->expectException( \WPDieException::class );
 
 		$this->render();
+	}
+
+	/**
+	 * While the backfill is still walking the store's history, the screen says
+	 * how far it has got.
+	 *
+	 * The figures are genuinely incomplete until it finishes, and a shop reading
+	 * a half-filled report as a finished one would conclude its coupons earned
+	 * less than they did.
+	 */
+	public function test_it_says_when_the_figures_are_still_being_built(): void {
+		$this->store( 10000, 4000, 4, 4 );
+
+		Plugin::get_instance()->container()->get( SettingsInterface::class )->set( 'backfill_cursor', '2026-03-01' );
+
+		$html = $this->render();
+
+		$this->assertStringContainsString( 'Still reading past orders', $html );
+		$this->assertStringContainsString( '2026-03-01', $html );
+	}
+
+	/**
+	 * Once it has finished, it stops saying so.
+	 */
+	public function test_a_finished_backfill_is_not_announced(): void {
+		$this->store( 10000, 4000, 4, 4 );
+
+		$settings = Plugin::get_instance()->container()->get( SettingsInterface::class );
+		$settings->set( 'backfill_cursor', '2026-03-01' );
+		$settings->set( 'backfill_complete', true );
+
+		$this->assertStringNotContainsString( 'Still reading past orders', $this->render() );
+	}
+
+	/**
+	 * Store two coupons for today, with the coverage each is given.
+	 *
+	 * @param int $first_covered  Covered lines for the first coupon.
+	 * @param int $second_covered Covered lines for the second.
+	 */
+	private function store_two( int $first_covered, int $second_covered ): void {
+		$today    = ( new DateTimeImmutable( 'now', wp_timezone() ) )->setTime( 0, 0 );
+		$currency = get_woocommerce_currency();
+		$rows     = array();
+
+		foreach ( array( $first_covered, $second_covered ) as $index => $covered ) {
+			$coupon = new WC_Coupon();
+			$coupon->set_code( 'mixed' . $index );
+			$coupon->set_discount_type( 'percent' );
+			$coupon->set_amount( '10' );
+
+			$rows[] = new CouponDayStats(
+				new CouponId( $coupon->save() ),
+				$today,
+				1,
+				new Money( 10000, $currency ),
+				new Money( 500, $currency ),
+				new Money( 4000, $currency ),
+				$covered,
+				4
+			);
+		}
+
+		Plugin::get_instance()
+			->container()
+			->get( CouponStatsRepositoryInterface::class )
+			->replace_day( $today, $rows, 'fake' );
+	}
+
+	/**
+	 * Where one coupon has cost behind it and another has none, the screen says
+	 * so rather than leaving the blank to be read as a zero margin.
+	 */
+	public function test_it_explains_partly_missing_cost_data(): void {
+		$this->store_two( 4, 0 );
+
+		$this->assertStringContainsString( 'no cost recorded', $this->render() );
+	}
+
+	/**
+	 * Where every coupon has cost behind it, there is nothing to explain and the
+	 * caveat stays off the screen.
+	 */
+	public function test_full_coverage_carries_no_caveat(): void {
+		$this->store_two( 4, 4 );
+
+		$this->assertStringNotContainsString( 'no cost recorded', $this->render() );
 	}
 }

@@ -13,7 +13,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use DFX\CouponAAW\Domain\Clock\ClockInterface;
 use DFX\CouponAAW\Repository\OrderStatsRepositoryInterface;
-use DFX\CouponAAW\Service\AggregationService;
+use DFX\CouponAAW\Service\AggregationInterface;
 use DFX\CouponAAW\Support\SettingsInterface;
 use WC_Abstract_Order;
 
@@ -60,14 +60,14 @@ final class Aggregator {
 	/**
 	 * Constructor.
 	 *
-	 * @param AggregationService            $aggregation Recomputes a day.
+	 * @param AggregationInterface          $aggregation Recomputes a day.
 	 * @param OrderStatsRepositoryInterface $orders      Bounds the backfill.
 	 * @param SettingsInterface             $settings    Holds the backfill cursor.
 	 * @param ClockInterface                $clock       Supplies today.
 	 * @param DateTimeZone                  $timezone    The store's timezone.
 	 */
 	public function __construct(
-		private readonly AggregationService $aggregation,
+		private readonly AggregationInterface $aggregation,
 		private readonly OrderStatsRepositoryInterface $orders,
 		private readonly SettingsInterface $settings,
 		private readonly ClockInterface $clock,
@@ -120,7 +120,7 @@ final class Aggregator {
 			return;
 		}
 
-		as_schedule_single_action( time() + 60, self::AGGREGATE_DAY, $args, self::GROUP );
+		as_schedule_single_action( $this->clock->now()->getTimestamp() + 60, self::AGGREGATE_DAY, $args, self::GROUP );
 	}
 
 	/**
@@ -211,6 +211,6 @@ final class Aggregator {
 			return;
 		}
 
-		as_schedule_single_action( time() + 10, self::BACKFILL_STEP, array(), self::GROUP );
+		as_schedule_single_action( $this->clock->now()->getTimestamp() + 10, self::BACKFILL_STEP, array(), self::GROUP );
 	}
 }
