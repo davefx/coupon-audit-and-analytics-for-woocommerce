@@ -19,6 +19,19 @@ data is missing rather than presenting an unreliable number as a reliable one.
 
 HPOS and cart/checkout blocks compatibility are declared explicitly.
 
+## What it does so far
+
+**WooCommerce → Coupon Audit** lists every coupon in the store with its real
+status, what it actually applies to, and what is wrong with it:
+
+- **Never expires** — live with nothing scheduled to ever turn it off.
+- **Dormant** — live but unredeemed for longer than the threshold.
+- **Dead campaign** — live while every other code from its campaign has expired.
+- **Applies to everything** — live with no product or category restriction at all.
+
+Status is derived, never stored, so a coupon that expired overnight says so the
+next morning. None of this needs cost data.
+
 ## Design
 
 The architectural half of the technical specification is published as
@@ -86,12 +99,14 @@ src/
   Domain/
     Clock/          the only way anything learns what time it is
     Coupon/         status, scope, orphans — pure logic, no WordPress
+  Repository/       the only layer that talks to $wpdb and WooCommerce
+  Service/          orchestration; coordinates, calculates nothing
+  Admin/            screens; formats what it is given, decides nothing
 ```
 
-The repository, cost-adapter, admin and REST layers land in later milestones.
-The rule that shapes all of them: the domain never sees WordPress, so its tests
-need neither a database nor a bootstrap and the full unit suite stays under two
-seconds.
+The cost-adapter and REST layers land in later milestones. The rule that shapes
+all of them: the domain never sees WordPress, so its tests need neither a
+database nor a bootstrap and the full unit suite stays under two seconds.
 
 `Domain/` is the part to read first. `StatusResolver` derives a coupon's status
 rather than storing it, `CouponScope` resolves what a coupon really applies to,
