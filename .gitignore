@@ -1,0 +1,18 @@
+/vendor/
+/node_modules/
+
+# Local overrides of the committed *.dist configuration.
+/phpunit.xml
+/phpcs.xml
+/phpstan.neon
+
+/.phpunit.cache/
+/.phpunit.result.cache
+/.phpcs-cache
+/coverage/
+/build/
+
+/.wp-env.override.json
+
+.DS_Store
+*.log

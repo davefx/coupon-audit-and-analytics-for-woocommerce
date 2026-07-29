@@ -1,0 +1,69 @@
+{
+	"name": "dfx/coupon-audit-and-analytics-for-woocommerce",
+	"description": "Coupon inventory audit and per-coupon profitability analytics for WooCommerce.",
+	"type": "wordpress-plugin",
+	"license": "GPL-3.0-or-later",
+	"authors": [
+		{
+			"name": "David Marín Carreño",
+			"email": "davefx@davefx.com"
+		}
+	],
+	"require": {
+		"php": ">=8.1"
+	},
+	"require-dev": {
+		"brain/monkey": "^2.6",
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+		"php-stubs/woocommerce-stubs": "^10.3",
+		"phpstan/phpstan": "^2.0",
+		"phpunit/phpunit": "^10.5",
+		"szepeviktor/phpstan-wordpress": "^2.0",
+		"woocommerce/woocommerce-sniffs": "^1.0"
+	},
+	"autoload": {
+		"psr-4": {
+			"DFX\\CouponAAW\\": "src/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"DFX\\CouponAAW\\Tests\\": "tests/"
+		}
+	},
+	"config": {
+		"platform": {
+			"php": "8.1"
+		},
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		},
+		"sort-packages": true
+	},
+	"minimum-stability": "stable",
+	"prefer-stable": true,
+	"scripts": {
+		"test": "phpunit",
+		"test:unit": "phpunit --testsuite unit",
+		"test:integration": "phpunit --testsuite integration",
+		"lint": "phpcs",
+		"lint:fix": "phpcbf",
+		"lint:boundary": "phpcs --standard=PHPCompatibility --runtime-set testVersion 7.0- coupon-audit-and-analytics-for-woocommerce.php uninstall.php",
+		"analyse": "phpstan analyse",
+		"check": [
+			"@lint",
+			"@lint:boundary",
+			"@analyse",
+			"@test:unit"
+		]
+	},
+	"scripts-descriptions": {
+		"test": "Run the full PHPUnit suite.",
+		"test:unit": "Run the pure-domain unit suite (no WordPress, no database).",
+		"lint": "Check coding standards with PHPCS.",
+		"lint:boundary": "Verify the main file still parses on PHP 7, so its version guard can run.",
+		"lint:fix": "Auto-fix coding standard violations with PHPCBF.",
+		"analyse": "Run PHPStan static analysis at level 8.",
+		"check": "Run coding standards, static analysis and unit tests."
+	}
+}

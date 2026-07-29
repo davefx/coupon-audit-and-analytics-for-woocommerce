@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<ruleset name="Coupon Audit and Analytics for WooCommerce">
+
+	<description>Coding standards for the plugin (§10.2).</description>
+
+	<file>.</file>
+
+	<exclude-pattern>/vendor/*</exclude-pattern>
+	<exclude-pattern>/node_modules/*</exclude-pattern>
+	<exclude-pattern>/assets/build/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="basepath" value="."/>
+	<arg name="parallel" value="8"/>
+	<arg name="colors"/>
+	<arg value="ps"/>
+
+	<config name="minimum_wp_version" value="6.4"/>
+	<config name="testVersion" value="8.1-"/>
+
+	<!-- WordPress standards plus the WooCommerce Marketplace ruleset. -->
+	<rule ref="WooCommerce-Core"/>
+	<rule ref="PHPCompatibilityWP"/>
+
+	<!-- Composer autoloading is PSR-4; class files cannot be named class-*.php. -->
+	<rule ref="WordPress.Files.FileName">
+		<exclude-pattern>/src/*</exclude-pattern>
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		The main file must also parse on PHP 7, or its own version guard would
+		be a syntax error on the installs it exists to protect. That cannot be
+		expressed here — testVersion is per-run, not per-file — so it is checked
+		separately by `composer run lint:boundary`.
+	-->
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="dfxcaaw"/>
+				<element value="DFX\CouponAAW"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="coupon-audit-and-analytics-for-woocommerce"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Tests are not shipped: no i18n, no escaping, no filesystem API to enforce. -->
+	<rule ref="WordPress.WP.I18n">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.Security">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.WP.AlternativeFunctions">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		Exception messages are developer-facing wiring errors, never rendered to
+		a browser. Escaping them would mean calling esc_html() from the domain
+		layer, which §5 forbids outright: no WordPress below the boundary.
+	-->
+	<rule ref="WordPress.Security.EscapeOutput.ExceptionNotEscaped">
+		<severity>0</severity>
+	</rule>
+
+	<!--
+		This sniff predates generics and rejects `list<string>` or
+		`array<string, callable>` as a mismatch for an `array` type hint.
+		PHPStan at level 8 checks the same thing properly, so it wins here.
+	-->
+	<rule ref="Squiz.Commenting.FunctionComment.IncorrectTypeHint">
+		<severity>0</severity>
+	</rule>
+
+</ruleset>

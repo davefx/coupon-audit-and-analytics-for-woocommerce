@@ -1,0 +1,16 @@
+includes:
+	- vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+	level: 8
+
+	paths:
+		- src
+		- tests
+		- coupon-audit-and-analytics-for-woocommerce.php
+		- uninstall.php
+
+	scanFiles:
+		- vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+
+	treatPhpDocTypesAsCertain: false
