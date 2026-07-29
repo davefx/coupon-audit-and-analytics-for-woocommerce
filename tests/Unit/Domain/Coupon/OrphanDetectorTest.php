@@ -244,6 +244,68 @@ final class OrphanDetectorTest extends TestCase {
 	}
 
 	/**
+	 * The batch pass and the single-coupon pass must agree.
+	 *
+	 * They are two routes to the same rule, and the batch one exists only because
+	 * the other is too slow to call in a loop. If they ever disagree, the screen
+	 * shows something no test of the single-coupon rule would catch.
+	 */
+	public function test_judging_a_whole_inventory_agrees_with_judging_one_at_a_time(): void {
+		$inventory = array(
+			$this->campaign_code( 'summer-a', 1, '2026-01-01' ),
+			$this->campaign_code( 'summer-b', 2, '2026-01-02' ),
+			$this->campaign_code( 'summer-c', 3, '2027-01-01' ),
+			$this->campaign_code( 'winter-a', 4, '2027-01-01' ),
+			CouponSnapshotBuilder::make()->with_id( 5 )->with_code( 'standalone' )->build(),
+		);
+
+		$detector = $this->detector();
+		$batch    = $detector->reasons_for_all( $inventory );
+
+		foreach ( $inventory as $coupon ) {
+			$this->assertSame(
+				$detector->reasons( $coupon, $inventory ),
+				$batch[ $coupon->id->value ],
+				sprintf( 'The two passes disagree about %s.', $coupon->code )
+			);
+		}
+	}
+
+	/**
+	 * A campaign whose every other code has expired is reported once the tally is
+	 * counted rather than searched, which is the behaviour the batch pass changed.
+	 */
+	public function test_the_batch_pass_still_finds_a_dead_campaign(): void {
+		$survivor = $this->campaign_code( 'summer-c', 3, '2027-01-01' );
+
+		$reasons = $this->detector()->reasons_for_all(
+			array(
+				$this->campaign_code( 'summer-a', 1, '2026-01-01' ),
+				$this->campaign_code( 'summer-b', 2, '2026-01-02' ),
+				$survivor,
+			)
+		);
+
+		$this->assertContains( OrphanReason::DEAD_CAMPAIGN, $reasons[ $survivor->id->value ] );
+	}
+
+	/**
+	 * A coupon whose siblings are still alive is not the remnant of anything.
+	 */
+	public function test_the_batch_pass_spares_a_live_campaign(): void {
+		$coupon = $this->campaign_code( 'summer-c', 3, '2027-01-01' );
+
+		$reasons = $this->detector()->reasons_for_all(
+			array(
+				$this->campaign_code( 'summer-a', 1, '2027-01-01' ),
+				$coupon,
+			)
+		);
+
+		$this->assertNotContains( OrphanReason::DEAD_CAMPAIGN, $reasons[ $coupon->id->value ] );
+	}
+
+	/**
 	 * Build a campaign code that is recent enough never to be dormant.
 	 *
 	 * @param string $code    The coupon code.

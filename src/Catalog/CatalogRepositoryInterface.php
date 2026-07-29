@@ -9,7 +9,6 @@ declare( strict_types=1 );
 
 namespace DFX\CouponAAW\Catalog;
 
-use DFX\CouponAAW\Domain\Coupon\CouponScope;
 use DFX\CouponAAW\Domain\Profit\Money;
 
 /**
@@ -39,13 +38,33 @@ interface CatalogRepositoryInterface {
 	public function category_names( array $ids ): array;
 
 	/**
-	 * The lowest price a coupon with this scope could be applied to.
+	 * The price of each of the given products.
 	 *
-	 * Null where the answer is not knowable — a shop with no priced products, or
-	 * one whose lookup table has not been built. Null means "not known" and never
-	 * "nothing is cheap".
+	 * Asked for every product any coupon names, all at once. Asking per coupon
+	 * turns a page load into one query per coupon, which at a few hundred
+	 * coupons is the difference between a screen and a timeout.
 	 *
-	 * @param CouponScope $scope The coupon's scope.
+	 * @param list<int> $ids Product IDs.
+	 *
+	 * @return array<int, Money> Keyed by ID; products with no price are absent.
 	 */
-	public function cheapest_in_scope( CouponScope $scope ): ?Money;
+	public function prices( array $ids ): array;
+
+	/**
+	 * The cheapest product in each of the given categories.
+	 *
+	 * @param list<int> $ids Category term IDs.
+	 *
+	 * @return array<int, Money> Keyed by term ID; empty categories are absent.
+	 */
+	public function cheapest_per_category( array $ids ): array;
+
+	/**
+	 * The cheapest product in the shop, which is what an unrestricted coupon
+	 * reaches.
+	 *
+	 * Null where the answer is not knowable — a shop with nothing priced. Null
+	 * means "not known" and never "nothing is cheap".
+	 */
+	public function cheapest_overall(): ?Money;
 }

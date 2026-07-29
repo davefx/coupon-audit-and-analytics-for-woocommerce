@@ -134,6 +134,11 @@ No. The plugin makes no external requests.
   are kept out of the audit, where tens of thousands of them would bury the
   coupons you chose.
 * Filters for other plugins to add columns, fill them, and shape the coupon query.
+* Much faster on shops with a lot of coupons. The overview used to read every
+  coupon's settings one at a time and weigh each coupon against every other by
+  searching the list afresh; both are now done once. On a test shop of 500
+  coupons and 300 products the screen went from 737 database queries to 27, and
+  from roughly 3.7 seconds to 0.6.
 
 = 0.1.0 =
 * First release: coupon audit, overlap detection, pre-publish warnings and

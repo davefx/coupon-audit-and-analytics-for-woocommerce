@@ -325,6 +325,73 @@ final class WpCouponRepositoryTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Listing coupons costs a fixed number of queries however many there are.
+	 *
+	 * `WC_Coupon` reads its meta one coupon at a time, so an inventory of five
+	 * hundred once meant five hundred queries and several seconds. The repository
+	 * fills WooCommerce's own meta cache in one query instead. This test is the
+	 * guard on that: it compares the cost of listing three coupons with the cost
+	 * of listing nine, and the difference has to be nothing.
+	 */
+	public function test_listing_costs_the_same_however_many_coupons_there_are(): void {
+		for ( $i = 0; $i < 3; $i++ ) {
+			$this->create_coupon( array( 'code' => 'few' . $i ) );
+		}
+
+		// Discarded. The first listing of a shop that has any coupons also asks
+		// once whether WooCommerce's lookup table exists, and that answer is kept
+		// for the rest of the request. Counting it here would read as growth.
+		$this->repository->all();
+
+		wp_cache_flush();
+		$before = get_num_queries();
+		$this->repository->all();
+		$for_three = get_num_queries() - $before;
+
+		for ( $i = 0; $i < 6; $i++ ) {
+			$this->create_coupon( array( 'code' => 'many' . $i ) );
+		}
+
+		wp_cache_flush();
+		$before   = get_num_queries();
+		$coupons  = $this->repository->all();
+		$for_nine = get_num_queries() - $before;
+
+		$this->assertCount( 9, $coupons );
+		$this->assertSame(
+			$for_three,
+			$for_nine,
+			'Three times the coupons cost extra queries, so coupon meta is being read one coupon at a time again.'
+		);
+	}
+
+	/**
+	 * The cached meta carries the real `meta_id`s.
+	 *
+	 * Not cosmetic: WooCommerce tells existing meta from new by that ID. Cached
+	 * without them, every save would re-insert the lot — and with a persistent
+	 * object cache, long after the request that seeded it.
+	 */
+	public function test_saving_a_coupon_after_listing_does_not_duplicate_its_meta(): void {
+		$id = $this->create_coupon( array( 'code' => 'roundtrip' ) );
+
+		update_post_meta( $id, 'custom_note', 'kept' );
+
+		wp_cache_flush();
+		$this->repository->all();
+
+		$coupon = new WC_Coupon( $id );
+		$coupon->set_amount( 25 );
+		$coupon->save();
+
+		$this->assertSame(
+			array( 'kept' ),
+			get_post_meta( $id, 'custom_note', false ),
+			'The meta was re-inserted rather than updated, so the cached rows had no meta_id.'
+		);
+	}
+
+	/**
 	 * Create a coupon through WooCommerce's own API, so the stored shape is
 	 * whatever WooCommerce actually writes rather than what we assume.
 	 *

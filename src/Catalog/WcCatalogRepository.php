@@ -9,7 +9,6 @@ declare( strict_types=1 );
 
 namespace DFX\CouponAAW\Catalog;
 
-use DFX\CouponAAW\Domain\Coupon\CouponScope;
 use DFX\CouponAAW\Domain\Profit\Money;
 use WC_Product;
 use WP_Term;
@@ -17,13 +16,17 @@ use WP_Term;
 /**
  * Reads product and category detail from WooCommerce.
  *
- * The cheapest-price lookup is the reason this class exists rather than a loop.
+ * The cheapest-price lookups are the reason this class exists rather than a loop.
  * Asking "is anything this coupon reaches cheaper than the discount" by loading
  * every product in every referenced category — which is how the prior art did
  * it — costs a full product object per row, and a shop with a thousand-product
  * category pays that on every page load. Ordering WooCommerce's own product
  * query by price and taking one row is backed by `wc_product_meta_lookup`, so
  * the same question costs a single indexed lookup.
+ *
+ * Everything here is asked in bulk, because the caller has a whole page of
+ * coupons to answer for and asking once per coupon is what made the page slow
+ * in the first place.
  */
 final class WcCatalogRepository implements CatalogRepositoryInterface {
 
@@ -89,42 +92,82 @@ final class WcCatalogRepository implements CatalogRepositoryInterface {
 	}
 
 	/**
-	 * The lowest price a coupon with this scope could be applied to.
+	 * The price of each of the given products.
 	 *
-	 * @param CouponScope $scope The coupon's scope.
+	 * @param list<int> $ids Product IDs.
+	 *
+	 * @return array<int, Money>
 	 */
-	public function cheapest_in_scope( CouponScope $scope ): ?Money {
-		$prices = array();
+	public function prices( array $ids ): array {
+		$ids = array_values( array_unique( array_map( 'absint', $ids ) ) );
 
-		if ( array() !== $scope->included_products ) {
-			$prices[] = $this->cheapest( array( 'include' => $scope->included_products ), $scope );
+		if ( array() === $ids ) {
+			return array();
 		}
 
-		if ( array() !== $scope->included_categories ) {
-			$slugs = $this->category_slugs( $scope->included_categories );
+		/*
+		 * One query for every price, through WordPress's own meta cache. The
+		 * alternative — a product object each — costs a query and a few hundred
+		 * kilobytes per product, and nothing here needs a product object: it
+		 * needs a number.
+		 */
+		update_meta_cache( 'post', $ids );
 
-			if ( array() !== $slugs ) {
-				$prices[] = $this->cheapest( array( 'category' => $slugs ), $scope );
+		$prices = array();
+
+		foreach ( $ids as $id ) {
+			$price = get_post_meta( $id, '_price', true );
+
+			if ( is_numeric( $price ) ) {
+				$prices[ $id ] = Money::from_decimal( (float) $price, $this->currency, $this->decimals );
 			}
 		}
 
-		// An unrestricted coupon reaches the whole catalogue, so the cheapest
-		// thing in the shop is the cheapest thing it can be applied to.
-		if ( array() === $prices ) {
-			$prices[] = $this->cheapest( array(), $scope );
+		return $prices;
+	}
+
+	/**
+	 * The cheapest product in each of the given categories.
+	 *
+	 * @param list<int> $ids Category term IDs.
+	 *
+	 * @return array<int, Money>
+	 */
+	public function cheapest_per_category( array $ids ): array {
+		// A zero would be dropped by WooCommerce as an absent restriction, and the
+		// shop-wide cheapest would come back labelled as that category's.
+		$ids = array_values( array_filter( array_unique( array_map( 'absint', $ids ) ) ) );
+
+		if ( array() === $ids ) {
+			return array();
 		}
 
-		$found = array_values( array_filter( $prices ) );
+		$winners = array();
 
-		if ( array() === $found ) {
-			return null;
+		foreach ( $ids as $id ) {
+			/*
+			 * Matched on the term ID rather than the slug. WooCommerce accepts
+			 * either, but a slug has to be resolved back to an ID before the
+			 * search can run — two further queries per category, which came to
+			 * more than the searches themselves. Both routes include the products
+			 * filed under a category's children, so a coupon restricted to a
+			 * parent category still reaches everything it reaches in the shop.
+			 */
+			$winner = $this->cheapest_id( array( 'product_category_id' => array( $id ) ) );
+
+			if ( null !== $winner ) {
+				$winners[ $id ] = $winner;
+			}
 		}
 
-		$cheapest = $found[0];
+		// The winners are priced together, so the number of categories costs
+		// searches but not price lookups.
+		$prices   = $this->prices( array_values( $winners ) );
+		$cheapest = array();
 
-		foreach ( $found as $price ) {
-			if ( $price->amount < $cheapest->amount ) {
-				$cheapest = $price;
+		foreach ( $winners as $term_id => $product_id ) {
+			if ( isset( $prices[ $product_id ] ) ) {
+				$cheapest[ $term_id ] = $prices[ $product_id ];
 			}
 		}
 
@@ -132,33 +175,36 @@ final class WcCatalogRepository implements CatalogRepositoryInterface {
 	}
 
 	/**
-	 * The cheapest purchasable product matching the given restriction.
+	 * The cheapest product in the shop.
+	 */
+	public function cheapest_overall(): ?Money {
+		$winner = $this->cheapest_id( array() );
+
+		return null === $winner ? null : ( $this->prices( array( $winner ) )[ $winner ] ?? null );
+	}
+
+	/**
+	 * Which product is the cheapest one matching the given restriction.
 	 *
-	 * Asked of WooCommerce's own product query rather than of the database.
-	 * Ordering by price there is backed by `wc_product_meta_lookup`, so this is
-	 * still one indexed lookup rather than the full scan that loading a category
-	 * would be — and it leaves no hand-assembled SQL to get wrong or to have to
-	 * argue with three separate checkers about.
+	 * Asked of WooCommerce's own product query rather than of the database, so
+	 * there is no hand-assembled SQL to get wrong or to argue with three separate
+	 * checkers about — and so that a category means what WooCommerce says it
+	 * means, including the products filed under its children.
+	 *
+	 * Only the ID is asked for. Fetching the product itself is what made this
+	 * expensive: WooCommerce answers a one-row search by loading the post, its
+	 * meta and its terms, so a handful of categories became a hundred queries.
+	 * The prices are read separately, all at once.
 	 *
 	 * @param array<string, mixed> $restriction What limits the search.
-	 * @param CouponScope          $scope       The coupon's scope, for its exclusions.
 	 */
-	private function cheapest( array $restriction, CouponScope $scope ): ?Money {
-		$excluded = $scope->excluded_products;
-
-		/*
-		 * Exclusions are applied here rather than passed to the query. Asking
-		 * the database to exclude posts is the `post__not_in` pattern, which is
-		 * slow enough that WordPress's own performance checks object to it —
-		 * and it is unnecessary: taking one more row than there are exclusions
-		 * guarantees at least one survivor, since at most that many can be
-		 * discarded.
-		 */
-		$products = wc_get_products(
+	private function cheapest_id( array $restriction ): ?int {
+		$ids = wc_get_products(
 			array_merge(
 				array(
-					'limit'    => count( $excluded ) + 1,
+					'limit'    => 1,
 					'status'   => 'publish',
+					'return'   => 'ids',
 
 					/*
 					 * Sorted on the stored price rather than by passing
@@ -168,7 +214,7 @@ final class WcCatalogRepository implements CatalogRepositoryInterface {
 					 * against the wrong product.
 					 */
 					'orderby'  => 'meta_value_num',
-					// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- _price is indexed by WooCommerce, and this reads a handful of rows.
+					// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- _price is indexed by WooCommerce, and this reads one row.
 					'meta_key' => '_price',
 					'order'    => 'ASC',
 				),
@@ -176,44 +222,13 @@ final class WcCatalogRepository implements CatalogRepositoryInterface {
 			)
 		);
 
-		if ( ! is_array( $products ) ) {
+		if ( ! is_array( $ids ) || array() === $ids ) {
 			return null;
 		}
 
-		foreach ( $products as $product ) {
-			if ( ! $product instanceof WC_Product ) {
-				continue;
-			}
+		$id = reset( $ids );
 
-			if ( in_array( $product->get_id(), $excluded, true ) ) {
-				continue;
-			}
-
-			return $this->price_of( $product );
-		}
-
-		return null;
-	}
-
-	/**
-	 * The slugs of the given categories, which is what a product query wants.
-	 *
-	 * @param list<int> $ids Category term IDs.
-	 *
-	 * @return list<string>
-	 */
-	private function category_slugs( array $ids ): array {
-		$slugs = array();
-
-		foreach ( $ids as $id ) {
-			$term = get_term( $id, 'product_cat' );
-
-			if ( $term instanceof WP_Term ) {
-				$slugs[] = $term->slug;
-			}
-		}
-
-		return $slugs;
+		return is_numeric( $id ) ? (int) $id : null;
 	}
 
 	/**

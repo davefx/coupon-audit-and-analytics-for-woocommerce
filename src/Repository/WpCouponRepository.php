@@ -18,6 +18,7 @@ use DFX\CouponAAW\Domain\Coupon\CouponTerms;
 use DFX\CouponAAW\Domain\Coupon\DiscountAmount;
 use DFX\CouponAAW\Domain\Profit\Money;
 use WC_Coupon;
+use WC_Data;
 use WP_Post;
 use wpdb;
 
@@ -37,6 +38,15 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	 * The post type coupons live in.
 	 */
 	private const POST_TYPE = 'shop_coupon';
+
+	/**
+	 * The object-cache group WooCommerce keeps coupon meta in.
+	 *
+	 * `WC_Coupon::$cache_group`, which is protected, so it is repeated rather
+	 * than read. Should it ever change upstream, entries written here are simply
+	 * never read and coupons load as they did before.
+	 */
+	private const CACHE_GROUP = 'coupons';
 
 	/**
 	 * Post statuses that mean the store intends the coupon to be live.
@@ -111,6 +121,8 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 		// One query for every coupon's last use, rather than one per coupon.
 		$last_used = $this->last_used( $ids );
 
+		$this->prime_meta_cache( $ids );
+
 		return array_values(
 			array_map(
 				fn ( WP_Post $post ): CouponSnapshot => $this->to_snapshot( $post, $last_used ),
@@ -176,6 +188,91 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	 */
 	private function listed_statuses(): array {
 		return array_values( get_post_stati( array( 'exclude_from_search' => false ) ) );
+	}
+
+	/**
+	 * Load every coupon's meta in one query, into WooCommerce's own cache.
+	 *
+	 * `WC_Coupon` reads its meta through `WC_Data_Store_WP::read_meta()`, which
+	 * issues one query per coupon. On a shop with five hundred coupons that is
+	 * five hundred round trips to build one screen, and it was the largest single
+	 * cost in the page. `WC_Data` checks its cache before reading, so filling
+	 * that cache up front turns all of them into none.
+	 *
+	 * The rows are stored in the shape `read_meta()` returns, real `meta_id`s and
+	 * all. That detail is not cosmetic: `WC_Data` uses those IDs to tell existing
+	 * meta from new, and meta cached without them would be re-inserted the next
+	 * time anything saved the coupon — with a persistent object cache, long after
+	 * this request. WordPress's own `update_meta_cache()` would have been the
+	 * tidier source but it discards the IDs, so the query is made here instead.
+	 * Internal keys are not filtered out; WooCommerce re-filters on the way in.
+	 *
+	 * If any of this ever stops matching WooCommerce, the cache simply goes unread
+	 * and the coupons load the slow way, which is where they started.
+	 *
+	 * @param list<int> $ids The coupons about to be built.
+	 */
+	private function prime_meta_cache( array $ids ): void {
+		if ( array() === $ids || ! class_exists( 'WC_Data' ) ) {
+			return;
+		}
+
+		$keys = array();
+
+		foreach ( $ids as $id ) {
+			$key = WC_Data::generate_meta_cache_key( $id, self::CACHE_GROUP );
+
+			// Anything already cached is left alone: it may hold changes this
+			// request made that the database has not been asked for since.
+			if ( ! is_array( wp_cache_get( $key, self::CACHE_GROUP ) ) ) {
+				$keys[ $id ] = $key;
+			}
+		}
+
+		if ( array() === $keys ) {
+			return;
+		}
+
+		// Aliased so that WPCS can recognise the prepare() call; the sniff only
+		// follows a variable literally named $wpdb.
+		$wpdb = $this->wpdb;
+
+		// One %d per ID, as in last_used(): placeholders rather than values, and
+		// the table name goes through the %i identifier placeholder.
+		$placeholders = implode( ', ', array_fill( 0, count( $keys ), '%d' ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- This *is* the caching: the results are written straight to the object cache below.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT post_id, meta_id, meta_key, meta_value FROM %i WHERE post_id IN ({$placeholders}) ORDER BY meta_id",
+				array_merge( array( $wpdb->postmeta ), array_keys( $keys ) )
+			)
+		);
+
+		// Coupons with no meta at all still get an entry, or each one costs the
+		// query this method exists to avoid.
+		$meta = array_fill_keys( array_keys( $keys ), array() );
+
+		foreach ( (array) $rows as $row ) {
+			$id = (int) $row->post_id;
+
+			if ( ! isset( $meta[ $id ] ) ) {
+				continue;
+			}
+
+			// phpcs:disable WordPress.DB.SlowDBQuery -- Not query arguments: these are the row's own field names, in the shape WooCommerce reads back.
+			$meta[ $id ][] = (object) array(
+				'meta_id'    => $row->meta_id,
+				'meta_key'   => $row->meta_key,
+				'meta_value' => $row->meta_value,
+			);
+			// phpcs:enable WordPress.DB.SlowDBQuery
+		}
+
+		foreach ( $meta as $id => $rows_for_coupon ) {
+			wp_cache_set( $keys[ $id ], $rows_for_coupon, self::CACHE_GROUP );
+		}
 	}
 
 	/**

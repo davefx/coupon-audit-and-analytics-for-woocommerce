@@ -25,6 +25,10 @@ use DFX\CouponAAW\Repository\CouponRepositoryInterface;
  * Orchestration only: it coordinates the repository and the domain and
  * calculates nothing itself (§5). It holds no state between calls, so two
  * builds either side of a write see the world either side of that write.
+ *
+ * Everything it needs from the catalogue is fetched once, before the loop. The
+ * loop itself issues no queries at all, which is what keeps the cost of the
+ * page flat as a shop's coupon list grows.
  */
 final class InventoryService {
 
@@ -36,7 +40,7 @@ final class InventoryService {
 	 * @param OrphanDetector             $orphans  Judges each coupon against the rest.
 	 * @param OverlapDetector            $overlaps Finds colliding pairs.
 	 * @param ConfigurationAuditor       $auditor  Checks each coupon's own terms.
-	 * @param CatalogRepositoryInterface $catalog  Supplies the cheapest reachable price.
+	 * @param CatalogRepositoryInterface $catalog Supplies the cheapest reachable price.
 	 */
 	public function __construct(
 		private readonly CouponRepositoryInterface $coupons,
@@ -58,6 +62,9 @@ final class InventoryService {
 	public function build(): Inventory {
 		$coupons = $this->coupons->all();
 
+		$pricing = new ScopePricing( $this->catalog, $coupons );
+		$orphans = $this->orphans->reasons_for_all( $coupons );
+
 		$overlaps = count( $coupons ) > OverlapDetector::SYNCHRONOUS_LIMIT
 			? null
 			: $this->overlaps->detect( $coupons );
@@ -69,9 +76,9 @@ final class InventoryService {
 			$entries[] = new InventoryEntry(
 				$coupon,
 				$this->status->resolve( $coupon ),
-				$this->orphans->reasons( $coupon, $coupons ),
+				$orphans[ $coupon->id->value ] ?? array(),
 				$by_coupon[ $coupon->id->value ] ?? array(),
-				$this->auditor->issues( $coupon, $this->cheapest_for( $coupon ) )
+				$this->auditor->issues( $coupon, $this->cheapest_for( $coupon, $pricing ) )
 			);
 		}
 
@@ -79,21 +86,20 @@ final class InventoryService {
 	}
 
 	/**
-	 * The cheapest thing a coupon can be applied to, asked once per coupon and
-	 * only where the answer can change the result.
+	 * The cheapest thing a coupon can be applied to.
 	 *
 	 * A percentage discount cannot exceed what it is applied to, so there is
-	 * nothing the catalogue could say that would matter — and skipping the query
-	 * for the commonest kind of coupon keeps a large inventory affordable.
+	 * nothing the catalogue could say that would matter.
 	 *
-	 * @param CouponSnapshot $coupon The coupon.
+	 * @param CouponSnapshot $coupon  The coupon.
+	 * @param ScopePricing   $pricing Prices already fetched for this inventory.
 	 */
-	private function cheapest_for( CouponSnapshot $coupon ): ?Money {
+	private function cheapest_for( CouponSnapshot $coupon, ScopePricing $pricing ): ?Money {
 		if ( ! $coupon->terms->amount->is_fixed() ) {
 			return null;
 		}
 
-		return $this->catalog->cheapest_in_scope( $coupon->scope );
+		return $pricing->cheapest( $coupon->scope );
 	}
 
 	/**

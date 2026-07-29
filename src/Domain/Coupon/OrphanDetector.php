@@ -60,6 +60,42 @@ final class OrphanDetector {
 	 * @return list<OrphanReason>
 	 */
 	public function reasons( CouponSnapshot $coupon, array $inventory = array() ): array {
+		return $this->judge( $coupon, $this->index( $inventory ) );
+	}
+
+	/**
+	 * Judge a whole inventory at once.
+	 *
+	 * The dead-campaign rule weighs each coupon against every other one, and
+	 * asking it coupon by coupon means walking the inventory afresh every time —
+	 * a thousand coupons is a million comparisons, and the screen stops loading.
+	 * The campaigns are counted once here instead, and each coupon is then judged
+	 * against the tally.
+	 *
+	 * @param list<CouponSnapshot> $inventory Every coupon in the shop.
+	 *
+	 * @return array<int, list<OrphanReason>> Reasons keyed by coupon ID.
+	 */
+	public function reasons_for_all( array $inventory ): array {
+		$index   = $this->index( $inventory );
+		$reasons = array();
+
+		foreach ( $inventory as $coupon ) {
+			$reasons[ $coupon->id->value ] = $this->judge( $coupon, $index );
+		}
+
+		return $reasons;
+	}
+
+	/**
+	 * Judge one coupon against an already-counted inventory.
+	 *
+	 * @param CouponSnapshot $coupon The coupon to judge.
+	 * @param CampaignIndex  $index  The counted inventory.
+	 *
+	 * @return list<OrphanReason>
+	 */
+	private function judge( CouponSnapshot $coupon, CampaignIndex $index ): array {
 		if ( ! $this->status->resolve( $coupon )->is_usable() ) {
 			return array();
 		}
@@ -74,11 +110,38 @@ final class OrphanDetector {
 			$reasons[] = OrphanReason::DORMANT;
 		}
 
-		if ( $this->belongs_to_a_dead_campaign( $coupon, $inventory ) ) {
+		if ( $index->every_sibling_expired( $coupon, $this->campaign_of( $coupon->code ) ) ) {
 			$reasons[] = OrphanReason::DEAD_CAMPAIGN;
 		}
 
 		return $reasons;
+	}
+
+	/**
+	 * Count the campaigns in an inventory.
+	 *
+	 * @param list<CouponSnapshot> $inventory The surrounding coupons.
+	 */
+	private function index( array $inventory ): CampaignIndex {
+		$members = array();
+		$expired = array();
+		$ids     = array();
+
+		foreach ( $inventory as $candidate ) {
+			$ids[ $candidate->id->value ] = true;
+
+			$campaign = $this->campaign_of( $candidate->code );
+
+			if ( null === $campaign ) {
+				continue;
+			}
+
+			$members[ $campaign ] = ( $members[ $campaign ] ?? 0 ) + 1;
+			$expired[ $campaign ] = ( $expired[ $campaign ] ?? 0 )
+				+ ( CouponStatus::EXPIRED === $this->status->resolve( $candidate ) ? 1 : 0 );
+		}
+
+		return new CampaignIndex( $members, $expired, $ids );
 	}
 
 	/**
@@ -111,44 +174,6 @@ final class OrphanDetector {
 	 */
 	private function dormancy_cutoff(): DateTimeImmutable {
 		return $this->clock->now()->modify( sprintf( '-%d days', $this->dormant_after_days ) );
-	}
-
-	/**
-	 * Whether every other code from this coupon's campaign has expired.
-	 *
-	 * @param CouponSnapshot       $coupon    The coupon to judge.
-	 * @param list<CouponSnapshot> $inventory The surrounding coupons.
-	 */
-	private function belongs_to_a_dead_campaign( CouponSnapshot $coupon, array $inventory ): bool {
-		$campaign = $this->campaign_of( $coupon->code );
-
-		if ( null === $campaign ) {
-			return false;
-		}
-
-		$siblings = array();
-
-		foreach ( $inventory as $candidate ) {
-			if ( $candidate->id->equals( $coupon->id ) ) {
-				continue;
-			}
-
-			if ( $campaign === $this->campaign_of( $candidate->code ) ) {
-				$siblings[] = $candidate;
-			}
-		}
-
-		if ( array() === $siblings ) {
-			return false;
-		}
-
-		foreach ( $siblings as $sibling ) {
-			if ( CouponStatus::EXPIRED !== $this->status->resolve( $sibling ) ) {
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	/**

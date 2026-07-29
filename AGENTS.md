@@ -171,6 +171,34 @@ way. [docs/PLUGIN-CHECK.md](docs/PLUGIN-CHECK.md) records what that cost —
 exception messages carry no interpolated values, because the escaping sniff
 rejects any variable reaching an exception constructor.
 
+## Ask the database once, not once per coupon
+
+The inventory screen reads every coupon on every load, so anything done *per
+coupon* is done hundreds of times. Two rules follow, and
+[docs/PERFORMANCE.md](docs/PERFORMANCE.md) has the measurements behind them.
+
+**No query inside a per-coupon loop.** Fetch what the whole inventory needs
+first, then judge each coupon from what is in hand. `ScopePricing` is the shape
+to copy: the catalogue is asked in bulk, once, before anything is judged.
+`WcCatalogRepository` therefore takes lists and returns maps — resist adding a
+convenient single-item method, because it will end up in a loop.
+
+**No scan of the inventory inside a per-coupon loop either.** The dead-campaign
+rule did that and was quadratic. Count once into an index, judge against the
+tally. Where a rule has both a batch and a single-coupon entry point, a test must
+assert the two agree.
+
+`WpCouponRepository` fills WooCommerce's own coupon meta cache from one query
+before building any `WC_Coupon`. Those cached rows carry real `meta_id`s
+deliberately — WooCommerce tells existing meta from new by that ID, and cached
+rows without them would make the next `save()` re-insert every meta value. Do not
+rebuild that cache from `update_meta_cache()`, which drops the IDs.
+
+Two integration tests hold this down: listing nine coupons must cost exactly what
+listing three costs, and saving a coupon after listing must not duplicate its
+meta. If either starts failing, the screen has quietly gone back to one query per
+coupon — or worse.
+
 ## Where the build is
 
 Phase 1 is complete — all eleven milestones of §15. Phase 2 is the Freemius SDK
