@@ -39,11 +39,25 @@ log() { printf '\033[0;34m==>\033[0m %s\n' "$1"; }
 
 if [ "$WP_VERSION" = "latest" ]; then
 	log "Resolving the latest WordPress release"
+
+	# Parsed with a JSON parser rather than a regex. The version-check response
+	# lists an offer per supported branch, all of them carrying a "current" key,
+	# and a greedy pattern happily returns the oldest one — which is how this
+	# once installed WordPress 4.7 and failed several steps later with a PHPUnit
+	# error that said nothing about versions.
 	WP_VERSION="$(
 		curl -fsSL https://api.wordpress.org/core/version-check/1.7/ |
-			sed -n 's/.*"current":"\([^"]*\)".*/\1/p' | head -1
+			php -r '$d = json_decode( stream_get_contents( STDIN ), true ); echo $d["offers"][0]["current"] ?? "";'
 	)"
 	[ -n "$WP_VERSION" ] || { echo "Could not resolve the latest WordPress version." >&2; exit 1; }
+fi
+
+# The plugin requires WordPress 6.4. An older test library will fail in ways
+# that point at PHPUnit rather than at the version, so refuse it here.
+WP_MAJOR_MINOR="$( printf '%s' "$WP_VERSION" | cut -d. -f1,2 )"
+if [ "$( printf '%s\n6.4\n' "$WP_MAJOR_MINOR" | sort -V | head -1 )" != "6.4" ]; then
+	echo "This plugin requires WordPress 6.4 or newer; refusing to install $WP_VERSION." >&2
+	exit 1
 fi
 
 log "WordPress $WP_VERSION"
@@ -137,12 +151,25 @@ if [ ! -f "$WC_PLUGIN_DIR/woocommerce.php" ]; then
 	mkdir -p "$(dirname "$WC_PLUGIN_DIR")"
 
 	if [ "$WC_VERSION" = "latest" ]; then
-		WC_URL="https://downloads.wordpress.org/plugin/woocommerce.zip"
-	else
-		WC_URL="https://downloads.wordpress.org/plugin/woocommerce.${WC_VERSION}.zip"
+		# Resolved through the plugin API rather than by fetching the unversioned
+		# woocommerce.zip, which serves whatever is in the repository right now —
+		# that has handed back a release candidate, and CI going red on upstream's
+		# release schedule is not a signal about this plugin.
+		log "Resolving the latest stable WooCommerce release"
+		WC_VERSION="$(
+			curl -fsSL 'https://api.wordpress.org/plugins/info/1.0/woocommerce.json' |
+				php -r '$d = json_decode( stream_get_contents( STDIN ), true ); echo $d["version"] ?? "";'
+		)"
+		[ -n "$WC_VERSION" ] || { echo "Could not resolve the latest WooCommerce version." >&2; exit 1; }
 	fi
 
-	curl -fsSL "$WC_URL" -o "$TMPDIR/woocommerce.zip"
+	WC_MAJOR_MINOR="$( printf '%s' "$WC_VERSION" | cut -d. -f1,2 )"
+	if [ "$( printf '%s\n10.3\n' "$WC_MAJOR_MINOR" | sort -V | head -1 )" != "10.3" ]; then
+		echo "This plugin requires WooCommerce 10.3 or newer; refusing to install $WC_VERSION." >&2
+		exit 1
+	fi
+
+	curl -fsSL "https://downloads.wordpress.org/plugin/woocommerce.${WC_VERSION}.zip" -o "$TMPDIR/woocommerce.zip"
 	unzip -qo "$TMPDIR/woocommerce.zip" -d "$(dirname "$WC_PLUGIN_DIR")"
 else
 	log "WooCommerce already present at $WC_PLUGIN_DIR"
