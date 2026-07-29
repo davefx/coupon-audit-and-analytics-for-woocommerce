@@ -123,21 +123,32 @@ final class SchemaMigrator {
 		$table   = $this->table_name();
 		$collate = $this->wpdb->get_charset_collate();
 
+		/*
+		 * Written for both MySQL and MariaDB. Two things are deliberate:
+		 *
+		 * Integer display widths (`bigint(20)`) are gone. MySQL 8 dropped them
+		 * from its own DESCRIBE output while MariaDB still reports them, so a
+		 * definition carrying them makes dbDelta believe every column differs on
+		 * one engine and not the other, and ALTER the table on every single run.
+		 *
+		 * `updated_at` has no zero-date default. '0000-00-00 00:00:00' is not a
+		 * legal default under MySQL's NO_ZERO_DATE, which is on by default in
+		 * MySQL 8; every insert supplies the value anyway.
+		 */
 		return "CREATE TABLE {$table} (
-			coupon_id bigint(20) unsigned NOT NULL,
+			coupon_id bigint unsigned NOT NULL,
 			stat_date date NOT NULL,
 			currency char(3) NOT NULL,
-			orders int(11) unsigned NOT NULL default 0,
-			net_revenue bigint(20) NOT NULL default 0,
-			discount bigint(20) NOT NULL default 0,
-			cost bigint(20) NOT NULL default 0,
-			covered_lines int(11) unsigned NOT NULL default 0,
-			total_lines int(11) unsigned NOT NULL default 0,
+			orders int unsigned NOT NULL default 0,
+			net_revenue bigint NOT NULL default 0,
+			discount bigint NOT NULL default 0,
+			cost bigint NOT NULL default 0,
+			covered_lines int unsigned NOT NULL default 0,
+			total_lines int unsigned NOT NULL default 0,
 			cost_source varchar(32) NOT NULL default '',
-			updated_at datetime NOT NULL default '0000-00-00 00:00:00',
+			updated_at datetime NOT NULL,
 			PRIMARY KEY  (coupon_id,stat_date,currency),
-			KEY stat_date (stat_date),
-			KEY coupon_id (coupon_id)
+			KEY stat_date (stat_date)
 		) {$collate};";
 	}
 }

@@ -88,9 +88,14 @@ final class SchemaMigratorTest extends WP_UnitTestCase {
 	 * Migrating creates the table and records the version.
 	 */
 	public function test_it_creates_the_table_and_records_the_version(): void {
+		global $wpdb;
+
 		$this->migrator->migrate();
 
-		$this->assertTrue( $this->table_exists() );
+		// The database's own complaint is reported, because "false is not true"
+		// says nothing about a CREATE TABLE that one engine accepts and another
+		// rejects.
+		$this->assertTrue( $this->table_exists(), 'CREATE TABLE failed: ' . $wpdb->last_error );
 		$this->assertSame( SchemaMigrator::VERSION, $this->migrator->installed_version() );
 		$this->assertFalse( $this->migrator->needs_upgrade() );
 	}
@@ -126,12 +131,14 @@ final class SchemaMigratorTest extends WP_UnitTestCase {
 	 * every time a plugin is switched on.
 	 */
 	public function test_migrating_twice_changes_nothing(): void {
+		global $wpdb;
+
 		$this->migrator->migrate();
 		$columns = $this->columns();
 
 		$this->migrator->migrate();
 
-		$this->assertTrue( $this->table_exists() );
+		$this->assertTrue( $this->table_exists(), 'CREATE TABLE failed: ' . $wpdb->last_error );
 		$this->assertSame( $columns, $this->columns() );
 	}
 
