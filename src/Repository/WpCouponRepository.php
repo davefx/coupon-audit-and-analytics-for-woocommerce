@@ -162,7 +162,40 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 			$usage_limit > 0 ? $usage_limit : null,
 			$coupon->get_usage_count(),
 			isset( $last_used[ $post->ID ] ) ? $this->local_datetime( $last_used[ $post->ID ] ) : null,
-			$this->scope_of( $coupon )
+			$this->scope_of( $coupon ),
+			$this->is_auto_applied( $coupon )
+		);
+	}
+
+	/**
+	 * Whether the coupon applies without the customer entering a code.
+	 *
+	 * WooCommerce has no such concept — verified against 10.7, which mentions
+	 * auto-apply nowhere in either WC_Coupon or its data store — so the answer is
+	 * always no unless a plugin that adds auto-apply says otherwise. §8.3 grades
+	 * an overlap between two auto-applied coupons as its most serious finding,
+	 * and without this hook that grade could never occur at all.
+	 *
+	 * @param WC_Coupon $coupon The coupon.
+	 */
+	private function is_auto_applied( WC_Coupon $coupon ): bool {
+		/**
+		 * Filters whether a coupon is applied automatically at checkout.
+		 *
+		 * WooCommerce has no auto-apply of its own, so this is the seam through
+		 * which a plugin that adds one tells the audit about it.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param bool      $is_auto_applied Whether the coupon applies without being entered.
+		 * @param int       $coupon_id       The coupon's post ID.
+		 * @param WC_Coupon $coupon          The coupon itself.
+		 */
+		return (bool) apply_filters(
+			'dfxcaaw_coupon_is_auto_applied',
+			false,
+			$coupon->get_id(),
+			$coupon
 		);
 	}
 

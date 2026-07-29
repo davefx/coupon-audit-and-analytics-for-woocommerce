@@ -16,6 +16,8 @@ use DFX\CouponAAW\Domain\Clock\ClockInterface;
 use DFX\CouponAAW\Domain\Clock\SystemClock;
 use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
 use DFX\CouponAAW\Domain\Coupon\StatusResolver;
+use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
+use DFX\CouponAAW\Domain\Overlap\ScopeIndex;
 use DFX\CouponAAW\Repository\CouponRepositoryInterface;
 use DFX\CouponAAW\Repository\WpCouponRepository;
 use DFX\CouponAAW\Support\PluginContext;
@@ -82,6 +84,16 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 
 				return new WpCouponRepository( $wpdb, $this->timezone );
 			}
+		);
+
+		$container->bind( ScopeIndex::class, static fn (): ScopeIndex => new ScopeIndex() );
+
+		$container->bind(
+			OverlapDetector::class,
+			static fn ( ContainerInterface $c ): OverlapDetector => new OverlapDetector(
+				$c->get( StatusResolver::class ),
+				$c->get( ScopeIndex::class )
+			)
 		);
 
 		$container->bind(

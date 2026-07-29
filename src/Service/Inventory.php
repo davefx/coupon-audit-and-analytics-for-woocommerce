@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace DFX\CouponAAW\Service;
 
 use DFX\CouponAAW\Domain\Coupon\CouponStatus;
+use DFX\CouponAAW\Domain\Overlap\Overlap;
 
 /**
  * Every coupon in the store, judged, together with the figures that summarise
@@ -34,18 +35,31 @@ final class Inventory {
 	/**
 	 * Constructor.
 	 *
-	 * @param list<InventoryEntry> $entries Every coupon, with what the domain concluded.
+	 * @param list<InventoryEntry> $entries  Every coupon, with what the domain concluded.
+	 * @param list<Overlap>|null   $overlaps Every collision, or null when the inventory
+	 *                                       was too large to check on page load.
 	 */
-	public function __construct( public readonly array $entries ) {
-		$this->summary = self::summarise( $entries );
+	public function __construct(
+		public readonly array $entries,
+		public readonly ?array $overlaps = null
+	) {
+		$this->summary = self::summarise( $entries, $overlaps );
+	}
+
+	/**
+	 * Whether overlap detection actually ran.
+	 */
+	public function overlaps_were_checked(): bool {
+		return null !== $this->overlaps;
 	}
 
 	/**
 	 * Build the summary figures.
 	 *
-	 * @param list<InventoryEntry> $entries The judged coupons.
+	 * @param list<InventoryEntry> $entries  The judged coupons.
+	 * @param list<Overlap>|null   $overlaps Every collision, or null when not checked.
 	 */
-	private static function summarise( array $entries ): InventorySummary {
+	private static function summarise( array $entries, ?array $overlaps ): InventorySummary {
 		$by_status    = array();
 		$orphans      = 0;
 		$unrestricted = 0;
@@ -68,6 +82,12 @@ final class Inventory {
 			$by_status[ $status->value ] = $by_status[ $status->value ] ?? 0;
 		}
 
-		return new InventorySummary( count( $entries ), $by_status, $orphans, $unrestricted );
+		return new InventorySummary(
+			count( $entries ),
+			$by_status,
+			$orphans,
+			$unrestricted,
+			null === $overlaps ? null : count( $overlaps )
+		);
 	}
 }

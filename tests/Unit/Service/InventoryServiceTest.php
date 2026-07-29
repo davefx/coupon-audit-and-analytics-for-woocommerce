@@ -15,6 +15,9 @@ use DFX\CouponAAW\Domain\Coupon\CouponStatus;
 use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
 use DFX\CouponAAW\Domain\Coupon\OrphanReason;
 use DFX\CouponAAW\Domain\Coupon\StatusResolver;
+use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
+use DFX\CouponAAW\Domain\Overlap\OverlapSeverity;
+use DFX\CouponAAW\Domain\Overlap\ScopeIndex;
 use DFX\CouponAAW\Service\InventoryService;
 use DFX\CouponAAW\Tests\Fixtures\CouponSnapshotBuilder;
 use DFX\CouponAAW\Tests\Fixtures\FrozenClock;
@@ -39,7 +42,8 @@ final class InventoryServiceTest extends TestCase {
 		return new InventoryService(
 			new InMemoryCouponRepository( $coupons ),
 			new StatusResolver( $clock ),
-			new OrphanDetector( new StatusResolver( $clock ), $clock )
+			new OrphanDetector( new StatusResolver( $clock ), $clock ),
+			new OverlapDetector( new StatusResolver( $clock ), new ScopeIndex() )
 		);
 	}
 
@@ -217,14 +221,122 @@ final class InventoryServiceTest extends TestCase {
 			}
 		};
 
+		$clock = FrozenClock::at( '2026-07-28' );
+
 		$service = new InventoryService(
 			$repository,
-			new StatusResolver( FrozenClock::at( '2026-07-28' ) ),
-			new OrphanDetector( new StatusResolver( FrozenClock::at( '2026-07-28' ) ), FrozenClock::at( '2026-07-28' ) )
+			new StatusResolver( $clock ),
+			new OrphanDetector( new StatusResolver( $clock ), $clock ),
+			new OverlapDetector( new StatusResolver( $clock ), new ScopeIndex() )
 		);
 
 		$service->build();
 
 		$this->assertSame( 1, $repository->reads );
+	}
+
+	/**
+	 * Collisions reach the entries of both coupons involved, so a screen can
+	 * show the finding against whichever row the user is looking at.
+	 */
+	public function test_an_overlap_reaches_both_coupons_involved(): void {
+		$service = $this->service(
+			array(
+				$this->healthy( 1, 'alpha' ),
+				$this->healthy( 2, 'beta' ),
+			)
+		);
+
+		$inventory = $service->build();
+
+		$this->assertCount( 1, $inventory->overlaps ?? array() );
+		$this->assertCount( 1, $inventory->entries[0]->overlaps );
+		$this->assertCount( 1, $inventory->entries[1]->overlaps );
+		$this->assertSame( 1, $inventory->summary->overlaps );
+	}
+
+	/**
+	 * A coupon in several collisions reports the worst of them, since that is
+	 * the one worth acting on first.
+	 */
+	public function test_a_coupon_reports_its_worst_collision(): void {
+		// The third coupon opens only after the first two have expired, so it
+		// collides with both on paper and with neither in a basket.
+		$service = $this->service(
+			array(
+				$this->healthy( 1, 'alpha' ),
+				$this->healthy( 2, 'beta' ),
+				CouponSnapshotBuilder::make()
+					->with_id( 3 )->with_code( 'much-later' )
+					->created( '2026-07-01' )->last_used( '2026-07-20' )
+					->starting( '2027-01-01' )
+					->build(),
+			)
+		);
+
+		$entries = $service->build()->entries;
+
+		$this->assertCount( 2, $entries[0]->overlaps );
+		$this->assertSame( OverlapSeverity::MEDIUM, $entries[0]->worst_overlap() );
+		$this->assertSame( OverlapSeverity::LOW, $entries[2]->worst_overlap() );
+	}
+
+	/**
+	 * A coupon in no collision reports none.
+	 */
+	public function test_a_coupon_without_collisions_reports_none(): void {
+		$service = $this->service( array( $this->healthy( 1, 'alone' ) ) );
+
+		$this->assertNull( $service->build()->entries[0]->worst_overlap() );
+		$this->assertSame( 0, $service->build()->summary->overlaps );
+	}
+
+	/**
+	 * Past the limit, the check is reported as not run rather than run badly.
+	 * §8.3 wants this work in the background for large inventories; until that
+	 * exists, saying nothing is honest and hanging the screen is not.
+	 */
+	public function test_overlap_detection_is_skipped_on_a_large_inventory(): void {
+		$coupons = array();
+
+		for ( $i = 1; $i <= InventoryService::OVERLAP_LIMIT + 1; $i++ ) {
+			$coupons[] = $this->healthy( $i, 'c' . $i );
+		}
+
+		$inventory = $this->service( $coupons )->build();
+
+		$this->assertFalse( $inventory->overlaps_were_checked() );
+		$this->assertNull( $inventory->overlaps );
+		$this->assertNull( $inventory->summary->overlaps );
+		$this->assertSame( array(), $inventory->entries[0]->overlaps );
+	}
+
+	/**
+	 * At the limit it still runs, so the boundary is not off by one.
+	 */
+	public function test_overlap_detection_runs_at_the_limit(): void {
+		$coupons = array();
+
+		for ( $i = 1; $i <= InventoryService::OVERLAP_LIMIT; $i++ ) {
+			$coupons[] = $this->healthy( $i, 'c' . $i );
+		}
+
+		$this->assertTrue( $this->service( $coupons )->build()->overlaps_were_checked() );
+	}
+
+	/**
+	 * A live coupon that is not flagged for anything else.
+	 *
+	 * @param int    $id   Post ID.
+	 * @param string $code Coupon code.
+	 */
+	private function healthy( int $id, string $code ): CouponSnapshot {
+		return CouponSnapshotBuilder::make()
+			->with_id( $id )
+			->with_code( $code )
+			->created( '2026-07-01' )
+			->last_used( '2026-07-20' )
+			->expiring( '2026-12-01' )
+			->build();
 	}
 }

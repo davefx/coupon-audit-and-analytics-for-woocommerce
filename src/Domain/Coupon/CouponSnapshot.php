@@ -35,7 +35,8 @@ final class CouponSnapshot {
 	 * @param int|null               $usage_limit  Maximum redemptions, or null for unlimited.
 	 * @param int                    $usage_count  Redemptions so far.
 	 * @param DateTimeImmutable|null $last_used_at Last redemption, or null if never used.
-	 * @param CouponScope            $scope        The products the coupon affects.
+	 * @param CouponScope            $scope           The products the coupon affects.
+	 * @param bool                   $is_auto_applied Whether it applies without the customer entering it.
 	 *
 	 * @throws InvalidArgumentException When the data could not describe a real coupon.
 	 */
@@ -49,7 +50,8 @@ final class CouponSnapshot {
 		public readonly ?int $usage_limit,
 		public readonly int $usage_count,
 		public readonly ?DateTimeImmutable $last_used_at,
-		public readonly CouponScope $scope
+		public readonly CouponScope $scope,
+		public readonly bool $is_auto_applied
 	) {
 		if ( '' === trim( $code ) ) {
 			throw new InvalidArgumentException( 'A coupon must have a code.' );

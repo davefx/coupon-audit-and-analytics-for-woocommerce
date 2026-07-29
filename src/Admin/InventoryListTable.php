@@ -11,6 +11,7 @@ namespace DFX\CouponAAW\Admin;
 
 use DFX\CouponAAW\Domain\Coupon\CouponStatus;
 use DFX\CouponAAW\Domain\Coupon\OrphanReason;
+use DFX\CouponAAW\Domain\Overlap\OverlapSeverity;
 use DFX\CouponAAW\Service\InventoryEntry;
 use WP_List_Table;
 
@@ -225,10 +226,6 @@ final class InventoryListTable extends WP_List_Table {
 	 * @param InventoryEntry $entry The row.
 	 */
 	private function findings_cell( InventoryEntry $entry ): string {
-		if ( ! $entry->is_orphan() ) {
-			return '<span class="dfxcaaw-finding-none">&mdash;</span>';
-		}
-
 		$labels = array_map(
 			static fn ( OrphanReason $reason ): string => sprintf(
 				'<span class="dfxcaaw-finding">%s</span>',
@@ -237,7 +234,46 @@ final class InventoryListTable extends WP_List_Table {
 			$entry->orphan_reasons
 		);
 
+		$worst = $entry->worst_overlap();
+
+		if ( null !== $worst ) {
+			$labels[] = sprintf(
+				'<span class="dfxcaaw-finding dfxcaaw-finding--%1$s">%2$s</span>',
+				esc_attr( $worst->value ),
+				esc_html(
+					sprintf(
+						/* translators: 1: severity of the worst collision, 2: how many coupons it collides with. */
+						_n(
+							'Overlaps %2$d coupon (%1$s)',
+							'Overlaps %2$d coupons (%1$s)',
+							count( $entry->overlaps ),
+							'coupon-audit-and-analytics-for-woocommerce'
+						),
+						self::severity_label( $worst ),
+						count( $entry->overlaps )
+					)
+				)
+			);
+		}
+
+		if ( array() === $labels ) {
+			return '<span class="dfxcaaw-finding-none">&mdash;</span>';
+		}
+
 		return implode( ' ', $labels );
+	}
+
+	/**
+	 * The human-readable name of an overlap severity.
+	 *
+	 * @param OverlapSeverity $severity The severity to label.
+	 */
+	private static function severity_label( OverlapSeverity $severity ): string {
+		return match ( $severity ) {
+			OverlapSeverity::HIGH   => __( 'high', 'coupon-audit-and-analytics-for-woocommerce' ),
+			OverlapSeverity::MEDIUM => __( 'medium', 'coupon-audit-and-analytics-for-woocommerce' ),
+			OverlapSeverity::LOW    => __( 'low', 'coupon-audit-and-analytics-for-woocommerce' ),
+		};
 	}
 
 	/**

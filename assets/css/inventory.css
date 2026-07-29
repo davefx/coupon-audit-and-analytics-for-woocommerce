@@ -91,3 +91,13 @@
 		flex: 1 1 40%;
 	}
 }
+
+.dfxcaaw-finding--high {
+	background: #fcf0f1;
+	color: #8a2424;
+}
+
+.dfxcaaw-finding--low {
+	background: #f0f0f1;
+	color: #50575e;
+}

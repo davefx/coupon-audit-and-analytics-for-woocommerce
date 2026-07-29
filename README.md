@@ -28,6 +28,10 @@ status, what it actually applies to, and what is wrong with it:
 - **Dormant** — live but unredeemed for longer than the threshold.
 - **Dead campaign** — live while every other code from its campaign has expired.
 - **Applies to everything** — live with no product or category restriction at all.
+- **Overlaps** — two live coupons that can both apply to the same product, graded
+  by how likely the collision is to actually happen. Nothing in WooCommerce
+  compares one coupon against another, so this finding is not reachable any
+  other way.
 
 Status is derived, never stored, so a coupon that expired overnight says so the
 next morning. None of this needs cost data.
@@ -99,6 +103,7 @@ src/
   Domain/
     Clock/          the only way anything learns what time it is
     Coupon/         status, scope, orphans — pure logic, no WordPress
+    Overlap/        colliding coupon pairs, and the index that finds them
   Repository/       the only layer that talks to $wpdb and WooCommerce
   Service/          orchestration; coordinates, calculates nothing
   Admin/            screens; formats what it is given, decides nothing
@@ -131,6 +136,22 @@ The internal prefix is `dfxcaaw` (`dfxcaaw_` for options, hooks, transients and
 tables; `DFX\CouponAAW` for the namespace). It is deliberately independent of
 the plugin slug, so renaming the product touches only the file header, the
 directory name and the text domain.
+
+## Extending it
+
+`dfxcaaw_coupon_is_auto_applied` — WooCommerce has no concept of a coupon that
+applies without the customer entering it, but several plugins add one. An
+overlap between two auto-applied coupons is the most serious finding the audit
+produces, and without this filter that grade can never occur:
+
+```php
+add_filter(
+	'dfxcaaw_coupon_is_auto_applied',
+	fn ( bool $auto, int $coupon_id ): bool => my_plugin_applies_automatically( $coupon_id ),
+	10,
+	2
+);
+```
 
 ## Licence
 

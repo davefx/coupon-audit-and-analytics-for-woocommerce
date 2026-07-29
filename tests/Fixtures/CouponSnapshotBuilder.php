@@ -95,6 +95,13 @@ final class CouponSnapshotBuilder {
 	private ?CouponScope $scope = null;
 
 	/**
+	 * Whether the coupon applies without the customer entering it.
+	 *
+	 * @var bool
+	 */
+	private bool $is_auto_applied = false;
+
+	/**
 	 * Start building.
 	 */
 	public static function make(): self {
@@ -219,6 +226,15 @@ final class CouponSnapshotBuilder {
 	}
 
 	/**
+	 * Mark the coupon as applying without the customer entering it.
+	 */
+	public function auto_applied(): self {
+		$this->is_auto_applied = true;
+
+		return $this;
+	}
+
+	/**
 	 * Produce the snapshot.
 	 */
 	public function build(): CouponSnapshot {
@@ -232,7 +248,8 @@ final class CouponSnapshotBuilder {
 			$this->usage_limit,
 			$this->usage_count,
 			self::optional_date( $this->last_used_at ),
-			$this->scope ?? CouponScope::universal()
+			$this->scope ?? CouponScope::universal(),
+			$this->is_auto_applied
 		);
 	}
 

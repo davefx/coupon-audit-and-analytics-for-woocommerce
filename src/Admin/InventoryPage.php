@@ -107,13 +107,44 @@ final class InventoryPage {
 			$summary->unrestricted > 0 ? 'dfxcaaw-tile--warn' : ''
 		);
 
+		if ( null === $summary->overlaps ) {
+			$this->render_text_tile(
+				__( 'Overlapping pairs', 'coupon-audit-and-analytics-for-woocommerce' ),
+				/* translators: shown when the inventory is too large to compare on page load. */
+				__( 'Not checked', 'coupon-audit-and-analytics-for-woocommerce' ),
+				''
+			);
+		} else {
+			$this->render_tile(
+				__( 'Overlapping pairs', 'coupon-audit-and-analytics-for-woocommerce' ),
+				$summary->overlaps,
+				$summary->overlaps > 0 ? 'dfxcaaw-tile--warn' : ''
+			);
+		}
+
 		echo '</div>';
 
-		if ( $summary->total > 0 && 0 === $summary->orphans && 0 === $summary->unrestricted ) {
+		if ( null === $summary->overlaps ) {
+			printf(
+				'<div class="notice notice-info inline"><p>%s</p></div>',
+				esc_html(
+					sprintf(
+						/* translators: %d: the number of coupons above which the check is skipped. */
+						__(
+							'Overlap detection was skipped: comparing every coupon against every other is too slow to do while you wait above %d coupons.',
+							'coupon-audit-and-analytics-for-woocommerce'
+						),
+						InventoryService::OVERLAP_LIMIT
+					)
+				)
+			);
+		}
+
+		if ( $summary->total > 0 && 0 === $summary->orphans && 0 === $summary->unrestricted && 0 === $summary->overlaps ) {
 			printf(
 				'<div class="notice notice-success inline"><p>%s</p></div>',
 				esc_html__(
-					'Nothing needs attention. Every coupon expires, and none of them applies to your whole catalogue.',
+					'Nothing needs attention. Every coupon expires, none applies to your whole catalogue, and none of them collide.',
 					'coupon-audit-and-analytics-for-woocommerce'
 				)
 			);
@@ -128,10 +159,21 @@ final class InventoryPage {
 	 * @param string $modifier Extra CSS class, or an empty string.
 	 */
 	private function render_tile( string $label, int $value, string $modifier ): void {
+		$this->render_text_tile( $label, number_format_i18n( $value ), $modifier );
+	}
+
+	/**
+	 * One tile whose value is words rather than a number.
+	 *
+	 * @param string $label    What is being reported.
+	 * @param string $value    The value to show.
+	 * @param string $modifier Extra CSS class, or an empty string.
+	 */
+	private function render_text_tile( string $label, string $value, string $modifier ): void {
 		printf(
 			'<div class="dfxcaaw-tile %1$s"><span class="dfxcaaw-tile__value">%2$s</span><span class="dfxcaaw-tile__label">%3$s</span></div>',
 			esc_attr( $modifier ),
-			esc_html( number_format_i18n( $value ) ),
+			esc_html( $value ),
 			esc_html( $label )
 		);
 	}

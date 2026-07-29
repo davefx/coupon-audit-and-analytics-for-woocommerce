@@ -12,6 +12,8 @@ namespace DFX\CouponAAW\Service;
 use DFX\CouponAAW\Domain\Coupon\CouponSnapshot;
 use DFX\CouponAAW\Domain\Coupon\CouponStatus;
 use DFX\CouponAAW\Domain\Coupon\OrphanReason;
+use DFX\CouponAAW\Domain\Overlap\Overlap;
+use DFX\CouponAAW\Domain\Overlap\OverlapSeverity;
 
 /**
  * A coupon together with everything the domain concluded about it.
@@ -28,12 +30,29 @@ final class InventoryEntry {
 	 * @param CouponSnapshot     $coupon         The coupon as stored.
 	 * @param CouponStatus       $status         Its resolved status.
 	 * @param list<OrphanReason> $orphan_reasons Every ground on which it is a relic, possibly none.
+	 * @param list<Overlap>      $overlaps       Collisions this coupon takes part in.
 	 */
 	public function __construct(
 		public readonly CouponSnapshot $coupon,
 		public readonly CouponStatus $status,
-		public readonly array $orphan_reasons
+		public readonly array $orphan_reasons,
+		public readonly array $overlaps = array()
 	) {}
+
+	/**
+	 * The worst collision this coupon takes part in, if any.
+	 */
+	public function worst_overlap(): ?OverlapSeverity {
+		$worst = null;
+
+		foreach ( $this->overlaps as $overlap ) {
+			if ( null === $worst || $overlap->severity->rank() > $worst->rank() ) {
+				$worst = $overlap->severity;
+			}
+		}
+
+		return $worst;
+	}
 
 	/**
 	 * Whether the coupon was flagged on any ground at all.

@@ -27,12 +27,14 @@ final class InventorySummary {
 	 * @param array<string, int> $by_status    Counts keyed by status value.
 	 * @param int                $orphans      Coupons flagged as relics.
 	 * @param int                $unrestricted Live coupons that apply to the whole catalogue.
+	 * @param int|null           $overlaps     Colliding pairs, or null when the inventory was too large to check.
 	 */
 	public function __construct(
 		public readonly int $total,
 		public readonly array $by_status,
 		public readonly int $orphans,
-		public readonly int $unrestricted
+		public readonly int $unrestricted,
+		public readonly ?int $overlaps = null
 	) {}
 
 	/**

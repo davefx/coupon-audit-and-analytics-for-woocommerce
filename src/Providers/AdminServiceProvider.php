@@ -17,6 +17,7 @@ use DFX\CouponAAW\Container\ContainerInterface;
 use DFX\CouponAAW\Container\ServiceProviderInterface;
 use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
 use DFX\CouponAAW\Domain\Coupon\StatusResolver;
+use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
 use DFX\CouponAAW\Repository\CouponRepositoryInterface;
 use DFX\CouponAAW\Service\InventoryService;
 use DFX\CouponAAW\Support\PluginContext;
@@ -40,7 +41,8 @@ final class AdminServiceProvider implements ServiceProviderInterface {
 			static fn ( ContainerInterface $c ): InventoryService => new InventoryService(
 				$c->get( CouponRepositoryInterface::class ),
 				$c->get( StatusResolver::class ),
-				$c->get( OrphanDetector::class )
+				$c->get( OrphanDetector::class ),
+				$c->get( OverlapDetector::class )
 			)
 		);
 
