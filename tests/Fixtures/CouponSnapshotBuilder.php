@@ -14,6 +14,8 @@ use DateTimeZone;
 use DFX\CouponAAW\Domain\Coupon\CouponId;
 use DFX\CouponAAW\Domain\Coupon\CouponScope;
 use DFX\CouponAAW\Domain\Coupon\CouponSnapshot;
+use DFX\CouponAAW\Domain\Coupon\CouponTerms;
+use DFX\CouponAAW\Domain\Coupon\DiscountAmount;
 
 /**
  * Keeps the noise out of the tests.
@@ -100,6 +102,13 @@ final class CouponSnapshotBuilder {
 	 * @var bool
 	 */
 	private bool $is_auto_applied = false;
+
+	/**
+	 * The coupon's commercial terms.
+	 *
+	 * @var CouponTerms|null
+	 */
+	private ?CouponTerms $terms = null;
 
 	/**
 	 * Start building.
@@ -235,6 +244,17 @@ final class CouponSnapshotBuilder {
 	}
 
 	/**
+	 * Set the coupon's commercial terms.
+	 *
+	 * @param CouponTerms $terms The terms.
+	 */
+	public function with_terms( CouponTerms $terms ): self {
+		$this->terms = $terms;
+
+		return $this;
+	}
+
+	/**
 	 * Produce the snapshot.
 	 */
 	public function build(): CouponSnapshot {
@@ -249,7 +269,8 @@ final class CouponSnapshotBuilder {
 			$this->usage_count,
 			self::optional_date( $this->last_used_at ),
 			$this->scope ?? CouponScope::universal(),
-			$this->is_auto_applied
+			$this->is_auto_applied,
+			$this->terms ?? new CouponTerms( DiscountAmount::percentage( 10.0 ) )
 		);
 	}
 

@@ -37,6 +37,7 @@ final class CouponSnapshot {
 	 * @param DateTimeImmutable|null $last_used_at Last redemption, or null if never used.
 	 * @param CouponScope            $scope           The products the coupon affects.
 	 * @param bool                   $is_auto_applied Whether it applies without the customer entering it.
+	 * @param CouponTerms            $terms           What the coupon offers, and on what conditions.
 	 *
 	 * @throws InvalidArgumentException When the data could not describe a real coupon.
 	 */
@@ -51,7 +52,8 @@ final class CouponSnapshot {
 		public readonly int $usage_count,
 		public readonly ?DateTimeImmutable $last_used_at,
 		public readonly CouponScope $scope,
-		public readonly bool $is_auto_applied
+		public readonly bool $is_auto_applied,
+		public readonly CouponTerms $terms
 	) {
 		if ( '' === trim( $code ) ) {
 			throw new InvalidArgumentException( 'A coupon must have a code.' );

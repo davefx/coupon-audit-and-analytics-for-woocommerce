@@ -97,7 +97,7 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 			function (): CouponRepositoryInterface {
 				global $wpdb;
 
-				return new WpCouponRepository( $wpdb, $this->timezone );
+				return new WpCouponRepository( $wpdb, $this->timezone, wc_get_price_decimals() );
 			}
 		);
 

@@ -14,6 +14,9 @@ use DateTimeZone;
 use DFX\CouponAAW\Domain\Coupon\CouponId;
 use DFX\CouponAAW\Domain\Coupon\CouponScope;
 use DFX\CouponAAW\Domain\Coupon\CouponSnapshot;
+use DFX\CouponAAW\Domain\Coupon\CouponTerms;
+use DFX\CouponAAW\Domain\Coupon\DiscountAmount;
+use DFX\CouponAAW\Domain\Profit\Money;
 use WC_Coupon;
 use WP_Post;
 use wpdb;
@@ -57,10 +60,12 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	 *
 	 * @param wpdb         $wpdb     WordPress database handle.
 	 * @param DateTimeZone $timezone The site's timezone.
+	 * @param int          $decimals Places in the currency's minor unit.
 	 */
 	public function __construct(
 		private readonly wpdb $wpdb,
-		private readonly DateTimeZone $timezone
+		private readonly DateTimeZone $timezone,
+		private readonly int $decimals = 2
 	) {}
 
 	/**
@@ -163,8 +168,82 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 			$coupon->get_usage_count(),
 			isset( $last_used[ $post->ID ] ) ? $this->local_datetime( $last_used[ $post->ID ] ) : null,
 			$this->scope_of( $coupon ),
-			$this->is_auto_applied( $coupon )
+			$this->is_auto_applied( $coupon ),
+			$this->terms_of( $coupon )
 		);
+	}
+
+	/**
+	 * The coupon's commercial terms.
+	 *
+	 * @param WC_Coupon $coupon The coupon.
+	 */
+	private function terms_of( WC_Coupon $coupon ): CouponTerms {
+		return new CouponTerms(
+			$this->discount_of( $coupon ),
+			$this->optional_money( $coupon->get_minimum_amount() ),
+			$this->optional_money( $coupon->get_maximum_amount() ),
+			(bool) $coupon->get_free_shipping(),
+			(bool) $coupon->get_individual_use(),
+			$this->optional_count( $coupon->get_usage_limit_per_user() ),
+			$this->optional_count( $coupon->get_limit_usage_to_x_items() ),
+			array_values( array_map( 'strval', $coupon->get_email_restrictions() ) )
+		);
+	}
+
+	/**
+	 * What the coupon takes off.
+	 *
+	 * WooCommerce's discount types are extensible, so a type is treated as a
+	 * percentage when it says so and as a fixed sum otherwise. Guessing the
+	 * other way round would let a custom percentage type be checked as though it
+	 * could exceed the basket, and report a fault that cannot happen.
+	 *
+	 * @param WC_Coupon $coupon The coupon.
+	 */
+	private function discount_of( WC_Coupon $coupon ): DiscountAmount {
+		$type   = (string) $coupon->get_discount_type();
+		$amount = (float) $coupon->get_amount();
+
+		if ( str_contains( $type, 'percent' ) ) {
+			return DiscountAmount::percentage( $amount, $type );
+		}
+
+		return DiscountAmount::fixed(
+			Money::from_decimal( $amount, $this->currency(), $this->decimals ),
+			$type
+		);
+	}
+
+	/**
+	 * A monetary threshold, or null where WooCommerce stores "unset" as empty.
+	 *
+	 * @param string $amount The stored amount.
+	 */
+	private function optional_money( string $amount ): ?Money {
+		if ( '' === trim( $amount ) || ! is_numeric( $amount ) ) {
+			return null;
+		}
+
+		return Money::from_decimal( (float) $amount, $this->currency(), $this->decimals );
+	}
+
+	/**
+	 * A cap, or null where WooCommerce stores "no cap" as zero or empty.
+	 *
+	 * @param mixed $value The stored value.
+	 */
+	private function optional_count( mixed $value ): ?int {
+		$count = (int) $value;
+
+		return $count > 0 ? $count : null;
+	}
+
+	/**
+	 * The store's currency.
+	 */
+	private function currency(): string {
+		return get_woocommerce_currency();
 	}
 
 	/**
