@@ -20,7 +20,14 @@ use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
 use DFX\CouponAAW\Domain\Overlap\ScopeIndex;
 use DFX\CouponAAW\Repository\CouponRepositoryInterface;
 use DFX\CouponAAW\Repository\WpCouponRepository;
+use DFX\CouponAAW\Cost\BoosterCogsSource;
+use DFX\CouponAAW\Cost\CostSourceRegistry;
+use DFX\CouponAAW\Cost\NativeCogsSource;
+use DFX\CouponAAW\Cost\SkyvergeCogsSource;
+use DFX\CouponAAW\Cost\WpFactoryCogsSource;
 use DFX\CouponAAW\Support\PluginContext;
+use DFX\CouponAAW\Support\SettingsInterface;
+use DFX\CouponAAW\Support\WpOptionSettings;
 use wpdb;
 
 /**
@@ -83,6 +90,35 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 				global $wpdb;
 
 				return new WpCouponRepository( $wpdb, $this->timezone );
+			}
+		);
+
+		$container->bind(
+			SettingsInterface::class,
+			static fn (): SettingsInterface => new WpOptionSettings()
+		);
+
+		/*
+		 * The cost systems a store might be using. Which one is read is settled
+		 * once, by the registry, rather than per line: a report that took one
+		 * plugin's figure for one line and another's for the next would be a
+		 * blend of two sets of books and reconcile with neither.
+		 */
+		$container->bind(
+			CostSourceRegistry::class,
+			static function ( ContainerInterface $c ): CostSourceRegistry {
+				$currency = get_woocommerce_currency();
+				$decimals = wc_get_price_decimals();
+
+				return new CostSourceRegistry(
+					array(
+						new NativeCogsSource( $currency, $decimals ),
+						new WpFactoryCogsSource( $currency, $decimals ),
+						new SkyvergeCogsSource( $currency, $decimals ),
+						new BoosterCogsSource( $currency, $decimals ),
+					),
+					$c->get( SettingsInterface::class )->get_string( 'cost_source' )
+				);
 			}
 		);
 
