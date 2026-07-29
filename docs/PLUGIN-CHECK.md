@@ -4,10 +4,15 @@ Run against the built distribution, not the repository — the repository contai
 a test harness that has no business inside a shipped plugin:
 
 ```bash
-composer run dist
+composer run dist   # writes build/coupon-audit-and-analytics-for-woocommerce-<version>.zip
 # copy build/coupon-audit-and-analytics-for-woocommerce into wp-content/plugins
 wp plugin check coupon-audit-and-analytics-for-woocommerce
 ```
+
+The zip is named for the version in the plugin header, and the build refuses to
+run if that header and the readme's `Stable tag` disagree — WordPress serves
+whatever `Stable tag` points at, so a mismatch publishes one version's code under
+another version's number, silently.
 
 The directory must be named exactly as the slug will be. Plugin Check compares
 the text domain and the trademark rules against the folder name, so checking a

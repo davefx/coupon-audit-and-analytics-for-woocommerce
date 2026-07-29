@@ -153,8 +153,14 @@ picks it up. That is the plugin's most likely extension point.
 
 ## Shipping
 
-`composer run dist` builds `build/coupon-audit-and-analytics-for-woocommerce.zip`
-with runtime dependencies only and everything in `.distignore` removed.
+`composer run dist` builds
+`build/coupon-audit-and-analytics-for-woocommerce-<version>.zip` with runtime
+dependencies only and everything in `.distignore` removed. The version comes
+from the plugin header, and the build fails if the readme's `Stable tag`
+disagrees with it.
+
+Releases are tagged with the bare version number — `0.1.0`, not `v0.1.0` — so a
+git tag and the wp.org SVN tag for the same release are spelled the same way.
 
 **Run Plugin Check against the build, in a directory named exactly as the slug.**
 Checking the repository reports the test harness as a bundled application;
