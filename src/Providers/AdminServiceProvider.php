@@ -16,6 +16,7 @@ use DFX\CouponAAW\Admin\InventoryPage;
 use DFX\CouponAAW\Admin\MarginListTable;
 use DFX\CouponAAW\Admin\MarginPage;
 use DFX\CouponAAW\Admin\MenuRegistrar;
+use DFX\CouponAAW\Admin\SettingsPage;
 use DFX\CouponAAW\Container\ContainerInterface;
 use DFX\CouponAAW\Container\ServiceProviderInterface;
 use DFX\CouponAAW\Domain\Clock\ClockInterface;
@@ -23,6 +24,7 @@ use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
 use DFX\CouponAAW\Domain\Coupon\StatusResolver;
 use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
 use DFX\CouponAAW\Repository\CouponRepositoryInterface;
+use DFX\CouponAAW\Cost\CostSourceRegistry;
 use DFX\CouponAAW\Install\Aggregator;
 use DFX\CouponAAW\Licensing\FeatureGateInterface;
 use DFX\CouponAAW\Licensing\LocalFeatureGate;
@@ -31,6 +33,7 @@ use DFX\CouponAAW\Service\InventoryService;
 use DFX\CouponAAW\Service\MarginService;
 use DFX\CouponAAW\Service\PrePublishValidator;
 use DFX\CouponAAW\Support\PluginContext;
+use DFX\CouponAAW\Support\SettingsInterface;
 
 /**
  * Wires the admin screens.
@@ -114,10 +117,19 @@ final class AdminServiceProvider implements ServiceProviderInterface {
 		);
 
 		$container->bind(
+			SettingsPage::class,
+			static fn ( ContainerInterface $c ): SettingsPage => new SettingsPage(
+				$c->get( SettingsInterface::class ),
+				$c->get( CostSourceRegistry::class )
+			)
+		);
+
+		$container->bind(
 			MenuRegistrar::class,
 			static fn ( ContainerInterface $c ): MenuRegistrar => new MenuRegistrar(
 				$c->get( InventoryPage::class ),
-				$c->get( MarginPage::class )
+				$c->get( MarginPage::class ),
+				$c->get( SettingsPage::class )
 			)
 		);
 

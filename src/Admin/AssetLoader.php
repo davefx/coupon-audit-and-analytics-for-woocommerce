@@ -60,6 +60,7 @@ final class AssetLoader {
 	 */
 	private function is_inventory_screen( string $hook_suffix ): bool {
 		return str_ends_with( $hook_suffix, '_page_' . MenuRegistrar::PAGE_SLUG )
-			|| str_ends_with( $hook_suffix, '_page_' . MarginPage::PAGE_SLUG );
+			|| str_ends_with( $hook_suffix, '_page_' . MarginPage::PAGE_SLUG )
+			|| str_ends_with( $hook_suffix, '_page_' . SettingsPage::PAGE_SLUG );
 	}
 }

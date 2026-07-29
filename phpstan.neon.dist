@@ -22,4 +22,8 @@ parameters:
 	scanDirectories:
 		- vendor/wp-phpunit/wp-phpunit/includes
 
+	# The distribution build is a copy of the plugin.
+	excludePaths:
+		- build
+
 	treatPhpDocTypesAsCertain: false

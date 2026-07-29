@@ -12,7 +12,6 @@
  * License:              GPLv3 or later
  * License URI:          https://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain:          coupon-audit-and-analytics-for-woocommerce
- * Domain Path:          /languages
  * WC requires at least: 10.3
  * WC tested up to:      10.3
  *

@@ -6,6 +6,9 @@
 	<file>.</file>
 
 	<exclude-pattern>/vendor/*</exclude-pattern>
+	<!-- The distribution build is a copy of the plugin; linting it reports every
+	     class twice. -->
+	<exclude-pattern>/build/*</exclude-pattern>
 	<exclude-pattern>/node_modules/*</exclude-pattern>
 	<exclude-pattern>/assets/build/*</exclude-pattern>
 

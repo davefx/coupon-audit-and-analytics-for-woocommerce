@@ -5,7 +5,7 @@
 	"license": "GPL-3.0-or-later",
 	"authors": [
 		{
-			"name": "David Marín Carreño",
+			"name": "David Mar\u00edn Carre\u00f1o",
 			"email": "davefx@davefx.com"
 		}
 	],
@@ -58,7 +58,8 @@
 			"@lint:boundary",
 			"@analyse",
 			"@test:unit"
-		]
+		],
+		"dist": "bash bin/build-dist.sh"
 	},
 	"scripts-descriptions": {
 		"test": "Run the full PHPUnit suite.",
@@ -67,6 +68,7 @@
 		"lint:boundary": "Verify the main file still parses on PHP 7, so its version guard can run.",
 		"lint:fix": "Auto-fix coding standard violations with PHPCBF.",
 		"analyse": "Run PHPStan static analysis at level 8.",
-		"check": "Run coding standards, static analysis and unit tests."
+		"check": "Run coding standards, static analysis and unit tests.",
+		"dist": "Build the distributable zip for WordPress.org."
 	}
 }

@@ -151,8 +151,21 @@ wrong margin, which §6.3 is explicit is worse than reporting nothing.
 Adding an adapter must stay cheap: register it in the container, and the registry
 picks it up. That is the plugin's most likely extension point.
 
+## Shipping
+
+`composer run dist` builds `build/coupon-audit-and-analytics-for-woocommerce.zip`
+with runtime dependencies only and everything in `.distignore` removed.
+
+**Run Plugin Check against the build, in a directory named exactly as the slug.**
+Checking the repository reports the test harness as a bundled application;
+checking a copy named anything else reports eighty text-domain mismatches and a
+trademark violation that do not exist, because both rules compare against the
+folder name. See [docs/PLUGIN-CHECK.md](docs/PLUGIN-CHECK.md), which also records
+the one finding that is deliberate and must not be "fixed".
+
 ## Where the build is
 
-Milestones 1–6 of §15 are done: scaffolding, coupon domain, repository,
-inventory screen, overlap detection, pre-publish warning. Next is cost adapters
-(§16 q1 — the last open question gating phase 1).
+Phase 1 is complete — all eleven milestones of §15. Phase 2 is the Freemius SDK
+and the paid features, and begins once the slug is approved. The swap is
+`LocalFeatureGate` for a licensed implementation of `FeatureGateInterface`, and
+touches nothing else.
