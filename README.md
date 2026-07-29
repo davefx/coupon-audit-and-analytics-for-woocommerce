@@ -19,6 +19,14 @@ data is missing rather than presenting an unreliable number as a reliable one.
 
 HPOS and cart/checkout blocks compatibility are declared explicitly.
 
+## Design
+
+The architectural half of the technical specification is published as
+[docs/SPECIFICATION.md](docs/SPECIFICATION.md). Comments throughout the source
+cite it by section number — `§3.3` for the singleton policy, `§5` for the
+layering rule, `§10.4` for the seams that are always injected. Its numbering is
+inherited from the full document, so the gaps between sections are expected.
+
 ## Development
 
 ```bash
