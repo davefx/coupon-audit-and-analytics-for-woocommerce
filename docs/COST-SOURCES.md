@@ -65,3 +65,40 @@ Applying today's cost to a two-year-old order is not the same measurement, and
 than it is. A product-level source is genuinely useful — it is far better than
 nothing, and for a store whose costs are stable it is close to exact — but a
 margin built from it is an estimate, and must be labelled as one.
+
+## One source per store, never a blend
+
+A store uses one method to manage cost of goods. The plugin reads whatever the
+database happens to hold, and its only hard obligation is that a single report
+never mixes values from two different sources.
+
+That rules out the per-line fallback §7 describes — walking the adapters in
+priority order and taking the first that yields a value *for each line* would
+happily read WPFactory's cost for one line and Booster's for the next, producing
+a margin that is a blend of two bookkeeping systems and reconciles with neither.
+
+Instead the registry resolves exactly **one active source** for the whole
+report:
+
+1. the source the user chose, if it is installed and available; otherwise
+2. the highest-priority available source; otherwise
+3. none, and no margin is shown.
+
+A line with no cost in the active source is missing cost — it is never filled in
+from a different plugin. That is what makes the coverage figure in §6.3 mean
+something: it measures one bookkeeping system's completeness, not the union of
+several.
+
+The active source is recorded alongside the figures, so a report can say which
+system produced it, and so a store that switches plugins can see why its numbers
+changed.
+
+## Cost at the time of sale, or cost today
+
+Only native COGS and WPFactory record what a line cost when the order was placed.
+The others store the product's current cost, so a margin built from them applies
+today's cost to an old order.
+
+This is a property of the source rather than of the store, so each adapter
+declares it. A margin computed from a source that does not record cost as of the
+sale is an estimate, and the screen that shows it says so.
