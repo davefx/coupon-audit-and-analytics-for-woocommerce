@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace DFX\CouponAAW\Admin;
 
 use DFX\CouponAAW\Domain\Coupon\CouponStatus;
+use DFX\CouponAAW\Domain\Coupon\ConfigurationIssue;
 use DFX\CouponAAW\Domain\Coupon\OrphanReason;
 use DFX\CouponAAW\Domain\Overlap\OverlapSeverity;
 use DFX\CouponAAW\Service\InventoryEntry;
@@ -39,8 +40,10 @@ final class InventoryListTable extends WP_List_Table {
 
 	/**
 	 * Constructor.
+	 *
+	 * @param CouponTermsFormatter $formatter Puts terms and scope into words.
 	 */
-	public function __construct() {
+	public function __construct( private readonly CouponTermsFormatter $formatter ) {
 		parent::__construct(
 			array(
 				'singular' => 'coupon',
@@ -56,14 +59,29 @@ final class InventoryListTable extends WP_List_Table {
 	 * @return array<string, string>
 	 */
 	public function get_columns() {
-		return array(
+		$columns = array(
 			'code'     => __( 'Code', 'coupon-audit-and-analytics-for-woocommerce' ),
 			'status'   => __( 'Status', 'coupon-audit-and-analytics-for-woocommerce' ),
+			'discount' => __( 'Discount', 'coupon-audit-and-analytics-for-woocommerce' ),
+			'spend'    => __( 'Basket', 'coupon-audit-and-analytics-for-woocommerce' ),
 			'scope'    => __( 'Applies to', 'coupon-audit-and-analytics-for-woocommerce' ),
+			'terms'    => __( 'Terms', 'coupon-audit-and-analytics-for-woocommerce' ),
 			'expires'  => __( 'Expires', 'coupon-audit-and-analytics-for-woocommerce' ),
 			'usage'    => __( 'Used', 'coupon-audit-and-analytics-for-woocommerce' ),
 			'findings' => __( 'Findings', 'coupon-audit-and-analytics-for-woocommerce' ),
 		);
+
+		/**
+		 * Filters the columns of the coupon audit table.
+		 *
+		 * A plugin adding a column here should also answer
+		 * `dfxcaaw_inventory_cell` for it.
+		 *
+		 * @since 0.2.0
+		 *
+		 * @param array<string, string> $columns Column keys mapped to their headings.
+		 */
+		return apply_filters( 'dfxcaaw_inventory_columns', $columns );
 	}
 
 	/**
@@ -140,24 +158,46 @@ final class InventoryListTable extends WP_List_Table {
 					esc_html( self::status_label( $item->status ) )
 				);
 
+			case 'discount':
+				return $this->formatter->amount( $item->coupon->terms );
+
+			case 'spend':
+				return $this->formatter->required_spend( $item->coupon->terms );
+
 			case 'scope':
-				return esc_html(
-					$item->coupon->scope->is_universal()
-						? __( 'Everything', 'coupon-audit-and-analytics-for-woocommerce' )
-						: __( 'Restricted', 'coupon-audit-and-analytics-for-woocommerce' )
-				);
+				return $this->formatter->scope( $item->coupon->scope );
+
+			case 'terms':
+				return $this->formatter->flags( $item->coupon->terms );
 
 			case 'expires':
 				return $this->expiry_cell( $item );
 
 			case 'usage':
-				return esc_html( $this->usage_label( $item ) );
+				return $this->formatter->usage(
+					$item->coupon->usage_count,
+					$item->coupon->usage_limit,
+					$item->coupon->terms
+				);
 
 			case 'findings':
 				return $this->findings_cell( $item );
 
 			default:
-				return '';
+				/**
+				 * Filters the contents of a coupon audit cell.
+				 *
+				 * How a plugin fills a column it added through
+				 * `dfxcaaw_inventory_columns`. The value is printed as markup, so
+				 * whatever answers this filter is responsible for escaping it.
+				 *
+				 * @since 0.2.0
+				 *
+				 * @param string         $content Cell contents; empty by default.
+				 * @param string         $column  Which column is being rendered.
+				 * @param InventoryEntry $entry   The coupon and its findings.
+				 */
+				return (string) apply_filters( 'dfxcaaw_inventory_cell', '', $column_name, $item );
 		}
 	}
 
@@ -203,24 +243,6 @@ final class InventoryListTable extends WP_List_Table {
 	}
 
 	/**
-	 * Usage against the limit, if there is one.
-	 *
-	 * @param InventoryEntry $entry The row.
-	 */
-	private function usage_label( InventoryEntry $entry ): string {
-		if ( null === $entry->coupon->usage_limit ) {
-			return (string) $entry->coupon->usage_count;
-		}
-
-		return sprintf(
-			/* translators: 1: times used, 2: usage limit. */
-			__( '%1$d of %2$d', 'coupon-audit-and-analytics-for-woocommerce' ),
-			$entry->coupon->usage_count,
-			$entry->coupon->usage_limit
-		);
-	}
-
-	/**
 	 * Why this coupon was flagged, if it was.
 	 *
 	 * @param InventoryEntry $entry The row.
@@ -233,6 +255,13 @@ final class InventoryListTable extends WP_List_Table {
 			),
 			$entry->orphan_reasons
 		);
+
+		foreach ( $entry->issues as $issue ) {
+			$labels[] = sprintf(
+				'<span class="dfxcaaw-finding dfxcaaw-finding--high">%s</span>',
+				esc_html( self::issue_label( $issue ) )
+			);
+		}
 
 		$worst = $entry->worst_overlap();
 
@@ -261,6 +290,22 @@ final class InventoryListTable extends WP_List_Table {
 		}
 
 		return implode( ' ', $labels );
+	}
+
+	/**
+	 * The human-readable name of a fault in a coupon's terms.
+	 *
+	 * @param ConfigurationIssue $issue The fault to label.
+	 */
+	private static function issue_label( ConfigurationIssue $issue ): string {
+		return match ( $issue ) {
+			ConfigurationIssue::DISCOUNT_EXCEEDS_MINIMUM_SPEND
+				=> __( 'Discount exceeds minimum spend', 'coupon-audit-and-analytics-for-woocommerce' ),
+			ConfigurationIssue::DISCOUNT_EXCEEDS_PRODUCT_PRICE
+				=> __( 'Discount exceeds a product price', 'coupon-audit-and-analytics-for-woocommerce' ),
+			ConfigurationIssue::UNBOUNDED_FIXED_DISCOUNT
+				=> __( 'Fixed discount with no minimum', 'coupon-audit-and-analytics-for-woocommerce' ),
+		};
 	}
 
 	/**

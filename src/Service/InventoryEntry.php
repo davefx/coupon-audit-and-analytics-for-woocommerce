@@ -11,6 +11,7 @@ namespace DFX\CouponAAW\Service;
 
 use DFX\CouponAAW\Domain\Coupon\CouponSnapshot;
 use DFX\CouponAAW\Domain\Coupon\CouponStatus;
+use DFX\CouponAAW\Domain\Coupon\ConfigurationIssue;
 use DFX\CouponAAW\Domain\Coupon\OrphanReason;
 use DFX\CouponAAW\Domain\Overlap\Overlap;
 use DFX\CouponAAW\Domain\Overlap\OverlapSeverity;
@@ -27,17 +28,26 @@ final class InventoryEntry {
 	/**
 	 * Constructor.
 	 *
-	 * @param CouponSnapshot     $coupon         The coupon as stored.
-	 * @param CouponStatus       $status         Its resolved status.
-	 * @param list<OrphanReason> $orphan_reasons Every ground on which it is a relic, possibly none.
-	 * @param list<Overlap>      $overlaps       Collisions this coupon takes part in.
+	 * @param CouponSnapshot           $coupon         The coupon as stored.
+	 * @param CouponStatus             $status         Its resolved status.
+	 * @param list<OrphanReason>       $orphan_reasons Every ground on which it is a relic, possibly none.
+	 * @param list<Overlap>            $overlaps  Collisions this coupon takes part in.
+	 * @param list<ConfigurationIssue> $issues   Faults in the coupon's own terms.
 	 */
 	public function __construct(
 		public readonly CouponSnapshot $coupon,
 		public readonly CouponStatus $status,
 		public readonly array $orphan_reasons,
-		public readonly array $overlaps = array()
+		public readonly array $overlaps = array(),
+		public readonly array $issues = array()
 	) {}
+
+	/**
+	 * Whether anything at all was found against this coupon.
+	 */
+	public function has_findings(): bool {
+		return $this->is_orphan() || array() !== $this->issues || array() !== $this->overlaps;
+	}
 
 	/**
 	 * The worst collision this coupon takes part in, if any.

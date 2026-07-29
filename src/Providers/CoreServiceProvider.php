@@ -11,7 +11,10 @@ namespace DFX\CouponAAW\Providers;
 
 use DateTimeZone;
 use DFX\CouponAAW\Container\ContainerInterface;
+use DFX\CouponAAW\Catalog\CatalogRepositoryInterface;
+use DFX\CouponAAW\Catalog\WcCatalogRepository;
 use DFX\CouponAAW\Container\ServiceProviderInterface;
+use DFX\CouponAAW\Domain\Coupon\ConfigurationAuditor;
 use DFX\CouponAAW\Domain\Clock\ClockInterface;
 use DFX\CouponAAW\Domain\Clock\SystemClock;
 use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
@@ -184,6 +187,17 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 				$c->get( Aggregator::class )
 			)
 		);
+
+		$container->bind(
+			CatalogRepositoryInterface::class,
+			static function (): CatalogRepositoryInterface {
+				global $wpdb;
+
+				return new WcCatalogRepository( $wpdb, get_woocommerce_currency(), wc_get_price_decimals() );
+			}
+		);
+
+		$container->bind( ConfigurationAuditor::class, static fn (): ConfigurationAuditor => new ConfigurationAuditor() );
 
 		$container->bind( ScopeIndex::class, static fn (): ScopeIndex => new ScopeIndex() );
 

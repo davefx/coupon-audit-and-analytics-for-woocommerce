@@ -15,12 +15,14 @@ use DFX\CouponAAW\Domain\Coupon\CouponStatus;
 use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
 use DFX\CouponAAW\Domain\Coupon\OrphanReason;
 use DFX\CouponAAW\Domain\Coupon\StatusResolver;
+use DFX\CouponAAW\Domain\Coupon\ConfigurationAuditor;
 use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
 use DFX\CouponAAW\Domain\Overlap\OverlapSeverity;
 use DFX\CouponAAW\Domain\Overlap\ScopeIndex;
 use DFX\CouponAAW\Service\InventoryService;
 use DFX\CouponAAW\Tests\Fixtures\CouponSnapshotBuilder;
 use DFX\CouponAAW\Tests\Fixtures\FrozenClock;
+use DFX\CouponAAW\Tests\Fixtures\InMemoryCatalogRepository;
 use DFX\CouponAAW\Tests\Fixtures\InMemoryCouponRepository;
 use PHPUnit\Framework\TestCase;
 
@@ -43,7 +45,9 @@ final class InventoryServiceTest extends TestCase {
 			new InMemoryCouponRepository( $coupons ),
 			new StatusResolver( $clock ),
 			new OrphanDetector( new StatusResolver( $clock ), $clock ),
-			new OverlapDetector( new StatusResolver( $clock ), new ScopeIndex() )
+			new OverlapDetector( new StatusResolver( $clock ), new ScopeIndex() ),
+			new ConfigurationAuditor(),
+			new InMemoryCatalogRepository()
 		);
 	}
 
@@ -227,7 +231,9 @@ final class InventoryServiceTest extends TestCase {
 			$repository,
 			new StatusResolver( $clock ),
 			new OrphanDetector( new StatusResolver( $clock ), $clock ),
-			new OverlapDetector( new StatusResolver( $clock ), new ScopeIndex() )
+			new OverlapDetector( new StatusResolver( $clock ), new ScopeIndex() ),
+			new ConfigurationAuditor(),
+			new InMemoryCatalogRepository()
 		);
 
 		$service->build();

@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace DFX\CouponAAW\Providers;
 
 use DFX\CouponAAW\Admin\AssetLoader;
+use DFX\CouponAAW\Admin\CouponTermsFormatter;
 use DFX\CouponAAW\Admin\CouponEditorNotices;
 use DFX\CouponAAW\Admin\InventoryListTable;
 use DFX\CouponAAW\Admin\InventoryPage;
@@ -24,7 +25,9 @@ use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
 use DFX\CouponAAW\Domain\Coupon\StatusResolver;
 use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
 use DFX\CouponAAW\Repository\CouponRepositoryInterface;
+use DFX\CouponAAW\Catalog\CatalogRepositoryInterface;
 use DFX\CouponAAW\Cost\CostSourceRegistry;
+use DFX\CouponAAW\Domain\Coupon\ConfigurationAuditor;
 use DFX\CouponAAW\Install\Aggregator;
 use DFX\CouponAAW\Licensing\FeatureGateInterface;
 use DFX\CouponAAW\Licensing\LocalFeatureGate;
@@ -55,13 +58,22 @@ final class AdminServiceProvider implements ServiceProviderInterface {
 				$c->get( CouponRepositoryInterface::class ),
 				$c->get( StatusResolver::class ),
 				$c->get( OrphanDetector::class ),
-				$c->get( OverlapDetector::class )
+				$c->get( OverlapDetector::class ),
+				$c->get( ConfigurationAuditor::class ),
+				$c->get( CatalogRepositoryInterface::class )
+			)
+		);
+
+		$container->bind(
+			CouponTermsFormatter::class,
+			static fn ( ContainerInterface $c ): CouponTermsFormatter => new CouponTermsFormatter(
+				$c->get( CatalogRepositoryInterface::class )
 			)
 		);
 
 		$container->bind(
 			InventoryListTable::class,
-			static function (): InventoryListTable {
+			static function ( ContainerInterface $c ): InventoryListTable {
 				// WP_List_Table lives in wp-admin and is not autoloaded. Requiring
 				// it here rather than at the top of the class file means the class
 				// is only ever resolved on a screen that has already loaded it.
@@ -69,7 +81,7 @@ final class AdminServiceProvider implements ServiceProviderInterface {
 					require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 				}
 
-				return new InventoryListTable();
+				return new InventoryListTable( $c->get( CouponTermsFormatter::class ) );
 			}
 		);
 

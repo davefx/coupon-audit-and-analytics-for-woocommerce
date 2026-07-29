@@ -9,9 +9,13 @@ declare( strict_types=1 );
 
 namespace DFX\CouponAAW\Service;
 
+use DFX\CouponAAW\Catalog\CatalogRepositoryInterface;
+use DFX\CouponAAW\Domain\Coupon\ConfigurationAuditor;
 use DFX\CouponAAW\Domain\Coupon\OrphanDetector;
 use DFX\CouponAAW\Domain\Coupon\StatusResolver;
+use DFX\CouponAAW\Domain\Coupon\CouponSnapshot;
 use DFX\CouponAAW\Domain\Overlap\Overlap;
+use DFX\CouponAAW\Domain\Profit\Money;
 use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
 use DFX\CouponAAW\Repository\CouponRepositoryInterface;
 
@@ -27,16 +31,20 @@ final class InventoryService {
 	/**
 	 * Constructor.
 	 *
-	 * @param CouponRepositoryInterface $coupons  Source of coupons.
-	 * @param StatusResolver            $status   Resolves each coupon's status.
-	 * @param OrphanDetector            $orphans  Judges each coupon against the rest.
-	 * @param OverlapDetector           $overlaps Finds colliding pairs.
+	 * @param CouponRepositoryInterface  $coupons  Source of coupons.
+	 * @param StatusResolver             $status   Resolves each coupon's status.
+	 * @param OrphanDetector             $orphans  Judges each coupon against the rest.
+	 * @param OverlapDetector            $overlaps Finds colliding pairs.
+	 * @param ConfigurationAuditor       $auditor  Checks each coupon's own terms.
+	 * @param CatalogRepositoryInterface $catalog  Supplies the cheapest reachable price.
 	 */
 	public function __construct(
 		private readonly CouponRepositoryInterface $coupons,
 		private readonly StatusResolver $status,
 		private readonly OrphanDetector $orphans,
-		private readonly OverlapDetector $overlaps
+		private readonly OverlapDetector $overlaps,
+		private readonly ConfigurationAuditor $auditor,
+		private readonly CatalogRepositoryInterface $catalog
 	) {}
 
 	/**
@@ -62,11 +70,30 @@ final class InventoryService {
 				$coupon,
 				$this->status->resolve( $coupon ),
 				$this->orphans->reasons( $coupon, $coupons ),
-				$by_coupon[ $coupon->id->value ] ?? array()
+				$by_coupon[ $coupon->id->value ] ?? array(),
+				$this->auditor->issues( $coupon, $this->cheapest_for( $coupon ) )
 			);
 		}
 
 		return new Inventory( $entries, $overlaps );
+	}
+
+	/**
+	 * The cheapest thing a coupon can be applied to, asked once per coupon and
+	 * only where the answer can change the result.
+	 *
+	 * A percentage discount cannot exceed what it is applied to, so there is
+	 * nothing the catalogue could say that would matter — and skipping the query
+	 * for the commonest kind of coupon keeps a large inventory affordable.
+	 *
+	 * @param CouponSnapshot $coupon The coupon.
+	 */
+	private function cheapest_for( CouponSnapshot $coupon ): ?Money {
+		if ( ! $coupon->terms->amount->is_fixed() ) {
+			return null;
+		}
+
+		return $this->catalog->cheapest_in_scope( $coupon->scope );
 	}
 
 	/**
