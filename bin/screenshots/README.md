@@ -1,60 +1,77 @@
 # Regenerating the screenshots
 
 `readme.txt` promises four screenshots, and they go stale: a changed column, a
-reworded notice, a new finding. These scripts rebuild them from nothing, so
-"take the screenshots again" is a command rather than an afternoon.
-
-They deliberately do **not** touch any existing site. A disposable WordPress is
-installed against a throwaway MySQL container, seeded with a shop that exercises
-every finding and all three cost-coverage states, and the plugin under test is
-the built distribution rather than the working tree — the pictures should show
-what a user installs.
+reworded notice, a new finding. A stale screenshot is worse than none — it
+advertises behaviour the plugin no longer has.
 
 ```bash
-docker run -d --name dfxcaaw-shots -e MYSQL_ROOT_PASSWORD=root \
-	-e MYSQL_DATABASE=shots -p 3308:3306 mysql:8.0
-
-mkdir -p /tmp/shots/wp && cd /tmp/shots/wp
-wp core download
-wp config create --dbname=shots --dbuser=root --dbpass=root --dbhost=127.0.0.1:3308
-wp core install --url=http://127.0.0.1:8088 --title="Demo Shop" \
-	--admin_user=demo --admin_password=demo --admin_email=demo@example.test --skip-email
-wp plugin install woocommerce --activate
-wp option update woocommerce_currency EUR
-wp option update woocommerce_feature_cost_of_goods_sold_enabled yes
-
-# The distribution build, not the repository.
-composer run dist
-cp -r build/coupon-audit-and-analytics-for-woocommerce wp-content/plugins/
-wp plugin activate coupon-audit-and-analytics-for-woocommerce
-
-wp eval-file bin/screenshots/seed.php
-wp eval-file bin/screenshots/seed2.php
-wp server --host=127.0.0.1 --port=8088 &
-
-# --no-save keeps a package.json and a lock file out of the repository, which
-# does not otherwise have either.
-npm install --no-save --no-package-lock puppeteer-core
-node bin/screenshots/shoot.js  .wordpress-org   # screens 1, 2 and 4
-node bin/screenshots/shoot3.js .wordpress-org   # the coupon editor
+composer run screenshots
 ```
 
-`wp-cli` resets its working directory between invocations in some shells, so pass
-`--path=` to the demo install rather than relying on a `cd`.
+Three minutes, and the four PNGs in `.wordpress-org/` are rebuilt. **Look at them
+before committing**: the script checks that they were written, not that they show
+what you meant.
 
-`shoot3.js` finds its coupon by code, from the coupon list. It used to take an ID
-in a file, which nothing wrote — so the step existed only in whoever had done it
-last. Anything these scripts need, they now find.
+It touches no existing site. A disposable WordPress is installed against a
+throwaway MySQL container, seeded with a shop that exercises every finding and all
+three cost-coverage states, photographed, and then removed again — including when
+it fails partway. The plugin it installs is the **built distribution**, not the
+working tree: the pictures should show what a user installs.
 
-Three things about the images themselves. They are captured at a 2x device pixel
-ratio, because the plugin directory renders them on displays that will otherwise
-show blurred text. The coupon editor is shot with WordPress's own menu
-collapsed rather than hidden: hiding it entirely widens the two-column layout
-past the viewport and clips the Publish box off the right edge. And the audit
-screen is shot wider than the others, because Findings is its last column and the
-default width cuts the labels off — the one thing a reader is looking for.
+Needs `docker`, `wp`, `node`, `npm` and a Chrome. Set `CHROME` if yours is not at
+`/usr/bin/google-chrome`. `puppeteer-core` is installed with `--no-save`, because
+this repository has neither a `package.json` nor a lock file and a screenshot run
+is no reason to give it one; if the script installed it, the script removes it.
 
-`seed2.php` exists separately because the third cost-coverage state — a coupon
-whose orders carry no cost at all — needs an unrestricted coupon applied to a
-basket of products that have no cost recorded. It is easier to add afterwards
-than to weave into the first pass.
+## What is in here
+
+| File | |
+|---|---|
+| `regenerate.sh` | The whole thing. Owns the container, the demo shop and the server, and clears up after itself. |
+| `seed.php` | Products, orders and nine coupons covering every status and finding. |
+| `seed2.php` | The third cost-coverage state, added afterwards — see below. |
+| `shoot.js` | Screenshots 1, 2 and 4: audit, margin, settings. |
+| `shoot3.js` | Screenshot 3: the warnings on the coupon edit screen. |
+
+`seed2.php` is separate because the third cost-coverage state — a coupon whose
+orders carry no cost at all — needs an unrestricted coupon applied to a basket of
+products that have no cost recorded. It is easier to add afterwards than to weave
+into the first pass.
+
+## Things that were learned the hard way
+
+None of these announces itself, and each one looks like a different problem.
+
+**The MySQL image answers a ping while it is still initialising.** WordPress then
+connects to a server that closes the socket mid-greeting, which reports as "MySQL
+server has gone away" and looks like anything except a container that is not ready
+yet. Readiness is therefore a real query, not a ping.
+
+**`wp server` is a wrapper around `php -S`.** Killing the pid you started leaves
+the PHP process holding the port, so the next run cannot serve the site it just
+built. The server is started with `setsid` and the whole process group is killed.
+
+**The audit screen is captured wider than the others.** Findings is its last
+column, and at the default width the labels are clipped off the right edge — the
+one thing a reader of that screenshot is looking for.
+
+**The coupon editor is shot with WordPress's own menu collapsed, not hidden.**
+Hiding it widens the two-column layout past the viewport and clips the Publish box
+away.
+
+**`shoot3.js` finds its coupon by code.** It used to read an ID from a file that
+nothing wrote, so that step existed only in whoever had done it last.
+
+**Images are captured at a 2x device pixel ratio**, because the plugin directory
+renders them on displays that would otherwise show blurred text.
+
+## When they change
+
+Screenshots 1, 2 and 4 are reproducible: an unchanged plugin gives byte-identical
+files. Screenshot 3 always differs, because the coupon editor prints the moment
+the demo coupon was published. A diff limited to `screenshot-3.png` means nothing
+changed.
+
+Twice now, regenerating these has found a real bug — the coupon terms columns in
+0.2.0, and an absent spend limit read as zero in 0.2.1. Looking at the pictures is
+part of the job, not a formality.

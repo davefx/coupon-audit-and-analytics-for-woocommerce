@@ -16,6 +16,7 @@ composer run check            # lint + PHP 7 boundary check + PHPStan + unit tes
 composer run test:unit        # pure domain, no WordPress, no database (~0.5s)
 composer run test:integration # real WordPress + WooCommerce + database
 composer run lint:fix         # PHPCBF auto-fixes
+composer run screenshots      # rebuild the readme screenshots (~3 min, needs docker)
 ```
 
 Run `composer run check` before every commit. It is what CI runs, minus the
@@ -187,6 +188,14 @@ folder name. Plugin Check currently reports **nothing** across every category. K
 way. [docs/PLUGIN-CHECK.md](docs/PLUGIN-CHECK.md) records what that cost —
 exception messages carry no interpolated values, because the escaping sniff
 rejects any variable reaching an exception constructor.
+
+**Regenerate the screenshots when a screen changes**, with `composer run
+screenshots` — it builds a throwaway shop, photographs it and removes it, in about
+three minutes. Then *look at the pictures*. Twice now they have shown a defect that
+no test had thought to ask about: the terms columns in 0.2.0, and an absent spend
+limit read as zero in 0.2.1. A diff touching only `screenshot-3.png` means nothing
+changed, since the coupon editor prints the moment the demo coupon was published.
+[bin/screenshots/README.md](bin/screenshots/README.md) has the traps.
 
 ## Ask the database once, not once per coupon
 

@@ -59,7 +59,8 @@
 			"@analyse",
 			"@test:unit"
 		],
-		"dist": "bash bin/build-dist.sh"
+		"dist": "bash bin/build-dist.sh",
+		"screenshots": "bash bin/screenshots/regenerate.sh"
 	},
 	"scripts-descriptions": {
 		"test": "Run the full PHPUnit suite.",
@@ -69,6 +70,7 @@
 		"lint:fix": "Auto-fix coding standard violations with PHPCBF.",
 		"analyse": "Run PHPStan static analysis at level 8.",
 		"check": "Run coding standards, static analysis and unit tests.",
-		"dist": "Build the distributable zip for WordPress.org."
+		"dist": "Build the distributable zip for WordPress.org.",
+		"screenshots": "Rebuild the readme screenshots from a throwaway demo shop."
 	}
 }
