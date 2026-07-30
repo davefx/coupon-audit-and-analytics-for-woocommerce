@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, analytics, discounts, profit
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.2.0
+Stable tag: 0.2.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -120,6 +120,13 @@ No. The plugin makes no external requests.
 
 == Changelog ==
 
+= 0.2.1 =
+* Fixed the basket column, which read "0.00 to 0.00" against every coupon that
+  has no spend limits. It now says "any", which is what it means.
+* Fixed a warning that never appeared: a fixed discount with no minimum spend
+  was not reported, because every coupon looked as though it required a basket
+  of at least zero.
+
 = 0.2.0 =
 * The overview now shows what each coupon actually is: the discount, the basket
   it requires, free shipping, individual use, and the usage caps per customer
@@ -145,6 +152,10 @@ No. The plugin makes no external requests.
   30-day gross margin.
 
 == Upgrade Notice ==
+
+= 0.2.1 =
+Fixes the basket column, and a warning about fixed discounts with no minimum
+spend that never appeared.
 
 = 0.2.0 =
 Adds the coupon terms to the overview, names what each coupon applies to, and
