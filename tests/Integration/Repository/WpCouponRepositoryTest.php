@@ -392,6 +392,59 @@ final class WpCouponRepositoryTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * A coupon with no spend limits reports none.
+	 *
+	 * WooCommerce stores an unset limit as an empty string but hands it back as
+	 * the string "0", so a mapping that only guards against emptiness produces a
+	 * limit of nothing-at-all. It reads on screen as "€0.00 to €0.00" — a basket
+	 * that must total exactly zero — against almost every coupon in a shop.
+	 */
+	public function test_a_coupon_without_spend_limits_reports_none(): void {
+		$id = $this->create_coupon( array( 'code' => 'nolimits' ) );
+
+		$coupon = $this->repository->find( new CouponId( $id ) );
+
+		$this->assertNotNull( $coupon );
+		$this->assertNull( $coupon->terms->minimum_spend, 'A minimum of zero is no minimum: no basket totals less.' );
+		$this->assertNull( $coupon->terms->maximum_spend, 'A maximum of zero would admit no basket at all.' );
+	}
+
+	/**
+	 * A real minimum survives the mapping.
+	 */
+	public function test_a_minimum_spend_is_mapped(): void {
+		$id = $this->create_coupon( array( 'code' => 'minspend' ) );
+
+		$coupon = new WC_Coupon( $id );
+		$coupon->set_minimum_amount( '25.50' );
+		$coupon->save();
+
+		$mapped = $this->repository->find( new CouponId( $id ) );
+
+		$this->assertNotNull( $mapped );
+		$this->assertSame( 2550, $mapped->terms->minimum_spend?->amount );
+		$this->assertNull( $mapped->terms->maximum_spend );
+	}
+
+	/**
+	 * And so does a range.
+	 */
+	public function test_both_spend_limits_are_mapped(): void {
+		$id = $this->create_coupon( array( 'code' => 'spendrange' ) );
+
+		$coupon = new WC_Coupon( $id );
+		$coupon->set_minimum_amount( '10' );
+		$coupon->set_maximum_amount( '200' );
+		$coupon->save();
+
+		$mapped = $this->repository->find( new CouponId( $id ) );
+
+		$this->assertNotNull( $mapped );
+		$this->assertSame( 1000, $mapped->terms->minimum_spend?->amount );
+		$this->assertSame( 20000, $mapped->terms->maximum_spend?->amount );
+	}
+
+	/**
 	 * Create a coupon through WooCommerce's own API, so the stored shape is
 	 * whatever WooCommerce actually writes rather than what we assume.
 	 *

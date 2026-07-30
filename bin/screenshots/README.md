@@ -32,16 +32,27 @@ wp eval-file bin/screenshots/seed.php
 wp eval-file bin/screenshots/seed2.php
 wp server --host=127.0.0.1 --port=8088 &
 
-npm install puppeteer-core
+# --no-save keeps a package.json and a lock file out of the repository, which
+# does not otherwise have either.
+npm install --no-save --no-package-lock puppeteer-core
 node bin/screenshots/shoot.js  .wordpress-org   # screens 1, 2 and 4
 node bin/screenshots/shoot3.js .wordpress-org   # the coupon editor
 ```
 
-Two things about the images themselves. They are captured at a 2x device pixel
+`wp-cli` resets its working directory between invocations in some shells, so pass
+`--path=` to the demo install rather than relying on a `cd`.
+
+`shoot3.js` finds its coupon by code, from the coupon list. It used to take an ID
+in a file, which nothing wrote — so the step existed only in whoever had done it
+last. Anything these scripts need, they now find.
+
+Three things about the images themselves. They are captured at a 2x device pixel
 ratio, because the plugin directory renders them on displays that will otherwise
-show blurred text. And the coupon editor is shot with WordPress's own menu
+show blurred text. The coupon editor is shot with WordPress's own menu
 collapsed rather than hidden: hiding it entirely widens the two-column layout
-past the viewport and clips the Publish box off the right edge.
+past the viewport and clips the Publish box off the right edge. And the audit
+screen is shot wider than the others, because Findings is its last column and the
+default width cuts the labels off — the one thing a reader is looking for.
 
 `seed2.php` exists separately because the third cost-coverage state — a coupon
 whose orders carry no cost at all — needs an unrestricted coupon applied to a

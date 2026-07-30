@@ -35,7 +35,7 @@ for ( $i = 1; $i <= 5; $i++ ) {
 	\Automattic\WooCommerce\Admin\API\Reports\Coupons\DataStore::sync_order_coupons( $order->get_id() );
 }
 
-$aggregation = \DFX\CouponAAW\Plugin::get_instance()->container()->get( \DFX\CouponAAW\Service\AggregationService::class );
+$aggregation = \DFX\CouponAAW\Plugin::get_instance()->container()->get( \DFX\CouponAAW\Service\AggregationInterface::class );
 for ( $d = 0; $d <= 10; $d++ ) {
 	$aggregation->aggregate_day( $now->modify( "-{$d} days" )->setTime( 0, 0 ) );
 }

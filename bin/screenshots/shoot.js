@@ -8,8 +8,11 @@ const OUT  = process.argv[2];
 // crisp on the plugin directory's retina rendering.
 const VIEWPORT = { width: 1500, height: 900, deviceScaleFactor: 2 };
 
+// The audit table is wider than the rest: eight columns, and Findings is the
+// last of them. At the default width its labels are clipped at the right edge,
+// which is the one column a reader is looking for.
 const SHOTS = [
-  { file: 'screenshot-1.png', url: '/wp-admin/admin.php?page=dfxcaaw-inventory', wait: '.dfxcaaw-summary' },
+  { file: 'screenshot-1.png', url: '/wp-admin/admin.php?page=dfxcaaw-inventory', wait: '.dfxcaaw-summary', width: 1800 },
   { file: 'screenshot-2.png', url: '/wp-admin/admin.php?page=dfxcaaw-margins',   wait: '.dfxcaaw-margins table' },
   { file: 'screenshot-4.png', url: '/wp-admin/admin.php?page=dfxcaaw-settings',  wait: '.dfxcaaw-settings form' },
 ];
@@ -44,6 +47,7 @@ const SHOTS = [
   `;
 
   for (const shot of SHOTS) {
+    await page.setViewport({ ...VIEWPORT, width: shot.width || VIEWPORT.width });
     await page.goto(`${BASE}${shot.url}`, { waitUntil: 'networkidle2' });
     await page.addStyleTag({ content: hideChrome });
     try { await page.waitForSelector(shot.wait, { timeout: 5000 }); } catch (e) { console.log(`  (selector ${shot.wait} not found)`); }

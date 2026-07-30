@@ -27,7 +27,5 @@ parameters:
 	# exclusion as a configuration error.
 	excludePaths:
 		- build (?)
-		# Screenshot tooling: throwaway scripts run against a demo shop.
-		- bin/screenshots
 
 	treatPhpDocTypesAsCertain: false

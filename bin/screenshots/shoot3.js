@@ -1,8 +1,14 @@
 const puppeteer = require('puppeteer-core');
-const fs = require('fs');
 
 const BASE = 'http://127.0.0.1:8088';
 const OUT  = process.argv[2];
+
+// The coupon the warnings are shown against: unrestricted, no expiry and no
+// usage limit, so it carries three of them at once. Found by its code rather
+// than by an ID passed in from outside — the ID changes every time the demo shop
+// is rebuilt, and a script that needs one handed to it is a script that does not
+// run on its own.
+const CODE = 'welcome10';
 
 (async () => {
   const browser = await puppeteer.launch({
@@ -19,8 +25,19 @@ const OUT  = process.argv[2];
   await page.type('#user_pass', 'demo');
   await Promise.all([ page.click('#wp-submit'), page.waitForNavigation({ waitUntil: 'networkidle2' }) ]);
 
-  const couponId = fs.readFileSync(`${OUT}/../coupon-id.txt`, 'utf8').trim();
-  await page.goto(`${BASE}/wp-admin/post.php?post=${couponId}&action=edit`, { waitUntil: 'networkidle2' });
+  await page.goto(`${BASE}/wp-admin/edit.php?post_type=shop_coupon`, { waitUntil: 'networkidle2' });
+
+  const editUrl = await page.evaluate((code) => {
+    const link = [...document.querySelectorAll('a.row-title')].find((a) => a.textContent.trim() === code);
+
+    return link ? link.href : null;
+  }, CODE);
+
+  if (!editUrl) {
+    throw new Error(`No coupon called ${CODE} in this shop — has the seed run?`);
+  }
+
+  await page.goto(editUrl, { waitUntil: 'networkidle2' });
 
   await page.addStyleTag({ content: `
     #wpadminbar { display: none !important; }

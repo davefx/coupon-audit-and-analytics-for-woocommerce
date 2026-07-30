@@ -355,7 +355,21 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 			return null;
 		}
 
-		return Money::from_decimal( (float) $amount, $this->currency(), $this->decimals );
+		$money = Money::from_decimal( (float) $amount, $this->currency(), $this->decimals );
+
+		/*
+		 * Zero means unset. WooCommerce stores an absent spend limit as an empty
+		 * string but hands it back as "0", so guarding against emptiness alone is
+		 * not enough — and it is not enough in a way that is easy to miss, because
+		 * the meta really is empty when you look at it.
+		 *
+		 * Reading zero as a limit is also wrong on its own terms: no basket totals
+		 * less than nothing, so a minimum of zero admits everything, and a maximum
+		 * of zero would admit nothing at all. Either way it is not a limit, and
+		 * rendering it as one puts "€0.00 to €0.00" against almost every coupon in
+		 * a shop.
+		 */
+		return $money->is_zero() ? null : $money;
 	}
 
 	/**
