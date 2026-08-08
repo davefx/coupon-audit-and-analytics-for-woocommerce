@@ -15,46 +15,48 @@ use DFX\CouponAAW\Domain\Coupon\CouponId;
 use DFX\CouponAAW\Domain\Profit\CouponDayStats;
 use DFX\CouponAAW\Domain\Profit\CouponMargin;
 use DFX\CouponAAW\Domain\Profit\Money;
-use DFX\CouponAAW\Licensing\Feature;
-use DFX\CouponAAW\Licensing\FeatureGateInterface;
 use DFX\CouponAAW\Repository\CouponRepositoryInterface;
 use DFX\CouponAAW\Repository\CouponStatsRepositoryInterface;
 
 /**
  * Sums the daily aggregates into per-coupon margins (§6.2).
  *
- * The window is capped at thirty days unless the store may see more. §11 asks
- * that the free limit be a natural consequence of the process rather than a
- * cosmetic filter, and it is: only the trailing thirty days are ever summed, so
- * there is no longer figure sitting behind a hidden flag.
+ * The window is thirty days, and only those thirty days are ever summed — there
+ * is no longer figure computed and then hidden. How many days it is comes in
+ * through the constructor, so this class has no opinion about where the number
+ * was decided and no way to be told a different one twice.
  */
 final class MarginService {
 
 	/**
-	 * The window the free tier covers.
+	 * How far back the margin screen looks unless something says otherwise.
+	 *
+	 * A default, not an allowance. `dfxcaaw_margin_window_days` changes it, and
+	 * anything may use that filter — a snippet in a theme, another plugin, a
+	 * reporting period chosen elsewhere.
 	 */
-	public const FREE_WINDOW_DAYS = 30;
+	public const WINDOW_DAYS = 30;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param CouponStatsRepositoryInterface $stats   Source of daily figures.
 	 * @param CouponRepositoryInterface      $coupons Supplies coupon codes.
-	 * @param ClockInterface                 $clock   Supplies today.
-	 * @param FeatureGateInterface           $gate    Decides how far back to look.
+	 * @param ClockInterface                 $clock       Supplies today.
+	 * @param int                            $window_days How far back to look.
 	 */
 	public function __construct(
 		private readonly CouponStatsRepositoryInterface $stats,
 		private readonly CouponRepositoryInterface $coupons,
 		private readonly ClockInterface $clock,
-		private readonly FeatureGateInterface $gate
+		private readonly int $window_days = self::WINDOW_DAYS
 	) {}
 
 	/**
-	 * How many days back the store may look.
+	 * How many days back the screen looks.
 	 */
 	public function window_days(): int {
-		return $this->gate->allows( Feature::FULL_HISTORY ) ? 365 : self::FREE_WINDOW_DAYS;
+		return $this->window_days;
 	}
 
 	/**

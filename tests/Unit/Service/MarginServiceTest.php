@@ -15,9 +15,6 @@ use DFX\CouponAAW\Domain\Coupon\CouponId;
 use DFX\CouponAAW\Domain\Profit\CostCoverage;
 use DFX\CouponAAW\Domain\Profit\CouponDayStats;
 use DFX\CouponAAW\Domain\Profit\Money;
-use DFX\CouponAAW\Licensing\Feature;
-use DFX\CouponAAW\Licensing\FeatureGateInterface;
-use DFX\CouponAAW\Licensing\LocalFeatureGate;
 use DFX\CouponAAW\Service\MarginService;
 use DFX\CouponAAW\Tests\Fixtures\CouponSnapshotBuilder;
 use DFX\CouponAAW\Tests\Fixtures\FrozenClock;
@@ -96,9 +93,9 @@ final class MarginServiceTest extends TestCase {
 	/**
 	 * Build the service, with a clock at 2026-07-28.
 	 *
-	 * @param FeatureGateInterface|null $gate The gate to use.
+	 * @param int|null $window_days How far back to look, or the default.
 	 */
-	private function service( ?FeatureGateInterface $gate = null ): MarginService {
+	private function service( ?int $window_days = null ): MarginService {
 		return new MarginService(
 			$this->stats,
 			new InMemoryCouponRepository(
@@ -108,7 +105,7 @@ final class MarginServiceTest extends TestCase {
 				)
 			),
 			FrozenClock::at( '2026-07-28' ),
-			$gate ?? new LocalFeatureGate()
+			$window_days ?? MarginService::WINDOW_DAYS
 		);
 	}
 
@@ -159,26 +156,24 @@ final class MarginServiceTest extends TestCase {
 	}
 
 	/**
-	 * A licensed store looks back further, through the same code path.
+	 * A wider window looks back further, through the same code path.
+	 *
+	 * The window is a number this class is handed, so widening it is not a
+	 * separate branch that could rot — it is the same summing over more days.
 	 */
-	public function test_a_licensed_store_sees_more_history(): void {
-		$gate = new class() implements FeatureGateInterface {
-
-			/**
-			 * Allow everything.
-			 *
-			 * @param Feature $feature The feature in question.
-			 */
-			public function allows( Feature $feature ): bool {
-				return true;
-			}
-		};
-
+	public function test_a_wider_window_sees_more_history(): void {
 		$this->store( '2026-07-28', 1, 5000, 1000, 1, 1 );
 		$this->store( '2026-06-01', 1, 90000, 1000, 1, 1 );
 
-		$this->assertSame( 365, $this->service( $gate )->window_days() );
-		$this->assertSame( 95000, $this->service( $gate )->margins()[0]->net_revenue->amount );
+		$this->assertSame( 365, $this->service( 365 )->window_days() );
+		$this->assertSame( 95000, $this->service( 365 )->margins()[0]->net_revenue->amount );
+	}
+
+	/**
+	 * The default window is thirty days, and the day before it is outside.
+	 */
+	public function test_the_default_window_is_thirty_days(): void {
+		$this->assertSame( 30, $this->service()->window_days() );
 	}
 
 	/**

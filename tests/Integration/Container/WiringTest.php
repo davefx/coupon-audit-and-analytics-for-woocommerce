@@ -27,7 +27,6 @@ use DFX\CouponAAW\Domain\Overlap\OverlapDetector;
 use DFX\CouponAAW\Install\Aggregator;
 use DFX\CouponAAW\Install\SchemaMigrator;
 use DFX\CouponAAW\Integration\IntegrationRegistry;
-use DFX\CouponAAW\Licensing\FeatureGateInterface;
 use DFX\CouponAAW\Plugin;
 use DFX\CouponAAW\Repository\CouponRepositoryInterface;
 use DFX\CouponAAW\Repository\CouponStatsRepositoryInterface;
@@ -78,7 +77,6 @@ final class WiringTest extends WP_UnitTestCase {
 			InventoryService::class,
 			MarginService::class,
 			PrePublishValidator::class,
-			FeatureGateInterface::class,
 			CouponTermsFormatter::class,
 			InventoryListTable::class,
 			MarginListTable::class,

@@ -3,7 +3,7 @@
  * Plugin Name:          Coupon Audit and Analytics for WooCommerce
  * Plugin URI:           https://github.com/davefx/coupon-audit-and-analytics-for-woocommerce
  * Description:          Audits your coupon inventory — what is live, what it really applies to, what overlaps — and measures what each coupon actually earns.
- * Version:              0.2.1
+ * Version:              0.3.0
  * Requires at least:    6.4
  * Requires PHP:         8.1
  * Requires Plugins:     woocommerce
@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
  * under src/ is free to use the full PHP 8.1 feature set.
  */
 
-define( 'DFXCAAW_VERSION', '0.2.1' );
+define( 'DFXCAAW_VERSION', '0.3.0' );
 define( 'DFXCAAW_FILE', __FILE__ );
 define( 'DFXCAAW_SLUG', 'coupon-audit-and-analytics-for-woocommerce' );
 define( 'DFXCAAW_MIN_PHP', '8.1' );

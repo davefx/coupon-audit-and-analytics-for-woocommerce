@@ -147,11 +147,6 @@ coupon-audit-and-analytics-for-woocommerce/
 │   ├── Rest/
 │   │   ├── InventoryController.php
 │   │   └── MarginController.php
-│   ├── Licensing/
-│   │   ├── FeatureGateInterface.php
-│   │   ├── LocalFeatureGate.php
-│   │   ├── FreemiusFeatureGate.php
-│   │   └── Feature.php                 # enum
 │   └── Install/
 │       ├── Activator.php
 │       └── SchemaMigrator.php
@@ -187,9 +182,18 @@ calculate nothing themselves.
 **Admin and REST** — Entry boundary. No logic: validate the request, delegate to a
 service, format the response.
 
-**Licensing** — Feature checks behind a dedicated interface. Business code asks
-`$gate->allows( Feature::HISTORY )` and never calls a licensing SDK directly. This
-allows both paths to be tested without loading any SDK.
+**Licensing (correction)** — There is no licensing layer, and the plugin
+distributed through the directory contains no feature gate. The original design
+put paid capabilities in the shipped code behind a `FeatureGateInterface` that
+answered "no" until a licence said otherwise; that is what the WordPress.org
+guidelines call locked functionality, and it is not permitted regardless of how
+cleanly it is abstracted.
+
+What replaces it is ordinary extensibility. The margin window is thirty days by
+default and `dfxcaaw_margin_window_days` changes it — a public filter, usable for
+free by anything, including a line in a theme's `functions.php`. Anything sold
+later is a separate plugin that *adds* code, not a key that switches on code
+already installed.
 
 ---
 
@@ -257,7 +261,6 @@ Each of these is always injected via interface, without exception:
 
 - **Time** → `ClockInterface`
 - **Database** → repository interfaces
-- **Licensing** → `FeatureGateInterface`
 - **Cost sources** → `CostSourceInterface`
 - **Options** → dedicated wrapper, never `get_option()` directly
 

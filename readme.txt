@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, analytics, discounts, profit
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.2.1
+Stable tag: 0.3.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -42,7 +42,8 @@ of you. They never block a save. You are told, and you decide.
 = The margin =
 
 For each coupon: revenue, what it gave away, the cost of the goods it moved, and
-the gross margin left over. Over the last 30 days.
+the gross margin left over. Over the last 30 days by default, which you can
+change with a filter — see the FAQ.
 
 This half needs cost data, and it is honest about not having it. WooCommerce's
 own cost-of-goods feature is off by default, so the plugin also reads the cost
@@ -107,6 +108,17 @@ never mixes them.
 It does not run on the storefront at all. Aggregation happens in the background
 through Action Scheduler, and the admin screens read precomputed figures.
 
+= Can I report on more than 30 days? =
+
+Yes. Thirty days is the default window, not a limit. Change it with the
+`dfxcaaw_margin_window_days` filter, from a snippet in your theme's
+functions.php or from another plugin:
+
+`add_filter( 'dfxcaaw_margin_window_days', function () { return 365; } );`
+
+The figures are aggregated daily and the backfill walks your whole order
+history, so a longer window has the data behind it.
+
 = Does it send my data anywhere? =
 
 No. The plugin makes no external requests.
@@ -119,6 +131,12 @@ No. The plugin makes no external requests.
 4. Settings: which cost-of-goods system to read, and whether uninstalling should take the data with it.
 
 == Changelog ==
+
+= 0.3.0 =
+* The margin window is now a documented filter, `dfxcaaw_margin_window_days`,
+  rather than a fixed cap. Thirty days remains the default; anything can change
+  it, including a snippet in your own theme.
+* Removed the internal feature-gate layer. Nothing in this plugin is withheld.
 
 = 0.2.1 =
 * Fixed the basket column, which read "0.00 to 0.00" against every coupon that
@@ -152,6 +170,9 @@ No. The plugin makes no external requests.
   30-day gross margin.
 
 == Upgrade Notice ==
+
+= 0.3.0 =
+The margin window is now filterable. Nothing else changes for existing installs.
 
 = 0.2.1 =
 Fixes the basket column, and a warning about fixed discounts with no minimum

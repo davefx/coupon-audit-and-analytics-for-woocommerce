@@ -225,9 +225,29 @@ listing three costs, and saving a coupon after listing must not duplicate its
 meta. If either starts failing, the screen has quietly gone back to one query per
 coupon — or worse.
 
+## Nothing in the directory version may be locked
+
+There is no licensing layer, and none may be added back. The plugin once carried
+a `FeatureGateInterface` that answered "no" to `FULL_HISTORY` until a licence said
+otherwise, capping the margin screen at thirty days while the code could do a
+year. WordPress.org calls that locked functionality and it is not permitted,
+however cleanly it is abstracted — the pre-review pended the submission over it.
+
+**Paid features are a separate plugin that adds code, never a key that switches
+on code already installed.** So: no `Feature` enum naming things a shop cannot
+have, no gate, no "free tier" in any comment, name or string. A constant named
+`FREE_WINDOW_DAYS` is the sort of thing that gets a submission pended.
+
+Where behaviour should be changeable, use a documented filter. Thirty days is the
+margin screen's *default*, and `dfxcaaw_margin_window_days` changes it — public,
+free to use, and documented in the readme's FAQ, which is what makes it an
+extension point rather than a paywall with a hook in it. The filter is applied in
+`AdminServiceProvider`, so `MarginService` keeps no opinion about WordPress and
+stays unit-testable; a window under a day is refused, because a filter is allowed
+to be wrong without taking the screen down.
+
 ## Where the build is
 
-Phase 1 is complete — all eleven milestones of §15. Phase 2 is the Freemius SDK
-and the paid features, and begins once the slug is approved. The swap is
-`LocalFeatureGate` for a licensed implementation of `FeatureGateInterface`, and
-touches nothing else.
+Phase 1 is complete — all eleven milestones of §15. Phase 2 is the paid features,
+and begins once the slug is approved. They ship as a separate plugin that hooks
+what is already here.
