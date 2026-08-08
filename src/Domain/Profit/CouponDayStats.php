@@ -16,8 +16,8 @@ use InvalidArgumentException;
 /**
  * A row of the aggregates table (§6.2): one coupon, one day, one currency.
  *
- * Every number the paid half of the product shows comes from here, so what this
- * refuses to compute matters as much as what it does.
+ * Every number the margin screen shows comes from here, so what this refuses to
+ * compute matters as much as what it does.
  */
 final class CouponDayStats {
 

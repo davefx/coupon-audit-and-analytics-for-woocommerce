@@ -15,8 +15,7 @@ use DFX\CouponAAW\Service\InventoryService;
 use DFX\CouponAAW\Service\InventorySummary;
 
 /**
- * The first screen this plugin ever shows, and the whole of its free tier's
- * audit half.
+ * The first screen this plugin ever shows, and the whole of the audit half.
  *
  * No logic lives here: it asks the service for the inventory, and formats it
  * (§5). The screen reads top-down as an answer to one question — what is live in
