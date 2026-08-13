@@ -52,6 +52,19 @@ if [ "$WP_VERSION" = "latest" ]; then
 	[ -n "$WP_VERSION" ] || { echo "Could not resolve the latest WordPress version." >&2; exit 1; }
 fi
 
+if [ "$WP_VERSION" = "rc" ]; then
+	log "Resolving the current WordPress release candidate"
+
+	# The beta channel offers the release under development, when there is one.
+	# Between releases it answers with the current stable instead, which is a
+	# fine thing to test against and not worth failing over.
+	WP_VERSION="$(
+		curl -fsSL "https://api.wordpress.org/core/version-check/1.7/?channel=beta" |
+			php -r '$d = json_decode( stream_get_contents( STDIN ), true ); echo $d["offers"][0]["current"] ?? "";'
+	)"
+	[ -n "$WP_VERSION" ] || { echo "Could not resolve the WordPress release candidate." >&2; exit 1; }
+fi
+
 # The plugin requires WordPress 6.4. An older test library will fail in ways
 # that point at PHPUnit rather than at the version, so refuse it here.
 WP_MAJOR_MINOR="$( printf '%s' "$WP_VERSION" | cut -d. -f1,2 )"
@@ -85,8 +98,20 @@ fi
 if [ ! -f "$WP_TESTS_DIR/includes/bootstrap.php" ]; then
 	log "Installing the WordPress test library into $WP_TESTS_DIR"
 	mkdir -p "$WP_TESTS_DIR"
-	curl -fsSL "https://github.com/WordPress/wordpress-develop/archive/refs/tags/${WP_VERSION}.tar.gz" \
+
+	# wordpress-develop tags final releases only. A release candidate — which is
+	# when testing against the next version actually matters — lives on the branch
+	# for its major.minor, so 7.1-RC3 is fetched from the "7.1" branch. The tag is
+	# tried first so a final release still comes from an immutable ref.
+	WP_DEVELOP_BRANCH="$( printf '%s' "$WP_VERSION" | cut -d- -f1 | cut -d. -f1,2 )"
+
+	if ! curl -fsSL "https://github.com/WordPress/wordpress-develop/archive/refs/tags/${WP_VERSION}.tar.gz" \
 		-o "$TMPDIR/wordpress-develop.tar.gz"
+	then
+		log "No tag ${WP_VERSION}; taking the test library from branch ${WP_DEVELOP_BRANCH}"
+		curl -fsSL "https://github.com/WordPress/wordpress-develop/archive/refs/heads/${WP_DEVELOP_BRANCH}.tar.gz" \
+			-o "$TMPDIR/wordpress-develop.tar.gz"
+	fi
 	mkdir -p "$TMPDIR/develop"
 	tar --strip-components=1 -zxf "$TMPDIR/wordpress-develop.tar.gz" -C "$TMPDIR/develop"
 

@@ -119,6 +119,22 @@ TABLE`. Such a table is fully usable but appears in neither `SHOW TABLES` nor
 `information_schema`, so "does this table exist" has to be asked by describing
 it. This cost an afternoon once; it will not announce itself.
 
+**`Tested up to` must name a version somebody actually tested against.** Pass a
+version to the installer to do it — `rc` resolves whatever release candidate
+WordPress is currently offering:
+
+```bash
+WP_TESTS_DIR=/tmp/wp-tests-rc WP_CORE_DIR=/tmp/wp-rc \
+	bin/install-wp-tests.sh wp_tests wp wp12345 localhost rc
+WP_TESTS_DIR=/tmp/wp-tests-rc WP_CORE_DIR=/tmp/wp-rc composer run test:integration
+```
+
+Separate directories, so the pinned environment survives alongside it. Note that
+`wordpress-develop` tags final releases only — a release candidate's test library
+comes from the branch for its major.minor, which the installer falls back to. CI
+runs this as a non-blocking job, because an RC is allowed to have bugs of its own
+and one must not redden a merge.
+
 **CI runs MySQL 8; a dev machine may well run MariaDB.** They disagree about
 integer display widths, zero-date defaults and more, so a schema change that
 passes locally can still fail CI. To check against MySQL before pushing:

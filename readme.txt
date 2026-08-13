@@ -2,9 +2,9 @@
 Contributors: davefx
 Tags: woocommerce, coupons, analytics, discounts, profit
 Requires at least: 6.4
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.3.0
+Stable tag: 0.3.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -132,6 +132,9 @@ No. The plugin makes no external requests.
 
 == Changelog ==
 
+= 0.3.1 =
+* Tested against WordPress 7.1 and WooCommerce 11. No code changes.
+
 = 0.3.0 =
 * The margin window is now a documented filter, `dfxcaaw_margin_window_days`,
   rather than a fixed cap. Thirty days remains the default; anything can change
@@ -170,6 +173,9 @@ No. The plugin makes no external requests.
   30-day gross margin.
 
 == Upgrade Notice ==
+
+= 0.3.1 =
+Compatibility only: tested against WordPress 7.1 and WooCommerce 11.
 
 = 0.3.0 =
 The margin window is now filterable. Nothing else changes for existing installs.
