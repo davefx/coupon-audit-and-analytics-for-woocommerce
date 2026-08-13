@@ -40,6 +40,8 @@ final class InventoryPageTest extends WP_UnitTestCase {
 	public function set_up(): void {
 		parent::set_up();
 
+		$_GET = array();
+
 		if ( ! class_exists( 'WP_List_Table' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 		}
@@ -352,5 +354,198 @@ final class InventoryPageTest extends WP_UnitTestCase {
 		);
 
 		$this->assertStringNotContainsString( 'Nothing needs attention', $html );
+	}
+
+	/**
+	 * Create a coupon of a given discount type.
+	 *
+	 * @param string      $code    The coupon code.
+	 * @param string      $type    WooCommerce's discount type slug.
+	 * @param string|null $expires Expiry date, or null for none.
+	 */
+	private function create_typed_coupon( string $code, string $type, ?string $expires = null ): int {
+		$coupon = new WC_Coupon();
+		$coupon->set_code( $code );
+		$coupon->set_discount_type( $type );
+		$coupon->set_amount( 10 );
+
+		if ( null !== $expires ) {
+			$coupon->set_date_expires( $expires );
+		}
+
+		return (int) $coupon->save();
+	}
+
+	/**
+	 * Render the screen as somebody allowed to see it.
+	 */
+	private function render_as_admin(): string {
+		$this->login_as( 'administrator' );
+
+		return $this->render();
+	}
+
+	/**
+	 * A store with one of each kind, to filter.
+	 */
+	private function seed_for_filtering(): void {
+		$this->create_typed_coupon( 'percentforever', 'percent' );
+		$this->create_typed_coupon( 'percentexpiring', 'percent', '2027-01-01' );
+		$this->create_typed_coupon( 'cartforever', 'fixed_cart' );
+		$this->create_typed_coupon( 'productexpiring', 'fixed_product', '2027-01-01' );
+	}
+
+	/**
+	 * Unfiltered, the screen shows the whole store.
+	 */
+	public function test_without_a_filter_every_coupon_is_listed(): void {
+		$this->seed_for_filtering();
+
+		$html = $this->render_as_admin();
+
+		foreach ( array( 'percentforever', 'percentexpiring', 'cartforever', 'productexpiring' ) as $code ) {
+			$this->assertStringContainsString( $code, $html );
+		}
+	}
+
+	/**
+	 * Filtering by discount type shows that type and no other.
+	 */
+	public function test_it_filters_by_discount_type(): void {
+		$this->seed_for_filtering();
+
+		$_GET['dfxcaaw_type'] = 'fixed_cart';
+
+		$html = $this->render_as_admin();
+
+		$this->assertStringContainsString( 'cartforever', $html );
+		$this->assertStringNotContainsString( 'percentforever', $html );
+		$this->assertStringNotContainsString( 'productexpiring', $html );
+	}
+
+	/**
+	 * Filtering by expiry finds the coupons nothing will ever turn off, which is
+	 * the finding a shop is most likely to act on.
+	 */
+	public function test_it_filters_to_coupons_that_never_expire(): void {
+		$this->seed_for_filtering();
+
+		$_GET['dfxcaaw_expiry'] = 'without';
+
+		$html = $this->render_as_admin();
+
+		$this->assertStringContainsString( 'percentforever', $html );
+		$this->assertStringContainsString( 'cartforever', $html );
+		$this->assertStringNotContainsString( 'percentexpiring', $html );
+	}
+
+	/**
+	 * And the other way round.
+	 */
+	public function test_it_filters_to_coupons_that_do_expire(): void {
+		$this->seed_for_filtering();
+
+		$_GET['dfxcaaw_expiry'] = 'with';
+
+		$html = $this->render_as_admin();
+
+		$this->assertStringContainsString( 'percentexpiring', $html );
+		$this->assertStringNotContainsString( 'percentforever', $html );
+	}
+
+	/**
+	 * Both at once narrows to coupons answering both.
+	 */
+	public function test_the_two_filters_combine(): void {
+		$this->seed_for_filtering();
+
+		$_GET['dfxcaaw_type']   = 'percent';
+		$_GET['dfxcaaw_expiry'] = 'without';
+
+		$html = $this->render_as_admin();
+
+		$this->assertStringContainsString( 'percentforever', $html );
+		$this->assertStringNotContainsString( 'percentexpiring', $html );
+		$this->assertStringNotContainsString( 'cartforever', $html );
+	}
+
+	/**
+	 * A discount type nobody offers is ignored rather than obeyed. A hand-edited
+	 * URL should not be able to empty the screen and leave a shop believing it
+	 * has no coupons.
+	 */
+	public function test_an_unknown_discount_type_is_ignored(): void {
+		$this->seed_for_filtering();
+
+		$_GET['dfxcaaw_type'] = 'not-a-real-type';
+
+		$html = $this->render_as_admin();
+
+		$this->assertStringContainsString( 'percentforever', $html );
+		$this->assertStringContainsString( 'cartforever', $html );
+	}
+
+	/**
+	 * The same for an expiry value that means nothing.
+	 */
+	public function test_an_unknown_expiry_value_is_ignored(): void {
+		$this->seed_for_filtering();
+
+		$_GET['dfxcaaw_expiry'] = 'perhaps';
+
+		$html = $this->render_as_admin();
+
+		$this->assertStringContainsString( 'percentforever', $html );
+		$this->assertStringContainsString( 'percentexpiring', $html );
+	}
+
+	/**
+	 * The screen offers the filters, with the current choice selected so that the
+	 * dropdown agrees with the table beneath it.
+	 */
+	public function test_it_offers_the_filters_and_remembers_the_choice(): void {
+		$this->seed_for_filtering();
+
+		$_GET['dfxcaaw_type'] = 'fixed_cart';
+
+		$html = $this->render_as_admin();
+
+		$this->assertStringContainsString( 'name="dfxcaaw_type"', $html );
+		$this->assertStringContainsString( 'name="dfxcaaw_expiry"', $html );
+		$this->assertStringContainsString( "value='fixed_cart' selected='selected'", $html );
+	}
+
+	/**
+	 * A filter that matches nothing says so, rather than repeating the message
+	 * for a store with no coupons at all — which would read as data loss.
+	 */
+	public function test_a_filter_matching_nothing_says_which(): void {
+		$this->create_typed_coupon( 'onlypercent', 'percent' );
+
+		$_GET['dfxcaaw_type'] = 'fixed_cart';
+
+		$html = $this->render_as_admin();
+
+		$this->assertStringContainsString( 'No coupons match', $html );
+		$this->assertStringNotContainsString( 'No coupons found', $html );
+	}
+
+	/**
+	 * The summary tiles describe the store, not the filtered view. A "needs
+	 * attention" count that moved as you filtered would answer a question nobody
+	 * asked.
+	 */
+	public function test_the_summary_still_describes_the_whole_store(): void {
+		$this->seed_for_filtering();
+
+		$_GET['dfxcaaw_type'] = 'fixed_cart';
+
+		$html = $this->render_as_admin();
+
+		$this->assertMatchesRegularExpression(
+			'/<span class="dfxcaaw-tile__value">4<\/span><span class="dfxcaaw-tile__label">Coupons/',
+			$html,
+			'The coupon count followed the filter instead of describing the store.'
+		);
 	}
 }

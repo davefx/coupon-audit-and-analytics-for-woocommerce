@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, analytics, discounts, profit
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.3.1
+Stable tag: 0.4.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -33,6 +33,10 @@ Works on day one, in every shop, with no setup and no cost data:
 
 Status is worked out when you look, never stored, so a coupon that expired
 overnight says so the next morning.
+
+Filter the list by discount type, or by whether a coupon expires at all — a shop
+with four hundred coupons cannot be read top to bottom, and "show me everything
+that never expires" is the question worth asking first.
 
 = The warning where it matters =
 
@@ -125,12 +129,17 @@ No. The plugin makes no external requests.
 
 == Screenshots ==
 
-1. The coupon audit: every coupon, its real status, what it applies to, and what is wrong with it — expired, exhausted, dormant, dead campaign, no expiry date, and overlapping.
+1. The coupon audit: every coupon, its real status, what it applies to, and what is wrong with it — expired, exhausted, dormant, dead campaign, no expiry date, and overlapping. Filter by discount type or by whether it expires.
 2. Per-coupon margin. Cost coverage is stated rather than assumed: one coupon's margin is exact, one is an estimate over half its lines, and one has no cost recorded at all and so shows no margin.
 3. Warnings on the coupon edit screen, against the coupon in front of you. They never block a save.
 4. Settings: which cost-of-goods system to read, and whether uninstalling should take the data with it.
 
 == Changelog ==
+
+= 0.4.0 =
+* Filter the audit by discount type, and by whether a coupon expires at all.
+  The summary tiles keep describing the whole store, so the counts do not move
+  as you narrow the list.
 
 = 0.3.1 =
 * Tested against WordPress 7.1 and WooCommerce 11. No code changes.
@@ -173,6 +182,9 @@ No. The plugin makes no external requests.
   30-day gross margin.
 
 == Upgrade Notice ==
+
+= 0.4.0 =
+Adds filtering to the coupon audit, by discount type and by expiry.
 
 = 0.3.1 =
 Compatibility only: tested against WordPress 7.1 and WooCommerce 11.

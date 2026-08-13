@@ -59,7 +59,11 @@ final class InventoryPage {
 
 		$inventory = $this->inventory->build();
 
-		$this->table->set_entries( $inventory->entries );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading a filter from the URL, not acting on a submission.
+		$filter = InventoryFilterRequest::from( $_GET );
+
+		$this->table->set_filter( $filter );
+		$this->table->set_entries( $inventory->matching( $filter ) );
 		$this->table->prepare_items();
 
 		echo '<div class="wrap dfxcaaw-inventory">';

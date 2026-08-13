@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace DFX\CouponAAW\Service;
 
 use DFX\CouponAAW\Domain\Coupon\CouponStatus;
+use DFX\CouponAAW\Domain\Coupon\CouponFilter;
 use DFX\CouponAAW\Domain\Overlap\Overlap;
 
 /**
@@ -44,6 +45,31 @@ final class Inventory {
 		public readonly ?array $overlaps = null
 	) {
 		$this->summary = self::summarise( $entries, $overlaps );
+	}
+
+	/**
+	 * The entries somebody is asking to see.
+	 *
+	 * The summary is not narrowed with them, and deliberately: the tiles describe
+	 * the store, and a "needs attention" count that changed as you filtered would
+	 * answer a question nobody asked. Filtering says what is on screen, not what
+	 * is true of the shop.
+	 *
+	 * @param CouponFilter $filter Which coupons to keep.
+	 *
+	 * @return list<InventoryEntry>
+	 */
+	public function matching( CouponFilter $filter ): array {
+		if ( $filter->is_empty() ) {
+			return $this->entries;
+		}
+
+		return array_values(
+			array_filter(
+				$this->entries,
+				static fn ( InventoryEntry $entry ): bool => $filter->matches( $entry->coupon )
+			)
+		);
 	}
 
 	/**

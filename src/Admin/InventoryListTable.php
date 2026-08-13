@@ -11,6 +11,7 @@ namespace DFX\CouponAAW\Admin;
 
 use DFX\CouponAAW\Domain\Coupon\CouponStatus;
 use DFX\CouponAAW\Domain\Coupon\ConfigurationIssue;
+use DFX\CouponAAW\Domain\Coupon\CouponFilter;
 use DFX\CouponAAW\Domain\Coupon\OrphanReason;
 use DFX\CouponAAW\Domain\Overlap\OverlapSeverity;
 use DFX\CouponAAW\Service\InventoryEntry;
@@ -42,8 +43,12 @@ final class InventoryListTable extends WP_List_Table {
 	 * Constructor.
 	 *
 	 * @param CouponTermsFormatter $formatter Puts terms and scope into words.
+	 * @param CouponFilter         $filter    Which coupons the rows were narrowed to.
 	 */
-	public function __construct( private readonly CouponTermsFormatter $formatter ) {
+	public function __construct(
+		private readonly CouponTermsFormatter $formatter,
+		private CouponFilter $filter = new CouponFilter()
+	) {
 		parent::__construct(
 			array(
 				'singular' => 'coupon',
@@ -110,6 +115,18 @@ final class InventoryListTable extends WP_List_Table {
 	}
 
 	/**
+	 * Tell the table which filter produced the entries it was given.
+	 *
+	 * It does not do the filtering — it is handed the result — but it draws the
+	 * controls and says what an empty table means, and both need to know.
+	 *
+	 * @param CouponFilter $filter The filter in force.
+	 */
+	public function set_filter( CouponFilter $filter ): void {
+		$this->filter = $filter;
+	}
+
+	/**
 	 * Build the rows for the current page.
 	 */
 	public function prepare_items(): void {
@@ -132,10 +149,91 @@ final class InventoryListTable extends WP_List_Table {
 	}
 
 	/**
-	 * Shown when the store has no coupons at all.
+	 * Shown when there is nothing to list.
+	 *
+	 * A filtered screen says so. Repeating "no coupons found" at somebody who has
+	 * just narrowed the view reads as though the coupons have gone.
 	 */
 	public function no_items(): void {
-		esc_html_e( 'No coupons found.', 'coupon-audit-and-analytics-for-woocommerce' );
+		if ( $this->filter->is_empty() ) {
+			esc_html_e( 'No coupons found.', 'coupon-audit-and-analytics-for-woocommerce' );
+
+			return;
+		}
+
+		esc_html_e( 'No coupons match these filters.', 'coupon-audit-and-analytics-for-woocommerce' );
+	}
+
+	/**
+	 * The filter controls, above the table.
+	 *
+	 * @param string $which Which end of the table this is.
+	 */
+	protected function extra_tablenav( $which ): void {
+		if ( 'top' !== $which ) {
+			return;
+		}
+
+		echo '<div class="alignleft actions">';
+
+		$this->render_select(
+			InventoryFilterRequest::TYPE_ARG,
+			__( 'All discount types', 'coupon-audit-and-analytics-for-woocommerce' ),
+			InventoryFilterRequest::discount_types(),
+			(string) $this->filter->discount_type
+		);
+
+		$this->render_select(
+			InventoryFilterRequest::EXPIRY_ARG,
+			__( 'Expiry: any', 'coupon-audit-and-analytics-for-woocommerce' ),
+			array(
+				InventoryFilterRequest::EXPIRY_WITH    => __( 'Expires', 'coupon-audit-and-analytics-for-woocommerce' ),
+				InventoryFilterRequest::EXPIRY_WITHOUT => __( 'Never expires', 'coupon-audit-and-analytics-for-woocommerce' ),
+			),
+			$this->expiry_choice()
+		);
+
+		submit_button( __( 'Filter', 'coupon-audit-and-analytics-for-woocommerce' ), '', 'filter_action', false );
+
+		echo '</div>';
+	}
+
+	/**
+	 * One filter dropdown.
+	 *
+	 * @param string                $name    The query argument it sets.
+	 * @param string                $any     The label for choosing nothing.
+	 * @param array<string, string> $options Value to label.
+	 * @param string                $current What is chosen now.
+	 */
+	private function render_select( string $name, string $any, array $options, string $current ): void {
+		printf( '<label class="screen-reader-text" for="%1$s">%2$s</label>', esc_attr( $name ), esc_html( $any ) );
+		printf( '<select name="%1$s" id="%1$s">', esc_attr( $name ) );
+		printf( '<option value="">%s</option>', esc_html( $any ) );
+
+		foreach ( $options as $value => $label ) {
+			printf(
+				'<option value=\'%1$s\'%2$s>%3$s</option>',
+				esc_attr( (string) $value ),
+				selected( (string) $value, $current, false ),
+				esc_html( (string) $label )
+			);
+		}
+
+		echo '</select>';
+	}
+
+	/**
+	 * The expiry choice as the query argument spells it.
+	 */
+	private function expiry_choice(): string {
+		if ( null === $this->filter->has_expiry ) {
+			return '';
+		}
+
+		return $this->filter->has_expiry
+			? InventoryFilterRequest::EXPIRY_WITH
+			: InventoryFilterRequest::EXPIRY_WITHOUT;
 	}
 
 	/**
