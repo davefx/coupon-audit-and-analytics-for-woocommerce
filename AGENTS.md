@@ -17,6 +17,7 @@ composer run test:unit        # pure domain, no WordPress, no database (~0.5s)
 composer run test:integration # real WordPress + WooCommerce + database
 composer run lint:fix         # PHPCBF auto-fixes
 composer run screenshots      # rebuild the readme screenshots (~3 min, needs docker)
+composer run assets           # render the wp.org banner and icon
 ```
 
 Run `composer run check` before every commit. It is what CI runs, minus the
@@ -212,6 +213,15 @@ no test had thought to ask about: the terms columns in 0.2.0, and an absent spen
 limit read as zero in 0.2.1. A diff touching only `screenshot-3.png` means nothing
 changed, since the coupon editor prints the moment the demo coupon was published.
 [bin/screenshots/README.md](bin/screenshots/README.md) has the traps.
+
+**The listing banner and icon are generated too**, from HTML in
+`bin/wporg-assets/`, so the palette stays the plugin's own and a change of wording
+is a diff. They are not shipped in the zip — wp.org reads them from `assets/` in
+SVN, and `.distignore` keeps `.wordpress-org` out of the build.
+[bin/wporg-assets/README.md](bin/wporg-assets/README.md) records why the small
+icon is reduced rather than rendered: headless Chrome will not paint into a window
+that small and hands back a tile of the background colour, which looks like a
+working file until it is opened.
 
 ## Ask the database once, not once per coupon
 

@@ -1,0 +1,47 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>icon</title>
+<style>
+	/*
+	 * Sized in viewport units so 256x256 and 128x128 come from one design.
+	 *
+	 * The icon is shown at 128px in search results and far smaller in the plugins
+	 * list, so it carries one idea and no words: a coupon, with the percent sign
+	 * that says what it is. The exclamation is what this plugin adds to a coupon,
+	 * and it is the only part that may be dropped if it stops reading — which is
+	 * why it sits alone in its own third of the ticket rather than overlapping.
+	 */
+	* { margin: 0; padding: 0; box-sizing: border-box; }
+
+	html, body {
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+	}
+
+	body {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #1d2327;
+	}
+
+	svg { display: block; width: 100vw; height: 100vh; }
+</style>
+
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+	<rect width="256" height="256" rx="54" fill="#1d2327"/>
+
+	<!-- The ticket, notched top and bottom so it reads as a coupon at 32px. -->
+	<path d="M52 74h152a10 10 0 0 1 10 10v18a26 26 0 0 0 0 52v18a10 10 0 0 1-10 10H52a10 10 0 0 1-10-10v-18a26 26 0 0 0 0-52V84a10 10 0 0 1 10-10Z"
+		fill="#dba617"/>
+
+	<!-- Per cent: the fastest way to say "discount" without a word. -->
+	<path d="M78 154 118 102" stroke="#1d2327" stroke-width="12" stroke-linecap="round"/>
+	<circle cx="82" cy="108" r="11" stroke="#1d2327" stroke-width="12"/>
+	<circle cx="114" cy="148" r="11" stroke="#1d2327" stroke-width="12"/>
+
+	<!-- What the audit adds. -->
+	<path d="M170 100v34" stroke="#1d2327" stroke-width="13" stroke-linecap="round"/>
+	<circle cx="170" cy="152" r="7.5" fill="#1d2327"/>
+</svg>

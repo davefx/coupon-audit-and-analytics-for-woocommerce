@@ -60,7 +60,8 @@
 			"@test:unit"
 		],
 		"dist": "bash bin/build-dist.sh",
-		"screenshots": "bash bin/screenshots/regenerate.sh"
+		"screenshots": "bash bin/screenshots/regenerate.sh",
+		"assets": "bash bin/wporg-assets/generate.sh"
 	},
 	"scripts-descriptions": {
 		"test": "Run the full PHPUnit suite.",
@@ -71,6 +72,7 @@
 		"analyse": "Run PHPStan static analysis at level 8.",
 		"check": "Run coding standards, static analysis and unit tests.",
 		"dist": "Build the distributable zip for WordPress.org.",
-		"screenshots": "Rebuild the readme screenshots from a throwaway demo shop."
+		"screenshots": "Rebuild the readme screenshots from a throwaway demo shop.",
+		"assets": "Render the WordPress.org banner and icon."
 	}
 }
