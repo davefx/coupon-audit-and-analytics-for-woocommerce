@@ -11,6 +11,7 @@
 /.phpcs-cache
 /coverage/
 /build/
+/.wporg-svn/
 
 /.wp-env.override.json
 

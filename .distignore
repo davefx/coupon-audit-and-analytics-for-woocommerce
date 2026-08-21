@@ -5,6 +5,7 @@
 # test harness, and shipping it enlarges the attack surface for no benefit.
 
 /.git
+/.wporg-svn
 /.github
 /.gitignore
 /.editorconfig

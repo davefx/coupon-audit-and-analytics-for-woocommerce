@@ -29,7 +29,11 @@ readonly SVN_URL="https://plugins.svn.wordpress.org/${SLUG}"
 
 readonly ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 readonly BUILD="${ROOT}/build"
-readonly WC="${BUILD}/svn"
+
+# Outside build/, which build-dist.sh wipes on every run. Kept between releases
+# so publishing does not re-download a trunk that grows with each version, and
+# ignored by git — it is a working copy of somebody else's repository.
+readonly WC="${ROOT}/.wporg-svn"
 readonly ASSETS="${ROOT}/.wordpress-org"
 
 COMMIT='no'
@@ -66,6 +70,9 @@ else
 	say "Checking out ${SVN_URL}"
 	# Only the top level to begin with: tags/ holds every past release and
 	# fetching all of them to publish one is a slow way to achieve nothing.
+	# trunk and assets in full; tags only as names. Every past release lives
+	# under tags/, and fetching all of them to publish one is a slow way to
+	# achieve nothing — and the tag is made on the server anyway.
 	svn checkout --quiet --depth immediates "${SVN_URL}" "${WC}"
 	svn update --quiet --set-depth infinity "${WC}/trunk" "${WC}/assets"
 fi
@@ -105,20 +112,32 @@ say 'Staging additions and deletions'
 ( cd "${WC}" && svn status | awk '/^\?/ { print $2 }' | xargs -r svn add --quiet --parents )
 ( cd "${WC}" && svn status | awk '/^!/  { print $2 }' | xargs -r svn delete --quiet )
 
-say "Creating tags/${VERSION}"
-svn copy --quiet "${WC}/trunk" "${WC}/tags/${VERSION}"
-
 # ---------------------------------------------------------------------------
 # What would happen.
 # ---------------------------------------------------------------------------
 
+# Read once, into memory, and sliced with bash rather than piped through head.
+# A pipe into head raises SIGPIPE the moment head has seen enough, and under
+# `set -o pipefail` that is a non-zero pipeline and the end of the script — which
+# looks exactly like a dry run that finished, and would have meant --commit never
+# reaching the commit at all.
+mapfile -t STATUS < <( cd "${WC}" && svn status )
+
+readonly SHOWN=30
+
 printf '\n'
 say 'Pending changes'
-( cd "${WC}" && svn status | sed 's/^/    /' | head -40 )
 
-CHANGES="$( cd "${WC}" && svn status | wc -l )"
+for line in "${STATUS[@]:0:${SHOWN}}"; do
+	printf '    %s\n' "${line}"
+done
+
+if (( ${#STATUS[@]} > SHOWN )); then
+	printf '    ... and %d more\n' "$(( ${#STATUS[@]} - SHOWN ))"
+fi
+
 printf '\n'
-say "${CHANGES} paths to commit"
+say "${#STATUS[@]} paths into trunk and assets, then tags/${VERSION} copied from trunk"
 
 if [[ "${COMMIT}" != 'yes' ]]; then
 	printf '\n'
@@ -131,11 +150,18 @@ fi
 # Publish.
 # ---------------------------------------------------------------------------
 
-say "Committing ${VERSION} to the plugin directory"
-
 SVN_ARGS=()
 [[ -n "${SVN_USERNAME:-}" ]] && SVN_ARGS+=( --username "${SVN_USERNAME}" )
 
+say "Committing trunk and assets"
 ( cd "${WC}" && svn commit "${SVN_ARGS[@]}" -m "Release ${VERSION}" )
+
+# Copied on the server rather than in the working copy. It is atomic, it costs
+# no local files, and it cannot go wrong the way a local copy can: `svn copy`
+# onto a directory that already exists copies *into* it, the way cp does, and
+# quietly produces tags/<version>/trunk/... — a tag nobody can install.
+say "Tagging ${VERSION}"
+svn copy "${SVN_ARGS[@]}" -m "Tag ${VERSION}" \
+	"${SVN_URL}/trunk" "${SVN_URL}/tags/${VERSION}"
 
 say "Done. https://wordpress.org/plugins/${SLUG} updates within a few minutes."

@@ -51,6 +51,13 @@ log "Installing runtime dependencies only"
 composer install --no-dev --no-interaction --optimize-autoloader --working-dir="$ROOT" --quiet
 rsync -a "${ROOT}/vendor/" "${TARGET}/vendor/"
 
+# Composer leaves an empty vendor/bin behind when a --no-dev install has no
+# binaries to link — sometimes, which is the awkward part: an empty directory in
+# a shipped plugin is merely pointless, but one that comes and goes makes every
+# SVN deploy differ from the last for no reason anybody can see. rmdir rather
+# than rm -rf, so that a real binary would survive this.
+rmdir "${TARGET}/vendor/bin" 2>/dev/null || true
+
 log "Restoring the development dependencies"
 composer install --no-interaction --working-dir="$ROOT" --quiet
 
