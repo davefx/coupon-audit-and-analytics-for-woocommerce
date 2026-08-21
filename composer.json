@@ -61,7 +61,8 @@
 		],
 		"dist": "bash bin/build-dist.sh",
 		"screenshots": "bash bin/screenshots/regenerate.sh",
-		"assets": "bash bin/wporg-assets/generate.sh"
+		"assets": "bash bin/wporg-assets/generate.sh",
+		"deploy": "bash bin/deploy-wporg.sh"
 	},
 	"scripts-descriptions": {
 		"test": "Run the full PHPUnit suite.",
@@ -73,6 +74,7 @@
 		"check": "Run coding standards, static analysis and unit tests.",
 		"dist": "Build the distributable zip for WordPress.org.",
 		"screenshots": "Rebuild the readme screenshots from a throwaway demo shop.",
-		"assets": "Render the WordPress.org banner and icon."
+		"assets": "Render the WordPress.org banner and icon.",
+		"deploy": "Show what publishing to WordPress.org would change; add -- --commit to publish."
 	}
 }

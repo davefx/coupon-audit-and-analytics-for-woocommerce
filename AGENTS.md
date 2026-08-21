@@ -18,6 +18,7 @@ composer run test:integration # real WordPress + WooCommerce + database
 composer run lint:fix         # PHPCBF auto-fixes
 composer run screenshots      # rebuild the readme screenshots (~3 min, needs docker)
 composer run assets           # render the wp.org banner and icon
+composer run deploy           # dry run of the wp.org release; -- --commit to publish
 ```
 
 Run `composer run check` before every commit. It is what CI runs, minus the
@@ -196,6 +197,17 @@ disagrees with it.
 
 Releases are tagged with the bare version number — `0.1.0`, not `v0.1.0` — so a
 git tag and the wp.org SVN tag for the same release are spelled the same way.
+
+**`composer run deploy` publishes to WordPress.org**, and commits nothing without
+`-- --commit`. SVN there is a release system, not somewhere to try things: what
+lands in trunk is what shops install, at once, and a tag once committed is never
+rewritten — the script refuses outright if `tags/<version>` already exists, so a
+correction means a new version. It puts the *built* tree in trunk, so what wp.org
+serves and what hangs off a GitHub release cannot drift apart, and the banner,
+icon and screenshots in `assets/`, which sits outside trunk and is not part of
+what anybody downloads. Credentials are never stored: SVN asks, or takes
+`SVN_USERNAME` from the environment. The SVN password is its own thing, set at
+profiles.wordpress.org, and is not the WordPress.org account password.
 
 **Run Plugin Check against the build, in a directory named exactly as the slug.**
 Checking the repository reports the test harness as a bundled application;
