@@ -198,8 +198,24 @@ disagrees with it.
 Releases are tagged with the bare version number — `0.1.0`, not `v0.1.0` — so a
 git tag and the wp.org SVN tag for the same release are spelled the same way.
 
-**`composer run deploy` publishes to WordPress.org**, and commits nothing without
-`-- --commit`. SVN there is a release system, not somewhere to try things: what
+**Publishing a GitHub release publishes the plugin.** `.github/workflows/deploy.yml`
+runs on `release: published` and nothing else — not a push, not a bare tag — and
+sends trunk, the tag and the listing assets to WordPress.org through
+`10up/action-wordpress-plugin-deploy`. It needs two repository secrets,
+`SVN_USERNAME` and `SVN_PASSWORD`; the SVN password is its own thing, set at
+profiles.wordpress.org, and is not the WordPress.org account password.
+
+Before it publishes, the workflow checks that the tag, the plugin header and the
+readme's `Stable tag` all say the same number. Two of those are checked on every
+build; only a release can check the third, and a release where they disagree
+publishes one version's code under another's. It then runs `composer run check`,
+because a red release cannot be taken back. `workflow_dispatch` offers a dry run,
+which is the only safe way to test a change to that file.
+
+**`composer run deploy` does the same thing from a workstation**, for when a
+release is not the right vehicle — a readme correction, a first publish, or
+finding out precisely what would change without pushing anything anywhere. It
+commits nothing without `-- --commit`. SVN there is a release system, not somewhere to try things: what
 lands in trunk is what shops install, at once, and a tag once committed is never
 rewritten — the script refuses outright if `tags/<version>` already exists, so a
 correction means a new version. It puts the *built* tree in trunk, so what wp.org

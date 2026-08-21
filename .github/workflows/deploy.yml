@@ -1,0 +1,93 @@
+name: Deploy to WordPress.org
+
+# Publishing a GitHub release publishes the plugin. Nothing else does — not a
+# push to main, not a tag on its own — because a release is a deliberate act and
+# SVN has no undo: what lands in trunk is what shops install, at once.
+on:
+  release:
+    types: [ published ]
+
+  # For trying it. The dry run does everything except commit, which is the only
+  # safe way to find out whether a change to this file works.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish, e.g. 0.4.0'
+        required: true
+      dry-run:
+        description: 'Prepare everything but commit nothing'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  # One deploy at a time. Two commits racing into the same trunk is not a thing
+  # SVN recovers from gracefully.
+  group: wporg-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Publish to the plugin directory
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mysqli, zip, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v4
+
+      # The version is decided in three places that must agree, and a release
+      # where they do not publishes one version's code under another's number.
+      # build-dist.sh already refuses when the header and the readme disagree;
+      # this adds the third, which only a release can check: the tag.
+      - name: Check the tag, the header and the readme agree
+        run: |
+          set -euo pipefail
+
+          slug='coupon-audit-and-analytics-for-woocommerce'
+          tag='${{ github.event.inputs.version || github.event.release.tag_name }}'
+          header="$( sed -n 's/^ \* Version: *\([0-9][^ ]*\).*/\1/p' "${slug}.php" | head -1 )"
+          stable="$( sed -n 's/^Stable tag: *\([0-9][^ ]*\).*/\1/p' readme.txt | head -1 )"
+
+          echo "tag=${tag}  header=${header}  stable tag=${stable}"
+
+          if [[ "${tag}" != "${header}" || "${tag}" != "${stable}" ]]; then
+            echo "::error::Tag ${tag}, header ${header} and Stable tag ${stable} must all match."
+            exit 1
+          fi
+
+      # A one-way publish deserves the same gate as a commit. The full CI run
+      # covers this commit too, but nothing enforces that it finished first, and
+      # a red release cannot be taken back.
+      - name: Lint, analyse and test
+        run: composer run check
+
+      # The directory that goes to trunk. Built rather than copied from the
+      # checkout, because the plugin ships its own autoloader and that means a
+      # --no-dev composer install, which .distignore alone cannot arrange.
+      - name: Build the distribution
+        run: composer run dist
+
+      - name: Deploy
+        uses: 10up/action-wordpress-plugin-deploy@stable
+        with:
+          dry-run: ${{ github.event.inputs.dry-run == 'true' }}
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          VERSION: ${{ github.event.inputs.version || github.event.release.tag_name }}
+          # The built tree, not the repository root. ASSETS_DIR is left alone:
+          # the action already looks in .wordpress-org, which is where the
+          # banner, icon and screenshots live.
+          BUILD_DIR: ./build/coupon-audit-and-analytics-for-woocommerce
