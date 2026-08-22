@@ -251,14 +251,18 @@ limit read as zero in 0.2.1. A diff touching only `screenshot-3.png` means nothi
 changed, since the coupon editor prints the moment the demo coupon was published.
 [bin/screenshots/README.md](bin/screenshots/README.md) has the traps.
 
-**The listing banner and icon are generated too**, from HTML in
-`bin/wporg-assets/`, so the palette stays the plugin's own and a change of wording
-is a diff. They are not shipped in the zip — wp.org reads them from `assets/` in
-SVN, and `.distignore` keeps `.wordpress-org` out of the build.
-[bin/wporg-assets/README.md](bin/wporg-assets/README.md) records why the small
-icon is reduced rather than rendered: headless Chrome will not paint into a window
-that small and hands back a tile of the background colour, which looks like a
-working file until it is opened.
+**The listing banner and icon are drawn as SVG** in `bin/wporg-assets/` and
+exported by Inkscape, so they can be edited in a drawing program and what Inkscape
+shows is what ships. `composer run assets` rebuilds them. They are not in the zip
+— wp.org reads them from `assets/` in SVN, and `.distignore` keeps
+`.wordpress-org` out of the build.
+
+The icon belongs to a family: it follows `random-user-ids` and
+`dfx-parish-retreat-letters`, and its palette is sampled from those two rather
+than invented. `icon.svg` inlines the maker's mark rather than referencing
+`dfx-mark.svg`, because wp.org serves that file on its own and a sibling
+reference would render as a hole.
+[bin/wporg-assets/README.md](bin/wporg-assets/README.md) has the rest.
 
 ## Ask the database once, not once per coupon
 
@@ -301,13 +305,23 @@ on code already installed.** So: no `Feature` enum naming things a shop cannot
 have, no gate, no "free tier" in any comment, name or string. A constant named
 `FREE_WINDOW_DAYS` is the sort of thing that gets a submission pended.
 
-Where behaviour should be changeable, use a documented filter. Thirty days is the
-margin screen's *default*, and `dfxcaaw_margin_window_days` changes it — public,
-free to use, and documented in the readme's FAQ, which is what makes it an
-extension point rather than a paywall with a hook in it. The filter is applied in
-`AdminServiceProvider`, so `MarginService` keeps no opinion about WordPress and
-stays unit-testable; a window under a day is refused, because a filter is allowed
-to be wrong without taking the screen down.
+Where behaviour should be changeable, use a filter. Thirty days is the margin
+screen's *default*, and `dfxcaaw_margin_window_days` changes it. The filter is
+applied in `AdminServiceProvider`, so `MarginService` keeps no opinion about
+WordPress and stays unit-testable; a window under a day is refused, because a
+filter is allowed to be wrong without taking the screen down.
+
+Its readme entry was removed deliberately, because a longer window is intended to
+be sold as an add-on. That is allowed — an undocumented hook is not a locked
+feature, the filter is still public and still free for anyone to call from their
+own `functions.php`, and thirty days is genuinely what this plugin does rather
+than a crippled version of what it could do. The line worth not crossing is the
+framing: an add-on that *adds* a capability is ordinary commerce, while a free
+plugin presented as limited pending payment is the trialware that got this
+submission pended once already, and "intentionally restricting included
+functionality" is on the approval email's list of things that get a plugin
+permanently removed. Do not reintroduce a gate, a `Feature` enum, or any string
+in the free plugin that advertises what paying would unlock.
 
 ## Where the build is
 
