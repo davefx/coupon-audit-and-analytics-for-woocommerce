@@ -205,6 +205,15 @@ sends trunk, the tag and the listing assets to WordPress.org through
 `SVN_USERNAME` and `SVN_PASSWORD`; the SVN password is its own thing, set at
 profiles.wordpress.org, and is not the WordPress.org account password.
 
+**The username is `DaveFX`, and the casing is load-bearing.** The profile URL
+says `profiles.wordpress.org/davefx/`, because those URLs are lowercased slugs —
+the account is not. Authentication accepts either, so the wrong case gets all the
+way past the login and is then refused by the pre-commit hook with `Access
+denied: user 'davefx' cannot modify:` followed by every path in the commit. That
+reads exactly like an account without commit rights, and it is not: it is a typo.
+The real spelling is in the author column of `svn log` on any repository the
+account has committed to.
+
 Before it publishes, the workflow checks that the tag, the plugin header and the
 readme's `Stable tag` all say the same number. Two of those are checked on every
 build; only a release can check the third, and a release where they disagree
