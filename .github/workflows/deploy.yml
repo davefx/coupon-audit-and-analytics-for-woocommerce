@@ -1,19 +1,20 @@
 name: Deploy to WordPress.org
 
-# Publishing a GitHub release publishes the plugin. Nothing else does — not a
-# push to main, not a tag on its own — because a release is a deliberate act and
-# SVN has no undo: what lands in trunk is what shops install, at once.
+# Pushing a version tag publishes the plugin. Nothing else does.
+#
+# That tag is pushed by the release workflow in the premium repository, which is
+# where this plugin's source lives — see .github/README.md. Everything in this
+# repository except this workflow is generated, so there is nothing here to
+# build and nothing here to test: the source was tested before the package was
+# built, and the package was verified after it was generated.
 on:
-  release:
-    types: [ published ]
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
 
-  # For trying it. The dry run does everything except commit, which is the only
-  # safe way to find out whether a change to this file works.
+  # For trying it against a tag that already exists. Commits nothing.
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to publish, e.g. 0.4.0'
-        required: true
       dry-run:
         description: 'Prepare everything but commit nothing'
         type: boolean
@@ -36,27 +37,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.1'
-          extensions: mysqli, zip, gd
-          coverage: none
-          tools: composer:v2
-
-      - name: Install dependencies
-        uses: ramsey/composer-install@v4
-
-      # The version is decided in three places that must agree, and a release
-      # where they do not publishes one version's code under another's number.
-      # build-dist.sh already refuses when the header and the readme disagree;
-      # this adds the third, which only a release can check: the tag.
+      # The tag, the plugin header and the readme's Stable tag must agree, or a
+      # release publishes one version's code under another version's number —
+      # silently, which is the worst way for that to happen. The generator
+      # upstream sets all three from one input, so this checks its work rather
+      # than a human's; it costs nothing and the alternative is finding out from
+      # a user.
       - name: Check the tag, the header and the readme agree
         run: |
           set -euo pipefail
 
           slug='coupon-audit-and-analytics-for-woocommerce'
-          tag='${{ github.event.inputs.version || github.event.release.tag_name }}'
+          tag='${{ github.ref_name }}'
           header="$( sed -n 's/^ \* Version: *\([0-9][^ ]*\).*/\1/p' "${slug}.php" | head -1 )"
           stable="$( sed -n 's/^Stable tag: *\([0-9][^ ]*\).*/\1/p' readme.txt | head -1 )"
 
@@ -67,18 +59,11 @@ jobs:
             exit 1
           fi
 
-      # A one-way publish deserves the same gate as a commit. The full CI run
-      # covers this commit too, but nothing enforces that it finished first, and
-      # a red release cannot be taken back.
-      - name: Lint, analyse and test
-        run: composer run check
-
-      # The directory that goes to trunk. Built rather than copied from the
-      # checkout, because the plugin ships its own autoloader and that means a
-      # --no-dev composer install, which .distignore alone cannot arrange.
-      - name: Build the distribution
-        run: composer run dist
-
+      # No build step. This repository is the built tree: its dependencies are
+      # already installed without the development ones and everything that does
+      # not ship has already been removed. BUILD_DIR is therefore left at the
+      # default, and so is ASSETS_DIR — the action already looks in
+      # .wordpress-org, which is where the banner, icon and screenshots live.
       - name: Deploy
         uses: 10up/action-wordpress-plugin-deploy@stable
         with:
@@ -86,8 +71,4 @@ jobs:
         env:
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
-          VERSION: ${{ github.event.inputs.version || github.event.release.tag_name }}
-          # The built tree, not the repository root. ASSETS_DIR is left alone:
-          # the action already looks in .wordpress-org, which is where the
-          # banner, icon and screenshots live.
-          BUILD_DIR: ./build/coupon-audit-and-analytics-for-woocommerce
+          VERSION: ${{ github.ref_name }}
