@@ -51,7 +51,7 @@
 		"test:integration": "phpunit -c phpunit-integration.xml.dist",
 		"lint": "phpcs",
 		"lint:fix": "phpcbf",
-		"lint:boundary": "phpcs --standard=PHPCompatibility --runtime-set testVersion 7.0- coupon-audit-and-analytics-for-woocommerce.php uninstall.php",
+		"lint:boundary": "phpcs --standard=PHPCompatibility --runtime-set testVersion 7.0- coupon-audit-and-analytics-for-woocommerce.php",
 		"analyse": "phpstan analyse",
 		"check": [
 			"@lint",
@@ -62,7 +62,9 @@
 		"dist": "bash bin/build-dist.sh",
 		"screenshots": "bash bin/screenshots/regenerate.sh",
 		"assets": "bash bin/wporg-assets/generate.sh",
-		"deploy": "bash bin/deploy-wporg.sh"
+		"deploy": "bash bin/deploy-wporg.sh",
+		"package": "bash bin/build-premium-package.sh",
+		"verify:free": "bash bin/verify-free-build.sh"
 	},
 	"scripts-descriptions": {
 		"test": "Run the full PHPUnit suite.",
@@ -71,6 +73,8 @@
 		"lint:boundary": "Verify the main file still parses on PHP 7, so its version guard can run.",
 		"lint:fix": "Auto-fix coding standard violations with PHPCBF.",
 		"analyse": "Run PHPStan static analysis at level 8.",
+		"package": "Build the premium zip that Freemius generates the free build from.",
+		"verify:free": "Check a Freemius free build: stripped, parses, and passes the suite.",
 		"check": "Run coding standards, static analysis and unit tests.",
 		"dist": "Build the distributable zip for WordPress.org.",
 		"screenshots": "Rebuild the readme screenshots from a throwaway demo shop.",

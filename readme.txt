@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, analytics, discounts, profit
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.4.1
+Stable tag: 0.5.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -65,10 +65,39 @@ Where cost is only partly known, the margin says so and states how much of it is
 real. Where no cost is known at all, no margin is shown. A wrong number in a
 financial dashboard destroys trust far faster than a missing number builds it.
 
+= The paid version =
+
+Coupon Audit and Analytics Premium is this plugin with more in it. It replaces
+this one rather than sitting beside it: installing the paid version deactivates
+the free one automatically, and your settings and the figures already gathered
+carry straight over.
+
+It is not a licence key that switches on something already sitting here. The
+paid features are not in this plugin at all — they ship in the paid build and
+nowhere else.
+
+* **A year of margin history.** The margin report covers 365 days.
+* **Export to CSV.** The audit with its findings, and the margin figures, as
+  they are on screen — whatever you have filtered the list down to.
+* **Net margin.** Gross margin less what it cost to take the money. The fee is
+  read from the gateway that actually charged it — Stripe, WooPayments and
+  PayPal are supported, and another can be added with a filter. Where no fee was
+  recorded, or where it was settled in a different currency from the order, the
+  figure says so instead of guessing: a confident wrong margin is worse than an
+  honest gap.
+
+What it costs, and how to get it: https://davefx.com/en/wordpress-plugins/coupon-audit-and-analytics-for-woocommerce/
+
 = What it does not do =
 
-No tracking. No external requests of any kind. No account. It reads your shop's
-own database and shows you what is in it.
+It does not track your shoppers, and it does not need an account to work. Your
+coupons, orders and customers never leave your server: every figure on every
+screen is computed from your own database, on your own machine.
+
+The plugin itself does talk to one outside service. It checks for updates, and
+it asks — once, and it takes no for an answer — whether you are willing to send
+diagnostics about the site. "Third Party Services" below says exactly what that
+covers.
 
 == Installation ==
 
@@ -118,7 +147,44 @@ through Action Scheduler, and the admin screens read precomputed figures.
 
 = Does it send my data anywhere? =
 
-No. The plugin makes no external requests.
+Your shop's data, no — not a coupon, not an order, not a customer. Everything
+the plugin reports is worked out on your own server and stays there.
+
+The plugin does contact one outside service, Freemius, to check for updates and
+to license the paid version. It also asks whether you are willing to send
+diagnostics about the site itself, such as its address and the version of
+WordPress it runs. It asks before sending anything, you can say no, and saying no
+changes nothing about how the plugin works. "Third Party Services" below lists
+every field.
+
+== Third Party Services ==
+
+This plugin uses Freemius for software licensing, updates and — only with your
+agreement — usage diagnostics. Freemius is operated by Freemius, Inc.
+
+* Terms of Use: https://freemius.com/terms/
+* Privacy Policy: https://freemius.com/privacy/
+
+= What is sent, and when =
+
+When the plugin is activated you are shown an opt-in screen. Nothing about you
+or your site is sent unless you accept it, the screen can be skipped, and the
+plugin works in full either way.
+
+If you opt in, Freemius receives:
+
+* your site's URL, name and language, and an anonymous site identifier
+* the name and email address of the WordPress user who opted in
+* the plugin's version, and whether it is the free or the paid build
+* whether the site is a local development install
+
+Separately from the opt-in, the plugin contacts freemius.com to check for plugin
+updates and, where the paid version is installed, to validate its licence key.
+
+= What is never sent =
+
+No coupon, order, customer or revenue data. Every figure this plugin reports is
+calculated on your own server, from your own database, and stays there.
 
 == Screenshots ==
 
@@ -128,6 +194,15 @@ No. The plugin makes no external requests.
 4. Settings: which cost-of-goods system to read, and whether uninstalling should take the data with it.
 
 == Changelog ==
+
+= 0.5.0 =
+* A paid version is now available: a year of margin history, CSV export, and
+  margin after payment fees. It replaces this plugin rather than sitting beside
+  it; see "The paid version" above.
+* The plugin now asks, once, whether you are willing to share diagnostics about
+  the site. You can decline and everything keeps working. "Third Party Services"
+  below says exactly what that covers.
+* No change to what any screen shows, or to any figure it reports.
 
 = 0.4.1 =
 * Clearer answer on cost data: WooCommerce has included its own Cost of Goods
@@ -181,6 +256,12 @@ No. The plugin makes no external requests.
   30-day gross margin.
 
 == Upgrade Notice ==
+
+= 0.5.0 =
+A paid version is now available, and the plugin will ask once whether you are
+willing to share diagnostics about the site. You can decline; nothing about how
+it works depends on the answer, and your shop's data is never sent either way.
+No screen or figure changes.
 
 = 0.4.1 =
 Documentation and listing artwork only. No code changes.
