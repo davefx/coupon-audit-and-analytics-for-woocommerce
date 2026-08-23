@@ -1,0 +1,506 @@
+# Translation of Plugins - Coupon Audit and Analytics for WooCommerce - Stable Readme (latest release) in Spanish (Spain)
+# This file is distributed under the same license as the Plugins - Coupon Audit and Analytics for WooCommerce - Stable Readme (latest release) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: +0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: GlotPress/4.1.0\n"
+"Language: es\n"
+"Project-Id-Version: Plugins - Coupon Audit and Analytics for WooCommerce - Stable Readme (latest release)\n"
+
+#. Short description.
+#, gp-priority: high
+msgid "Find the coupons quietly costing you money: what is still live, what it really applies to, what overlaps, and what each one actually earns."
+msgstr "Encuentra los cupones que te están costando dinero en silencio: cuáles siguen activos, a qué se aplican realmente, cuáles se solapan y lo que gana cada uno."
+
+#. Plugin name.
+#, gp-priority: high
+msgid "Coupon Audit and Analytics for WooCommerce"
+msgstr "Coupon Audit and Analytics for WooCommerce"
+
+#. Found in faq paragraph.
+msgid ""
+"The plugin does contact one outside service, Freemius, to check for updates and\n"
+"to license the paid add-on. It also asks whether you are willing to send\n"
+"diagnostics about the site itself, such as its address and the version of\n"
+"WordPress it runs. It asks before sending anything, you can say no, and saying no\n"
+"changes nothing about how the plugin works. \"Third Party Services\" below lists\n"
+"every field."
+msgstr "El plugin sí contacta con un servicio externo, Freemius, para comprobar si hay actualizaciones y para licenciar la versión de pago. También te pregunta si estás dispuesto a enviar diagnósticos sobre el propio sitio, como su dirección y la versión de WordPress que usa. Pregunta antes de enviar nada, puedes decir que no, y decir que no no cambia en nada el funcionamiento del plugin. «Servicios de terceros», más abajo, enumera todos los campos."
+
+#. Found in faq paragraph.
+msgid ""
+"Your shop's data, no — not a coupon, not an order, not a customer. Everything\n"
+"the plugin reports is worked out on your own server and stays there."
+msgstr "Los datos de tu tienda, no: ni un cupón, ni un pedido, ni un cliente. Todo lo que informa el plugin se calcula en tu propio servidor y ahí se queda."
+
+#. Found in description paragraph.
+msgid ""
+"No coupon, order, customer or revenue data. Every figure this plugin reports is\n"
+"calculated on your own server, from your own database, and stays there."
+msgstr "Ningún dato de cupones, pedidos, clientes ni ingresos. Todas las cifras que muestra este plugin se calculan en tu propio servidor, a partir de tu propia base de datos, y ahí se quedan."
+
+#. Found in description paragraph.
+msgid ""
+"Separately from the opt-in, the plugin contacts freemius.com to check for plugin\n"
+"updates and, where the paid add-on is installed, to validate its licence key."
+msgstr "Al margen de esa autorización, el plugin contacta con freemius.com para comprobar si hay actualizaciones y, donde esté instalada la versión de pago, para validar su clave de licencia."
+
+#. Found in description paragraph.
+msgid "If you opt in, Freemius receives:"
+msgstr "Si lo autorizas, Freemius recibe:"
+
+#. Found in description paragraph.
+msgid ""
+"When the plugin is activated you are shown an opt-in screen. Nothing about you\n"
+"or your site is sent unless you accept it, the screen can be skipped, and the\n"
+"plugin works in full either way."
+msgstr "Al activar el plugin se te muestra una pantalla de autorización. No se envía nada sobre ti ni sobre tu sitio a menos que la aceptes, se puede omitir, y el plugin funciona por completo en cualquiera de los dos casos."
+
+#. Found in description paragraph.
+msgid ""
+"This plugin uses Freemius for software licensing, updates and — only with your\n"
+"agreement — usage diagnostics. Freemius is operated by Freemius, Inc."
+msgstr "Este plugin usa Freemius para las licencias del software, las actualizaciones y —solo con tu consentimiento— los diagnósticos de uso. Freemius está gestionado por Freemius, Inc."
+
+#. Found in description paragraph.
+msgid ""
+"The plugin itself does talk to one outside service. It checks for updates, and\n"
+"it asks — once, and it takes no for an answer — whether you are willing to send\n"
+"diagnostics about the site. \"Third Party Services\" below says exactly what that\n"
+"covers."
+msgstr "El plugin en sí sí que habla con un servicio externo. Comprueba si hay actualizaciones y te pregunta —una vez, y acepta un no por respuesta— si estás dispuesto a enviar diagnósticos sobre el sitio. «Servicios de terceros», más abajo, explica exactamente qué incluye eso."
+
+#. Found in description paragraph.
+msgid ""
+"It does not track your shoppers, and it does not need an account to work. Your\n"
+"coupons, orders and customers never leave your server: every figure on every\n"
+"screen is computed from your own database, on your own machine."
+msgstr "No hace seguimiento de tus compradores y no necesita ninguna cuenta para funcionar. Tus cupones, pedidos y clientes nunca salen de tu servidor: todas las cifras de todas las pantallas se calculan a partir de tu propia base de datos, en tu propia máquina."
+
+#. Found in description paragraph.
+msgid "What it costs, and how to get it: https://davefx.com/en/wordpress-plugins/coupon-audit-and-analytics-for-woocommerce/"
+msgstr "Lo que cuesta, y cómo conseguirla: https://davefx.com/es/plugins-de-wordpress/coupon-audit-and-analytics-for-woocommerce/"
+
+#. Found in description paragraph.
+msgid ""
+"Coupon Audit and Analytics Premium installs alongside this plugin and adds to\n"
+"it. It brings its own code rather than a key that switches on something already\n"
+"sitting here."
+msgstr "Coupon Audit and Analytics Premium es este mismo plugin con más cosas dentro. Sustituye a este en lugar de convivir con él: al instalar la versión de pago se desactiva sola la gratuita, y tus ajustes y las cifras ya recopiladas pasan directamente."
+
+#. Found in description list item.
+msgid "whether the site is a local development install"
+msgstr "si el sitio es una instalación local de desarrollo"
+
+#. Found in description list item.
+msgid "the plugin's version, and whether it is the free or the paid build"
+msgstr "la versión del plugin, y si es la compilación gratuita o la de pago"
+
+#. Found in description list item.
+msgid "the name and email address of the WordPress user who opted in"
+msgstr "el nombre y la dirección de correo electrónico del usuario de WordPress que dio la autorización"
+
+#. Found in description list item.
+msgid "your site's URL, name and language, and an anonymous site identifier"
+msgstr "la URL, el nombre y el idioma de tu sitio, y un identificador anónimo del sitio"
+
+#. Found in description list item.
+msgid "Privacy Policy: https://freemius.com/privacy/"
+msgstr "Política de privacidad: https://freemius.com/privacy/"
+
+#. Found in description list item.
+msgid "Terms of Use: https://freemius.com/terms/"
+msgstr "Términos de uso: https://freemius.com/terms/"
+
+#. Found in description list item.
+msgid ""
+"<strong>Net margin.</strong> Gross margin less what it cost to take the money. The fee is\n"
+"read from the gateway that actually charged it, and Stripe is what is\n"
+"supported today; another gateway can be added with a filter. Where no fee was\n"
+"recorded, or where it was settled in a different currency from the order, the\n"
+"figure says so instead of guessing — a confident wrong margin is worse than an\n"
+"honest gap."
+msgstr "<strong>Margen neto.</strong> El margen bruto menos lo que costó cobrar el dinero. La comisión se lee de la pasarela que la cobró realmente: hoy están soportadas Stripe, WooPayments y PayPal, y se puede añadir otra con un filtro. Cuando no se registró ninguna comisión, o cuando se liquidó en una moneda distinta a la del pedido, la cifra lo dice en lugar de adivinar: un margen erróneo dicho con seguridad es peor que un hueco honesto."
+
+#. Found in description list item.
+msgid ""
+"<strong>Export to CSV.</strong> The audit with its findings, and the margin figures, as\n"
+"they are on screen — whatever you have filtered the list down to."
+msgstr "<strong>Exportar a CSV.</strong> La auditoría con sus hallazgos, y las cifras de margen, tal y como están en pantalla: con los filtros que hayas aplicado a la lista."
+
+#. Found in description list item.
+msgid "<strong>A year of margin history.</strong> The margin report covers 365 days."
+msgstr "<strong>Un año de histórico de márgenes.</strong> El informe de márgenes cubre 365 días."
+
+#. Found in description header.
+msgid "What is never sent"
+msgstr "Lo que nunca se envía"
+
+#. Found in description header.
+msgid "What is sent, and when"
+msgstr "Qué se envía, y cuándo"
+
+#. Found in description header.
+msgid "Third Party Services"
+msgstr "Servicios de terceros"
+
+#. Found in description header.
+msgid "The paid add-on"
+msgstr "La versión de pago"
+
+#. Found in faq paragraph.
+msgid ""
+"Margins do need cost data, but not necessarily another plugin: WooCommerce has\n"
+"included its own Cost of Goods feature since 10.3, and it only needs switching\n"
+"on. If your shop already records cost in one of the third-party plugins listed\n"
+"above, this reads that instead — whichever one you tell it to believe."
+msgstr "Los márgenes sí necesitan datos de coste, pero no necesariamente otro plugin: WooCommerce incluye su propia característica de Coste de los bienes desde la 10.3, y solo hay que activarla. Si tu tienda ya registra el coste en alguno de los plugins de terceros de la lista de arriba, se leerá ese: el que tú le digas que se crea."
+
+#. Found in description paragraph.
+msgid ""
+"For each coupon: revenue, what it gave away, the cost of the goods it moved, and\n"
+"the gross margin left over. Over the last 30 days."
+msgstr "Para cada cupón: los ingresos, lo que descontó, el coste de los bienes que movió y el margen bruto que quedó. Durante los últimos 30 días."
+
+#. Found in faq paragraph.
+msgid ""
+"It does not run on the storefront at all. Aggregation happens in the background\n"
+"through Action Scheduler, and the admin screens read precomputed figures."
+msgstr "No se ejecuta en la parte pública de la tienda en absoluto. La agregación ocurre en segundo plano mediante Action Scheduler, y las pantallas de administración leen cifras ya calculadas."
+
+#. Found in faq paragraph.
+msgid ""
+"One of them, chosen by you under <strong>WooCommerce → Coupon Audit Settings</strong>. It\n"
+"never mixes them."
+msgstr "Uno de ellos, el que elijas en <strong>WooCommerce → Ajustes de la auditoría de cupones</strong>. Nunca los mezcla."
+
+#. Found in faq paragraph.
+msgid ""
+"Either some order lines have no cost recorded, in which case the covered share\n"
+"is stated alongside; or your cost plugin only stores what a product costs today\n"
+"rather than what it cost when each order was placed. Both are useful. Neither is\n"
+"exact, and the screen says so."
+msgstr "O bien algunas líneas de pedido no tienen coste registrado, en cuyo caso se indica al lado qué parte está cubierta; o bien tu plugin de costes solo guarda lo que cuesta un producto hoy, y no lo que costaba cuando se hizo cada pedido. Las dos cosas son útiles. Ninguna es exacta, y la pantalla lo dice."
+
+#. Found in faq paragraph.
+msgid ""
+"Because none of its orders has a cost recorded against it. The plugin will not\n"
+"guess, and it will not quietly treat an unknown cost as zero, because that would\n"
+"report your revenue as your profit."
+msgstr "Porque ninguno de sus pedidos tiene un coste registrado. El plugin no va a adivinar, ni va a tratar en silencio un coste desconocido como cero, porque eso sería presentar tus ingresos como tu beneficio."
+
+#. Found in faq paragraph.
+msgid ""
+"No. The audit half — expiry, overlaps, orphans, scope — needs no cost data at\n"
+"all and works the moment you activate."
+msgstr "No. La mitad de auditoría —caducidad, solapamientos, cupones huérfanos, alcance— no necesita ningún dato de coste y funciona desde el momento en que la activas."
+
+#. Found in faq header.
+msgid "Does it send my data anywhere?"
+msgstr "¿Envía mis datos a alguna parte?"
+
+#. Found in faq header.
+msgid "Does it slow my shop down?"
+msgstr "¿Ralentiza mi tienda?"
+
+#. Found in faq header.
+msgid "I use two cost plugins. Which one does it read?"
+msgstr "Uso dos plugins de costes. ¿Cuál lee?"
+
+#. Found in faq header.
+msgid "Why are some margins marked as an estimate?"
+msgstr "¿Por qué algunos márgenes están marcados como estimación?"
+
+#. Found in faq header.
+msgid "Why does a coupon show no margin?"
+msgstr "¿Por qué un cupón no muestra margen?"
+
+#. Found in faq header.
+msgid "Do I need a cost-of-goods plugin?"
+msgstr "¿Necesito un plugin de coste de los bienes?"
+
+#. Found in installation paragraph.
+msgid ""
+"Past orders are read in the background after activation, so margins for older\n"
+"periods fill in over a few minutes rather than all at once."
+msgstr "Los pedidos antiguos se leen en segundo plano tras la activación, así que los márgenes de los periodos más antiguos se van rellenando a lo largo de unos minutos en lugar de aparecer de golpe."
+
+#. Found in installation list item.
+msgid ""
+"For margins, make sure your shop records product costs — either through\n"
+"WooCommerce's own Cost of Goods feature or one of the supported plugins —\n"
+"then look at <strong>WooCommerce → Coupon Margin</strong>."
+msgstr "Para los márgenes, asegúrate de que tu tienda registra los costes de los productos —ya sea con la característica Coste de los bienes de WooCommerce o con uno de los plugins soportados— y luego mira <strong>WooCommerce → Margen de los cupones</strong>."
+
+#. Found in installation list item.
+msgid "Go to <strong>WooCommerce → Coupon Audit</strong>. The audit works immediately."
+msgstr "Ve a <strong>WooCommerce → Auditoría de cupones</strong>. La auditoría funciona de inmediato."
+
+#. Found in installation list item.
+msgid "Install and activate the plugin."
+msgstr "Instala y activa el plugin."
+
+#. Found in description paragraph.
+msgid ""
+"Where cost is only partly known, the margin says so and states how much of it is\n"
+"real. Where no cost is known at all, no margin is shown. A wrong number in a\n"
+"financial dashboard destroys trust far faster than a missing number builds it."
+msgstr "Cuando el coste solo se conoce en parte, el margen lo dice e indica qué proporción es real. Cuando no se conoce ningún coste, no se muestra margen. Un número equivocado en un panel financiero destruye la confianza mucho más rápido de lo que un número ausente la construye."
+
+#. Found in description paragraph.
+msgid ""
+"Figures come from <strong>one</strong> of these, never a mixture — a margin blended from two\n"
+"sets of books reconciles with neither. If several are installed you choose which\n"
+"one to believe."
+msgstr "Las cifras salen de <strong>uno</strong> de ellos, nunca de una mezcla: un margen que combina dos contabilidades no cuadra con ninguna de las dos. Si tienes varios instalados, tú eliges a cuál creer."
+
+#. Found in description paragraph.
+msgid ""
+"This half needs cost data, and it is honest about not having it. WooCommerce's\n"
+"own cost-of-goods feature is off by default, so the plugin also reads the cost\n"
+"plugins shops actually use:"
+msgstr "Esta mitad necesita datos de coste, y es honesta cuando no los tiene. La característica de coste de los bienes de WooCommerce viene desactivada por defecto, así que el plugin también lee los plugins de costes que las tiendas usan de verdad:"
+
+#. Found in description paragraph.
+msgid ""
+"The same findings appear on the coupon edit screen, against the coupon in front\n"
+"of you. They never block a save. You are told, and you decide."
+msgstr "Los mismos hallazgos aparecen en la pantalla de edición del cupón, junto al cupón que tienes delante. Nunca bloquean el guardado. Se te avisa, y tú decides."
+
+#. Found in description paragraph.
+msgid ""
+"Filter the list by discount type, or by whether a coupon expires at all — a shop\n"
+"with four hundred coupons cannot be read top to bottom, and \"show me everything\n"
+"that never expires\" is the question worth asking first."
+msgstr "Filtra la lista por tipo de descuento, o por si el cupón caduca o no: una tienda con cuatrocientos cupones no se puede leer de arriba abajo, y «enséñame todo lo que no caduca nunca» es la pregunta que merece la pena hacer primero."
+
+#. Found in description paragraph.
+msgid ""
+"Status is worked out when you look, never stored, so a coupon that expired\n"
+"overnight says so the next morning."
+msgstr "El estado se calcula cuando lo miras, nunca se guarda, así que un cupón que caducó durante la noche lo dice a la mañana siguiente."
+
+#. Found in description paragraph.
+msgid "Works on day one, in every shop, with no setup and no cost data:"
+msgstr "Funciona desde el primer día, en cualquier tienda, sin configuración y sin datos de coste:"
+
+#. Found in description paragraph.
+msgid "This plugin reads your coupons and says what is wrong with them."
+msgstr "Este plugin lee tus cupones y te dice qué falla en ellos."
+
+#. Found in description paragraph.
+msgid ""
+"Most shops accumulate coupons. A launch code from two years ago, a partner\n"
+"discount nobody switched off, three variations of the same campaign where only\n"
+"one was meant to survive. WooCommerce will happily keep honouring all of them,\n"
+"and it will not tell you."
+msgstr "Casi todas las tiendas acumulan cupones. Un código de lanzamiento de hace dos años, un descuento para un socio que nadie desactivó, tres variantes de la misma campaña de las que solo una debía sobrevivir. WooCommerce seguirá aceptándolos todos tan tranquilo, y no te lo va a decir."
+
+#. Found in description list item.
+msgid "Booster for WooCommerce"
+msgstr "Booster for WooCommerce"
+
+#. Found in description list item.
+msgid "WooCommerce Cost of Goods"
+msgstr "WooCommerce Cost of Goods"
+
+#. Found in description list item.
+msgid "Cost of Goods for WooCommerce, by WPFactory"
+msgstr "Cost of Goods for WooCommerce, de WPFactory"
+
+#. Found in description list item.
+msgid "WooCommerce's built-in Cost of Goods (10.3 and later)"
+msgstr "El Coste de los bienes integrado en WooCommerce (10.3 y posteriores)"
+
+#. Found in description list item.
+msgid ""
+"<strong>Overlaps</strong> — two live coupons that can both apply to the same product.\n"
+"Nothing in WooCommerce compares one coupon against another, so this is not a\n"
+"finding you can reach any other way."
+msgstr "<strong>Solapamientos</strong>: dos cupones activos que pueden aplicarse los dos al mismo producto. Nada en WooCommerce compara un cupón con otro, así que este hallazgo no se puede obtener de ninguna otra forma."
+
+#. Found in description list item.
+msgid "<strong>Applies to everything</strong> — live, with no product or category restriction at all."
+msgstr "<strong>Se aplica a todo</strong>: activo, sin ninguna restricción de producto ni de categoría."
+
+#. Found in description list item.
+msgid "<strong>Dead campaign</strong> — live, while every other code from its campaign has expired."
+msgstr "<strong>Campaña muerta</strong>: activo, mientras que todos los demás códigos de su campaña han caducado."
+
+#. Found in description list item.
+msgid "<strong>Dormant</strong> — live, but nobody has redeemed it in months."
+msgstr "<strong>Sin uso</strong>: activo, pero nadie lo ha canjeado en meses."
+
+#. Found in description list item.
+msgid "<strong>Never expires</strong> — live, with nothing scheduled to ever turn it off."
+msgstr "<strong>Nunca caduca</strong>: activo, sin nada programado que vaya a desactivarlo algún día."
+
+#. Found in description header.
+msgid "What it does not do"
+msgstr "Lo que no hace"
+
+#. Found in description header.
+msgid "The margin"
+msgstr "El margen"
+
+#. Found in description header.
+msgid "The warning where it matters"
+msgstr "El aviso donde importa"
+
+#. Found in description header.
+msgid "The audit"
+msgstr "La auditoría"
+
+#. Screenshot description.
+msgid "Settings: which cost-of-goods system to read, and whether uninstalling should take the data with it."
+msgstr "Ajustes: qué sistema de coste de los bienes leer, y si al desinstalar deben borrarse también los datos."
+
+#. Screenshot description.
+msgid "Warnings on the coupon edit screen, against the coupon in front of you. They never block a save."
+msgstr "Avisos en la pantalla de edición del cupón, junto al cupón que tienes delante. Nunca bloquean el guardado."
+
+#. Screenshot description.
+msgid "Per-coupon margin. Cost coverage is stated rather than assumed: one coupon's margin is exact, one is an estimate over half its lines, and one has no cost recorded at all and so shows no margin."
+msgstr "Margen por cupón. La cobertura de costes se indica en lugar de darse por supuesta: el margen de un cupón es exacto, otro es una estimación sobre la mitad de sus líneas, y otro no tiene ningún coste registrado y por eso no muestra margen."
+
+#. Screenshot description.
+msgid "The coupon audit: every coupon, its real status, what it applies to, and what is wrong with it — expired, exhausted, dormant, dead campaign, no expiry date, and overlapping. Filter by discount type or by whether it expires."
+msgstr "La auditoría de cupones: todos los cupones, su estado real, a qué se aplican y qué falla en ellos: caducado, agotado, sin uso, campaña muerta, sin fecha de caducidad y solapamientos. Filtra por tipo de descuento o por si caduca."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid "No change to what any screen shows, or to any figure it reports."
+msgstr "Sin cambios en lo que muestra ninguna pantalla, ni en ninguna cifra que informa."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid ""
+"The plugin now asks, once, whether you are willing to share diagnostics about\n"
+"the site. You can decline and everything keeps working. \"Third Party Services\"\n"
+"below says exactly what that covers."
+msgstr "El plugin ahora pregunta, una vez, si estás dispuesto a compartir diagnósticos sobre el sitio. Puedes negarte y todo sigue funcionando. «Servicios de terceros», más abajo, explica exactamente qué incluye eso."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid ""
+"A paid add-on is now available: a year of margin history, CSV export, and\n"
+"margin after payment fees. It installs alongside this plugin; see \"The paid\n"
+"add-on\" above."
+msgstr "Ya está disponible una versión de pago: un año de histórico de márgenes, exportación a CSV y margen después de las comisiones de pago. Sustituye a este plugin en lugar de convivir con él; consulta «La versión de pago» más arriba."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid "A banner and an icon for the plugin directory."
+msgstr "Un banner y un icono para el directorio de plugins."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid ""
+"Clearer answer on cost data: WooCommerce has included its own Cost of Goods\n"
+"feature since 10.3, so no separate plugin is needed for margins — the\n"
+"third-party ones are still read if your shop already uses one."
+msgstr "Respuesta más clara sobre los datos de coste: WooCommerce incluye su propia característica de Coste de los bienes desde la 10.3, así que no hace falta un plugin aparte para los márgenes; los de terceros se siguen leyendo si tu tienda ya usa alguno."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid ""
+"First release: coupon audit, overlap detection, pre-publish warnings and\n"
+"30-day gross margin."
+msgstr "Primera versión: auditoría de cupones, detección de solapamientos, avisos antes de publicar y margen bruto de 30 días."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid ""
+"Much faster on shops with a lot of coupons. The overview used to read every\n"
+"coupon's settings one at a time and weigh each coupon against every other by\n"
+"searching the list afresh; both are now done once. On a test shop of 500\n"
+"coupons and 300 products the screen went from 737 database queries to 27, and\n"
+"from roughly 3.7 seconds to 0.6."
+msgstr "Mucho más rápido en tiendas con muchos cupones. El resumen leía los ajustes de cada cupón uno a uno y comparaba cada cupón con todos los demás recorriendo la lista de nuevo cada vez; ahora las dos cosas se hacen una sola vez. En una tienda de prueba con 500 cupones y 300 productos, la pantalla pasó de 737 consultas a la base de datos a 27, y de unos 3,7 segundos a 0,6."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid "Filters for other plugins to add columns, fill them, and shape the coupon query."
+msgstr "Filtros para que otros plugins añadan columnas, las rellenen y ajusten la consulta de cupones."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid ""
+"Support for YITH WooCommerce Points and Rewards: its generated reward coupons\n"
+"are kept out of the audit, where tens of thousands of them would bury the\n"
+"coupons you chose."
+msgstr "Compatibilidad con YITH WooCommerce Points and Rewards: los cupones de recompensa que genera se dejan fuera de la auditoría, donde decenas de miles de ellos enterrarían los cupones que tú elegiste."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid ""
+"Support for WooCommerce Extended Coupon Features, including coupons it applies\n"
+"automatically — which is what makes a high-severity overlap possible at all."
+msgstr "Compatibilidad con WooCommerce Extended Coupon Features, incluidos los cupones que aplica automáticamente, que son los que hacen posible un solapamiento de severidad alta."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid ""
+"New finding: a fixed discount worth more than the minimum spend it demands, or\n"
+"more than something it applies to. WooCommerce applies these without comment."
+msgstr "Nuevo hallazgo: un descuento fijo que vale más que el gasto mínimo que exige, o más que algo a lo que se aplica. WooCommerce los aplica sin decir nada."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid ""
+"\"Applies to\" names the products and categories, prices them, and strikes\n"
+"through anything a customer cannot currently buy."
+msgstr "«Se aplica a» nombra los productos y las categorías, indica sus precios y tacha todo lo que un cliente no puede comprar ahora mismo."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid ""
+"The overview now shows what each coupon actually is: the discount, the basket\n"
+"it requires, free shipping, individual use, and the usage caps per customer\n"
+"and per basket."
+msgstr "El resumen ahora muestra lo que es realmente cada cupón: el descuento, la cesta que exige, el envío gratuito, el uso individual y los límites de uso por cliente y por cesta."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid ""
+"Fixed a warning that never appeared: a fixed discount with no minimum spend\n"
+"was not reported, because every coupon looked as though it required a basket\n"
+"of at least zero."
+msgstr "Corregido un aviso que nunca aparecía: no se informaba de un descuento fijo sin gasto mínimo, porque todos los cupones parecían exigir una cesta de al menos cero."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid ""
+"Fixed the basket column, which read \"0.00 to 0.00\" against every coupon that\n"
+"has no spend limits. It now says \"any\", which is what it means."
+msgstr "Corregida la columna de cesta, que ponía «0,00 a 0,00» en todos los cupones sin límites de gasto. Ahora pone «cualquiera», que es lo que significa."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid "Removed the internal feature-gate layer. Nothing in this plugin is withheld."
+msgstr "Eliminada la capa interna de restricción de características. En este plugin no se retiene nada."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid ""
+"The margin window is now a documented filter, <code>dfxcaaw_margin_window_days</code>,\n"
+"rather than a fixed cap. Thirty days remains the default; anything can change\n"
+"it, including a snippet in your own theme."
+msgstr "El periodo del margen ahora es un filtro documentado, <code>dfxcaaw_margin_window_days</code>, en lugar de un tope fijo. Treinta días sigue siendo el valor por defecto; cualquier cosa puede cambiarlo, incluido un fragmento de código en tu propio tema."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid "Tested against WordPress 7.1 and WooCommerce 11. No code changes."
+msgstr "Probado con WordPress 7.1 y WooCommerce 11. Sin cambios en el código."
+
+#. Found in changelog list item.
+#, gp-priority: low
+msgid ""
+"Filter the audit by discount type, and by whether a coupon expires at all.\n"
+"The summary tiles keep describing the whole store, so the counts do not move\n"
+"as you narrow the list."
+msgstr "Filtra la auditoría por tipo de descuento y por si el cupón caduca o no. Los recuadros de resumen siguen describiendo toda la tienda, así que las cifras no cambian al acotar la lista."

@@ -1,0 +1,553 @@
+# Translation of Plugins - Coupon Audit and Analytics for WooCommerce - Stable (latest release) in Spanish (Spain)
+# This file is distributed under the same license as the Plugins - Coupon Audit and Analytics for WooCommerce - Stable (latest release) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: +0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: GlotPress/4.1.0\n"
+"Language: es\n"
+"Project-Id-Version: Plugins - Coupon Audit and Analytics for WooCommerce - Stable (latest release)\n"
+
+#. Plugin URI of the plugin
+#: coupon-audit-and-analytics-for-woocommerce.php
+msgid "https://davefx.com/en/wordpress-plugins/coupon-audit-and-analytics-for-woocommerce/"
+msgstr "https://davefx.com/es/plugins-de-wordpress/coupon-audit-and-analytics-for-woocommerce/"
+
+#: src/Integration/YithPointsIntegration.php:54
+msgid "YITH WooCommerce Points and Rewards"
+msgstr "YITH WooCommerce Points and Rewards"
+
+#. translators: %s: comma-separated list of payment methods.
+#: src/Integration/WjecfIntegration.php:159
+msgid "Payment: %s"
+msgstr "Pago: %s"
+
+#. translators: %s: comma-separated list of shipping methods.
+#: src/Integration/WjecfIntegration.php:152
+msgid "Shipping: %s"
+msgstr "Envío: %s"
+
+#. translators: %s: comma-separated list of customer roles.
+#: src/Integration/WjecfIntegration.php:145
+msgid "Not roles: %s"
+msgstr "Roles excluidos: %s"
+
+#. translators: %s: comma-separated list of customer roles.
+#: src/Integration/WjecfIntegration.php:138
+msgid "Only roles: %s"
+msgstr "Solo roles: %s"
+
+#. translators: %s: an amount or range of amounts.
+#: src/Integration/WjecfIntegration.php:131
+msgid "Matching subtotal: %s"
+msgstr "Subtotal coincidente: %s"
+
+#. translators: %s: a quantity or range of quantities.
+#: src/Integration/WjecfIntegration.php:123
+msgid "Matching items: %s"
+msgstr "Artículos coincidentes: %s"
+
+#: src/Integration/WjecfIntegration.php:116
+msgid "Needs any listed category"
+msgstr "Necesita alguna de las categorías indicadas"
+
+#: src/Integration/WjecfIntegration.php:116
+msgid "Needs all listed categories"
+msgstr "Necesita todas las categorías indicadas"
+
+#: src/Integration/WjecfIntegration.php:115
+msgid "Needs any listed product"
+msgstr "Necesita alguno de los productos indicados"
+
+#: src/Integration/WjecfIntegration.php:115
+msgid "Needs all listed products"
+msgstr "Necesita todos los productos indicados"
+
+#: src/Integration/WjecfIntegration.php:112
+msgid "First purchase only"
+msgstr "Solo en la primera compra"
+
+#: src/Integration/WjecfIntegration.php:108
+msgid "Applied automatically"
+msgstr "Se aplica automáticamente"
+
+#: src/Integration/WjecfIntegration.php:87
+msgid "Extended conditions"
+msgstr "Condiciones ampliadas"
+
+#: src/Integration/WjecfIntegration.php:56
+msgid "WooCommerce Extended Coupon Features"
+msgstr "WooCommerce Extended Coupon Features"
+
+#: src/Cost/WpFactoryCogsSource.php:52
+msgid "Cost of Goods for WooCommerce (WPFactory)"
+msgstr "Cost of Goods for WooCommerce (WPFactory)"
+
+#: src/Cost/SkyvergeCogsSource.php:48
+msgid "WooCommerce Cost of Goods"
+msgstr "WooCommerce Cost of Goods"
+
+#: src/Cost/NativeCogsSource.php:86
+msgid "WooCommerce (built-in cost of goods)"
+msgstr "WooCommerce (coste de los bienes integrado)"
+
+#: src/Cost/BoosterCogsSource.php:38
+msgid "Booster for WooCommerce"
+msgstr "Booster for WooCommerce"
+
+#: src/Catalog/WcCatalogRepository.php:268
+msgid "hidden from the catalogue"
+msgstr "oculto en el catálogo"
+
+#: src/Catalog/WcCatalogRepository.php:264
+msgid "not purchasable"
+msgstr "no se puede comprar"
+
+#: src/Catalog/WcCatalogRepository.php:260
+msgid "no price set"
+msgstr "sin precio establecido"
+
+#: src/Catalog/WcCatalogRepository.php:256
+msgid "out of stock"
+msgstr "sin existencias"
+
+#: src/Admin/SettingsPage.php:242
+msgid "Off by default. The aggregated figures take a while to rebuild, and deactivating a plugin is not the same as agreeing to lose them."
+msgstr "Desactivado por defecto. Las cifras agregadas tardan un rato en reconstruirse, y desactivar un plugin no es lo mismo que aceptar perderlas."
+
+#: src/Admin/SettingsPage.php:234
+msgid "Delete this plugin's data when it is uninstalled"
+msgstr "Borrar los datos de este plugin al desinstalarlo"
+
+#: src/Admin/SettingsPage.php:226
+msgid "On uninstall"
+msgstr "Al desinstalar"
+
+#. translators: %s: the name of the cost system in use.
+#: src/Admin/SettingsPage.php:209
+msgid "%s records what a product costs today, not what it cost when each order was placed, so margins built from it are estimates."
+msgstr "%s registra lo que cuesta un producto hoy, no lo que costaba cuando se hizo cada pedido, así que los márgenes calculados con esos datos son estimaciones."
+
+#: src/Admin/SettingsPage.php:178
+msgid "Figures come from one system only, never a mixture: a margin blended from two sets of books reconciles with neither."
+msgstr "Las cifras salen de un único sistema, nunca de una mezcla: un margen que combina dos contabilidades no cuadra con ninguna de las dos."
+
+#: src/Admin/SettingsPage.php:162
+msgid "Choose automatically"
+msgstr "Elegir automáticamente"
+
+#: src/Admin/SettingsPage.php:148
+msgid "No cost-of-goods system was found. Enable WooCommerce's own Cost of Goods feature, or install a cost-of-goods plugin, and margins will start to appear."
+msgstr "No se ha encontrado ningún sistema de coste de los bienes. Activa la característica Coste de los bienes de WooCommerce, o instala un plugin de coste de los bienes, y empezarán a aparecer los márgenes."
+
+#: src/Admin/SettingsPage.php:141
+msgid "Cost of goods source"
+msgstr "Origen del coste de los bienes"
+
+#: src/Admin/SettingsPage.php:68
+msgid "Settings saved."
+msgstr "Ajustes guardados."
+
+#: src/Admin/SettingsPage.php:52
+msgid "You do not have permission to change these settings."
+msgstr "No tienes permisos para cambiar estos ajustes."
+
+#: src/Admin/MenuRegistrar.php:65 src/Admin/MenuRegistrar.php:66
+#: src/Admin/SettingsPage.php:63
+msgid "Coupon Audit Settings"
+msgstr "Ajustes de la auditoría de cupones"
+
+#: src/Admin/MarginPage.php:113
+msgid "Some coupons have no cost recorded against their orders, so no margin is shown for them. Margins marked as an estimate cover only part of their lines."
+msgstr "Algunos cupones no tienen coste registrado en sus pedidos, así que no se muestra su margen. Los márgenes marcados como estimación cubren solo una parte de sus líneas."
+
+#: src/Admin/MarginPage.php:109
+msgid "No margin can be shown yet, because none of these orders has a cost recorded against it. Set product costs in WooCommerce, or in whichever cost-of-goods plugin your shop already uses, and the figures will appear."
+msgstr "Todavía no se puede mostrar ningún margen, porque ninguno de estos pedidos tiene un coste registrado. Establece los costes de los productos en WooCommerce, o en el plugin de coste de los bienes que ya use tu tienda, y aparecerán las cifras."
+
+#. translators: %s: the date the backfill has reached.
+#: src/Admin/MarginPage.php:90
+msgid "Still reading past orders — figures are complete up to %s and will fill in as the work continues."
+msgstr "Todavía se están leyendo pedidos antiguos: las cifras están completas hasta el %s y se irán rellenando a medida que avance el trabajo."
+
+#. translators: 1: first day of the window, 2: last day.
+#: src/Admin/MarginPage.php:54
+msgid "Gross margin from %1$s to %2$s."
+msgstr "Margen bruto del %1$s al %2$s."
+
+#: src/Admin/MarginPage.php:51 src/Admin/MenuRegistrar.php:56
+#: src/Admin/MenuRegistrar.php:57
+msgid "Coupon Margin"
+msgstr "Margen de los cupones"
+
+#: src/Admin/MarginPage.php:44
+msgid "You do not have permission to view coupon margins."
+msgstr "No tienes permisos para ver los márgenes de los cupones."
+
+#: src/Admin/MarginListTable.php:178
+msgid "estimate"
+msgstr "estimación"
+
+#. translators: %s: margin as a percentage of revenue.
+#: src/Admin/MarginListTable.php:173
+msgid "(%s%%)"
+msgstr "(%s%%)"
+
+#: src/Admin/MarginListTable.php:166
+msgid "Needs cost data"
+msgstr "Faltan datos de coste"
+
+#. translators: %d: percentage of order lines whose cost is known.
+#: src/Admin/MarginListTable.php:153
+msgid "over %d%% of lines"
+msgstr "sobre el %d%% de las líneas"
+
+#: src/Admin/MarginListTable.php:145
+msgid "Not known"
+msgstr "Se desconoce"
+
+#. translators: %d: the ID of a coupon that no longer exists.
+#: src/Admin/MarginListTable.php:131
+msgid "deleted coupon #%d"
+msgstr "cupón borrado n.º %d"
+
+#: src/Admin/MarginListTable.php:92
+msgid "No coupon was used in this period."
+msgstr "No se usó ningún cupón en este periodo."
+
+#: src/Admin/MarginListTable.php:67
+msgid "Gross margin"
+msgstr "Margen bruto"
+
+#: src/Admin/MarginListTable.php:66
+msgid "Cost of goods"
+msgstr "Coste de los bienes"
+
+#: src/Admin/MarginListTable.php:65
+msgid "Given away"
+msgstr "Descontado"
+
+#: src/Admin/MarginListTable.php:64
+msgid "Revenue"
+msgstr "Ingresos"
+
+#: src/Admin/MarginListTable.php:63
+msgid "Orders"
+msgstr "Pedidos"
+
+#: src/Admin/MarginListTable.php:62
+msgid "Coupon"
+msgstr "Cupón"
+
+#: src/Admin/InventoryPage.php:150
+msgid "Nothing needs attention. Every coupon expires, none applies to your whole catalogue, and none of them collide."
+msgstr "No hay nada que requiera atención. Todos los cupones caducan, ninguno se aplica a todo tu catálogo y ninguno choca con otro."
+
+#. translators: %d: the number of coupons above which the check is skipped.
+#: src/Admin/InventoryPage.php:137
+msgid "Overlap detection was skipped: comparing every coupon against every other is too slow to do while you wait above %d coupons."
+msgstr "Se ha omitido la detección de solapamientos: comparar cada cupón con todos los demás es demasiado lento para hacerlo mientras esperas si hay más de %d cupones."
+
+#. translators: shown when the inventory is too large to compare on page load.
+#: src/Admin/InventoryPage.php:118
+msgid "Not checked"
+msgstr "Sin comprobar"
+
+#: src/Admin/InventoryPage.php:116 src/Admin/InventoryPage.php:123
+msgid "Overlapping pairs"
+msgstr "Pares solapados"
+
+#: src/Admin/InventoryPage.php:109
+msgid "Apply to everything"
+msgstr "Se aplican a todo"
+
+#: src/Admin/InventoryPage.php:104
+msgid "Needs attention"
+msgstr "Requieren atención"
+
+#: src/Admin/InventoryPage.php:94
+msgid "Coupons"
+msgstr "Cupones"
+
+#: src/Admin/InventoryPage.php:70 src/Admin/MenuRegistrar.php:47
+#: src/Admin/MenuRegistrar.php:48
+msgid "Coupon Audit"
+msgstr "Auditoría de cupones"
+
+#: src/Admin/InventoryPage.php:52
+msgid "You do not have permission to view the coupon audit."
+msgstr "No tienes permisos para ver la auditoría de cupones."
+
+#: src/Admin/InventoryListTable.php:419
+msgid "Dead campaign"
+msgstr "Campaña muerta"
+
+#: src/Admin/InventoryListTable.php:418
+msgid "Dormant"
+msgstr "Sin uso"
+
+#: src/Admin/InventoryListTable.php:417
+msgid "No expiry date"
+msgstr "Sin fecha de caducidad"
+
+#: src/Admin/InventoryListTable.php:406
+msgid "Inactive"
+msgstr "Inactivo"
+
+#: src/Admin/InventoryListTable.php:405
+msgid "Exhausted"
+msgstr "Agotado"
+
+#: src/Admin/InventoryListTable.php:404
+msgid "Expired"
+msgstr "Caducado"
+
+#: src/Admin/InventoryListTable.php:403
+msgid "Scheduled"
+msgstr "Programado"
+
+#: src/Admin/InventoryListTable.php:402 src/Admin/InventoryPage.php:99
+msgid "Active"
+msgstr "Activo"
+
+#: src/Admin/InventoryListTable.php:356
+msgid "low"
+msgstr "baja"
+
+#: src/Admin/InventoryListTable.php:355
+msgid "medium"
+msgstr "media"
+
+#: src/Admin/InventoryListTable.php:354
+msgid "high"
+msgstr "alta"
+
+#: src/Admin/InventoryListTable.php:343
+msgid "Fixed discount with no minimum"
+msgstr "Descuento fijo sin mínimo"
+
+#: src/Admin/InventoryListTable.php:342
+msgid "Discount exceeds a product price"
+msgstr "El descuento supera el precio de un producto"
+
+#: src/Admin/InventoryListTable.php:341
+msgid "Discount exceeds minimum spend"
+msgstr "El descuento supera el gasto mínimo"
+
+#. translators: 1: severity of the worst collision, 2: how many coupons it
+#. collides with.
+#: src/Admin/InventoryListTable.php:318
+msgid "Overlaps %2$d coupon (%1$s)"
+msgid_plural "Overlaps %2$d coupons (%1$s)"
+msgstr[0] "Se solapa con %2$d cupón (%1$s)"
+msgstr[1] "Se solapa con %2$d cupones (%1$s)"
+
+#: src/Admin/InventoryListTable.php:177
+msgid "Filter"
+msgstr "Filtrar"
+
+#: src/Admin/InventoryListTable.php:172
+msgid "Never expires"
+msgstr "Nunca caduca"
+
+#: src/Admin/InventoryListTable.php:169
+msgid "Expiry: any"
+msgstr "Caducidad: cualquiera"
+
+#: src/Admin/InventoryListTable.php:163
+msgid "All discount types"
+msgstr "Todos los tipos de descuento"
+
+#: src/Admin/InventoryListTable.php:148
+msgid "No coupons match these filters."
+msgstr "Ningún cupón coincide con estos filtros."
+
+#: src/Admin/InventoryListTable.php:145
+msgid "No coupons found."
+msgstr "No se han encontrado cupones."
+
+#: src/Admin/InventoryListTable.php:68
+msgid "Findings"
+msgstr "Hallazgos"
+
+#: src/Admin/InventoryListTable.php:67
+msgid "Used"
+msgstr "Usos"
+
+#: src/Admin/InventoryListTable.php:66 src/Admin/InventoryListTable.php:171
+msgid "Expires"
+msgstr "Caduca"
+
+#: src/Admin/InventoryListTable.php:65
+msgid "Terms"
+msgstr "Condiciones"
+
+#: src/Admin/InventoryListTable.php:64
+msgid "Applies to"
+msgstr "Se aplica a"
+
+#: src/Admin/InventoryListTable.php:63
+msgid "Basket"
+msgstr "Cesta"
+
+#: src/Admin/InventoryListTable.php:62
+msgid "Discount"
+msgstr "Descuento"
+
+#: src/Admin/InventoryListTable.php:61
+msgid "Status"
+msgstr "Estado"
+
+#: src/Admin/InventoryListTable.php:60
+msgid "Code"
+msgstr "Código"
+
+#. translators: %d: the ID of a category that no longer exists.
+#: src/Admin/CouponTermsFormatter.php:279
+msgid "deleted category #%d"
+msgstr "categoría borrada n.º %d"
+
+#. translators: %d: the ID of a product that no longer exists.
+#: src/Admin/CouponTermsFormatter.php:237
+msgid "deleted product #%d"
+msgstr "producto borrado n.º %d"
+
+#: src/Admin/CouponTermsFormatter.php:200
+msgid "Not on sale items"
+msgstr "Artículos no rebajados"
+
+#: src/Admin/CouponTermsFormatter.php:197
+msgid "Never in"
+msgstr "Nunca en"
+
+#: src/Admin/CouponTermsFormatter.php:196 src/Admin/InventoryListTable.php:298
+msgid "Never"
+msgstr "Nunca"
+
+#: src/Admin/CouponTermsFormatter.php:195
+msgid "Only in"
+msgstr "Solo en"
+
+#: src/Admin/CouponTermsFormatter.php:194
+msgid "Only"
+msgstr "Solo"
+
+#: src/Admin/CouponTermsFormatter.php:182
+msgid "Everything"
+msgstr "Todo"
+
+#. translators: %s: comma-separated list of billing addresses.
+#: src/Admin/CouponTermsFormatter.php:162
+msgid "Only for %s"
+msgstr "Solo para %s"
+
+#: src/Admin/CouponTermsFormatter.php:155
+msgid "Individual use"
+msgstr "Uso individual"
+
+#: src/Admin/CouponTermsFormatter.php:151
+msgid "Free shipping"
+msgstr "Envío gratuito"
+
+#. translators: %d: items in one basket the coupon may apply to.
+#: src/Admin/CouponTermsFormatter.php:128
+msgid "%d item per basket"
+msgid_plural "%d items per basket"
+msgstr[0] "%d artículo por cesta"
+msgstr[1] "%d artículos por cesta"
+
+#. translators: %d: redemptions allowed per customer.
+#: src/Admin/CouponTermsFormatter.php:113
+msgid "%d per customer"
+msgid_plural "%d per customer"
+msgstr[0] "%d por cliente"
+msgstr[1] "%d por cliente"
+
+#. translators: 1: redemptions so far, 2: the cap, or an infinity sign.
+#: src/Admin/CouponTermsFormatter.php:102
+msgid "%1$s of %2$s"
+msgstr "%1$s de %2$s"
+
+#: src/Admin/CouponTermsFormatter.php:87
+msgid "any"
+msgstr "cualquiera"
+
+#. translators: %s: highest basket total.
+#: src/Admin/CouponTermsFormatter.php:82
+msgid "up to %s"
+msgstr "hasta %s"
+
+#. translators: %s: lowest basket total.
+#: src/Admin/CouponTermsFormatter.php:74
+msgid "%s or more"
+msgstr "%s o más"
+
+#. translators: 1: lowest basket total, 2: highest.
+#: src/Admin/CouponTermsFormatter.php:65
+msgid "%1$s to %2$s"
+msgstr "de %1$s a %2$s"
+
+#. translators: %s: a percentage, already formatted.
+#: src/Admin/CouponTermsFormatter.php:45
+msgid "%s%%"
+msgstr "%s%%"
+
+#: src/Admin/CouponEditorNotices.php:144
+msgid "Both are applied automatically, so a customer does not have to find them."
+msgstr "Los dos se aplican automáticamente, así que el cliente no tiene que encontrarlos."
+
+#. translators: 1: number of other coupons, 2: comma-separated coupon codes.
+#: src/Admin/CouponEditorNotices.php:133
+msgid "This coupon applies to the same products as %1$d other live coupon: %2$s."
+msgid_plural "This coupon applies to the same products as %1$d other live coupons: %2$s."
+msgstr[0] "Este cupón se aplica a los mismos productos que otro %1$d cupón activo: %2$s."
+msgstr[1] "Este cupón se aplica a los mismos productos que otros %1$d cupones activos: %2$s."
+
+#: src/Admin/CouponEditorNotices.php:109
+msgid "This coupon has no usage limit, so it can be redeemed any number of times."
+msgstr "Este cupón no tiene límite de uso, así que se puede canjear tantas veces como sea."
+
+#: src/Admin/CouponEditorNotices.php:105
+msgid "This coupon has no expiry date, so nothing will ever turn it off."
+msgstr "Este cupón no tiene fecha de caducidad, así que nada lo desactivará nunca."
+
+#: src/Admin/CouponEditorNotices.php:62
+msgid "Coupon audit:"
+msgstr "Auditoría de cupones:"
+
+#. translators: %s: required WooCommerce version.
+#: coupon-audit-and-analytics-for-woocommerce.php:197
+msgid "Coupon Audit and Analytics for WooCommerce requires WooCommerce %s or newer to be installed and active."
+msgstr "Coupon Audit and Analytics for WooCommerce necesita que WooCommerce %s o superior esté instalado y activo."
+
+#: coupon-audit-and-analytics-for-woocommerce.php:151
+msgid "Coupon Audit and Analytics for WooCommerce is missing its dependencies. Run \"composer install\" in the plugin directory."
+msgstr "A Coupon Audit and Analytics for WooCommerce le faltan sus dependencias. Ejecuta «composer install» en el directorio del plugin."
+
+#. translators: 1: required PHP version, 2: PHP version in use.
+#: coupon-audit-and-analytics-for-woocommerce.php:142
+msgid "Coupon Audit and Analytics for WooCommerce requires PHP %1$s or newer. This site runs PHP %2$s."
+msgstr "Coupon Audit and Analytics for WooCommerce necesita PHP %1$s o superior. Este sitio usa PHP %2$s."
+
+#. Author URI of the plugin
+#: coupon-audit-and-analytics-for-woocommerce.php
+msgid "https://davefx.com"
+msgstr "https://davefx.com"
+
+#. Author of the plugin
+#: coupon-audit-and-analytics-for-woocommerce.php
+msgid "David Marín Carreño"
+msgstr "David Marín Carreño"
+
+#. Description of the plugin
+#: coupon-audit-and-analytics-for-woocommerce.php
+msgid "Audits your coupon inventory — what is live, what it really applies to, what overlaps — and measures what each coupon actually earns."
+msgstr "Audita el inventario de cupones de tu tienda —cuáles están activos, a qué se aplican realmente y cuáles se solapan— y mide lo que gana cada uno."
+
+#. Plugin Name of the plugin
+#: coupon-audit-and-analytics-for-woocommerce.php
+msgid "Coupon Audit and Analytics for WooCommerce"
+msgstr "Coupon Audit and Analytics for WooCommerce"

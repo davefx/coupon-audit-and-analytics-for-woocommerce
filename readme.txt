@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, analytics, discounts, profit
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.5.0
+Stable tag: 0.5.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -195,6 +195,15 @@ calculated on your own server, from your own database, and stays there.
 
 == Changelog ==
 
+= 0.5.1 =
+* Corrects this page. It described the paid version as installing alongside the
+  free one; it replaces it — installing the paid version deactivates the free
+  one automatically, and your settings and figures carry over. The 0.5.0
+  description reached the directory before that correction did.
+* Net margin reads payment fees from Stripe, WooPayments and PayPal, not from
+  Stripe alone as the previous description said.
+* No change to any screen or to any figure.
+
 = 0.5.0 =
 * A paid version is now available: a year of margin history, CSV export, and
   margin after payment fees. It replaces this plugin rather than sitting beside
@@ -256,6 +265,10 @@ calculated on your own server, from your own database, and stays there.
   30-day gross margin.
 
 == Upgrade Notice ==
+
+= 0.5.1 =
+Corrections to the plugin's description only. Nothing about the plugin itself
+changes.
 
 = 0.5.0 =
 A paid version is now available, and the plugin will ask once whether you are

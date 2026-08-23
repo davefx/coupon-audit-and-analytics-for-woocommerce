@@ -369,10 +369,18 @@ final class InventoryListTable extends WP_List_Table {
      * @return list<InventoryEntry>
      */
     private function sort( array $entries ) : array {
+        // Sorting a list table is a link, not a form, so there is no nonce to
+        // check and asking for one would break every column header.
+        //
+        // On their own line rather than trailing the statement: Freemius
+        // reformats the shipped code and moves a trailing comment to the line
+        // *after* the statement, where it suppresses nothing. Plugin Check then
+        // reports these two on the published plugin and not on this repository,
+        // which is the worst place for a difference to appear.
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $orderby = ( isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : 'code' );
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $order = ( isset( $_GET['order'] ) && 'desc' === strtolower( sanitize_key( wp_unslash( $_GET['order'] ) ) ) ? -1 : 1 );
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         usort( $entries, static function ( InventoryEntry $a, InventoryEntry $b ) use($orderby, $order) : int {
             switch ( $orderby ) {
                 case 'status':
