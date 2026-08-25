@@ -92,7 +92,7 @@ msgstr "WooCommerce Cost of Goods"
 
 #: src/Cost/NativeCogsSource.php:86
 msgid "WooCommerce (built-in cost of goods)"
-msgstr "WooCommerce (coste de los bienes integrado)"
+msgstr "WooCommerce (precio de coste integrado)"
 
 #: src/Cost/BoosterCogsSource.php:38
 msgid "Booster for WooCommerce"
@@ -141,11 +141,11 @@ msgstr "Elegir automáticamente"
 
 #: src/Admin/SettingsPage.php:148
 msgid "No cost-of-goods system was found. Enable WooCommerce's own Cost of Goods feature, or install a cost-of-goods plugin, and margins will start to appear."
-msgstr "No se ha encontrado ningún sistema de coste de los bienes. Activa la característica Coste de los bienes de WooCommerce, o instala un plugin de coste de los bienes, y empezarán a aparecer los márgenes."
+msgstr "No se ha encontrado ningún sistema de precio de coste. Activa la característica Precio de coste de WooCommerce, o instala un plugin de precio de coste, y empezarán a aparecer los márgenes."
 
 #: src/Admin/SettingsPage.php:141
 msgid "Cost of goods source"
-msgstr "Origen del coste de los bienes"
+msgstr "Origen del precio de coste"
 
 #: src/Admin/SettingsPage.php:68
 msgid "Settings saved."
@@ -166,7 +166,7 @@ msgstr "Algunos cupones no tienen coste registrado en sus pedidos, así que no s
 
 #: src/Admin/MarginPage.php:109
 msgid "No margin can be shown yet, because none of these orders has a cost recorded against it. Set product costs in WooCommerce, or in whichever cost-of-goods plugin your shop already uses, and the figures will appear."
-msgstr "Todavía no se puede mostrar ningún margen, porque ninguno de estos pedidos tiene un coste registrado. Establece los costes de los productos en WooCommerce, o en el plugin de coste de los bienes que ya use tu tienda, y aparecerán las cifras."
+msgstr "Todavía no se puede mostrar ningún margen, porque ninguno de estos pedidos tiene un coste registrado. Establece los costes de los productos en WooCommerce, o en el plugin de precio de coste que ya use tu tienda, y aparecerán las cifras."
 
 #. translators: %s: the date the backfill has reached.
 #: src/Admin/MarginPage.php:90
@@ -224,7 +224,7 @@ msgstr "Margen bruto"
 
 #: src/Admin/MarginListTable.php:66
 msgid "Cost of goods"
-msgstr "Coste de los bienes"
+msgstr "Precio de coste"
 
 #: src/Admin/MarginListTable.php:65
 msgid "Given away"

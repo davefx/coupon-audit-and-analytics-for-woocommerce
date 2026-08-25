@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, analytics, discounts, profit
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.5.1
+Stable tag: 0.5.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -86,7 +86,7 @@ nowhere else.
   figure says so instead of guessing: a confident wrong margin is worse than an
   honest gap.
 
-What it costs, and how to get it: https://davefx.com/en/wordpress-plugins/coupon-audit-and-analytics-for-woocommerce/
+[What it costs, and how to get it](https://davefx.com/en/wordpress-plugins/coupon-audit-and-analytics-for-woocommerce/)
 
 = What it does not do =
 
@@ -162,8 +162,8 @@ every field.
 This plugin uses Freemius for software licensing, updates and — only with your
 agreement — usage diagnostics. Freemius is operated by Freemius, Inc.
 
-* Terms of Use: https://freemius.com/terms/
-* Privacy Policy: https://freemius.com/privacy/
+* [Terms of Use](https://freemius.com/terms/)
+* [Privacy Policy](https://freemius.com/privacy/)
 
 = What is sent, and when =
 
@@ -194,6 +194,12 @@ calculated on your own server, from your own database, and stays there.
 4. Settings: which cost-of-goods system to read, and whether uninstalling should take the data with it.
 
 == Changelog ==
+
+= 0.5.2 =
+* The links on this page work. WordPress.org shows a bare address as plain text,
+  so the link to the plugin's own site and the links to Freemius's terms and
+  privacy policy were all unclickable — including the two the privacy disclosure
+  exists to point at.
 
 = 0.5.1 =
 * Corrects this page. It described the paid version as installing alongside the
@@ -265,6 +271,10 @@ calculated on your own server, from your own database, and stays there.
   30-day gross margin.
 
 == Upgrade Notice ==
+
+= 0.5.2 =
+Makes the links on the plugin's directory page clickable. Nothing about the
+plugin itself changes.
 
 = 0.5.1 =
 Corrections to the plugin's description only. Nothing about the plugin itself

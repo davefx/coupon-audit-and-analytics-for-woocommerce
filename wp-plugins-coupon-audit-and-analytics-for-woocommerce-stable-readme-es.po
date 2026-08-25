@@ -158,13 +158,13 @@ msgid ""
 "included its own Cost of Goods feature since 10.3, and it only needs switching\n"
 "on. If your shop already records cost in one of the third-party plugins listed\n"
 "above, this reads that instead — whichever one you tell it to believe."
-msgstr "Los márgenes sí necesitan datos de coste, pero no necesariamente otro plugin: WooCommerce incluye su propia característica de Coste de los bienes desde la 10.3, y solo hay que activarla. Si tu tienda ya registra el coste en alguno de los plugins de terceros de la lista de arriba, se leerá ese: el que tú le digas que se crea."
+msgstr "Los márgenes sí necesitan datos de coste, pero no necesariamente otro plugin: WooCommerce incluye su propia característica de Precio de coste desde la 10.3, y solo hay que activarla. Si tu tienda ya registra el coste en alguno de los plugins de terceros de la lista de arriba, se leerá ese: el que tú le digas que se crea."
 
 #. Found in description paragraph.
 msgid ""
 "For each coupon: revenue, what it gave away, the cost of the goods it moved, and\n"
 "the gross margin left over. Over the last 30 days."
-msgstr "Para cada cupón: los ingresos, lo que descontó, el coste de los bienes que movió y el margen bruto que quedó. Durante los últimos 30 días."
+msgstr "Para cada cupón: los ingresos, lo que descontó, el precio de coste que movió y el margen bruto que quedó. Durante los últimos 30 días."
 
 #. Found in faq paragraph.
 msgid ""
@@ -221,7 +221,7 @@ msgstr "¿Por qué un cupón no muestra margen?"
 
 #. Found in faq header.
 msgid "Do I need a cost-of-goods plugin?"
-msgstr "¿Necesito un plugin de coste de los bienes?"
+msgstr "¿Necesito un plugin de precio de coste?"
 
 #. Found in installation paragraph.
 msgid ""
@@ -234,7 +234,7 @@ msgid ""
 "For margins, make sure your shop records product costs — either through\n"
 "WooCommerce's own Cost of Goods feature or one of the supported plugins —\n"
 "then look at <strong>WooCommerce → Coupon Margin</strong>."
-msgstr "Para los márgenes, asegúrate de que tu tienda registra los costes de los productos —ya sea con la característica Coste de los bienes de WooCommerce o con uno de los plugins soportados— y luego mira <strong>WooCommerce → Margen de los cupones</strong>."
+msgstr "Para los márgenes, asegúrate de que tu tienda registra los costes de los productos —ya sea con la característica Precio de coste de WooCommerce o con uno de los plugins soportados— y luego mira <strong>WooCommerce → Margen de los cupones</strong>."
 
 #. Found in installation list item.
 msgid "Go to <strong>WooCommerce → Coupon Audit</strong>. The audit works immediately."
@@ -263,7 +263,7 @@ msgid ""
 "This half needs cost data, and it is honest about not having it. WooCommerce's\n"
 "own cost-of-goods feature is off by default, so the plugin also reads the cost\n"
 "plugins shops actually use:"
-msgstr "Esta mitad necesita datos de coste, y es honesta cuando no los tiene. La característica de coste de los bienes de WooCommerce viene desactivada por defecto, así que el plugin también lee los plugins de costes que las tiendas usan de verdad:"
+msgstr "Esta mitad necesita datos de coste, y es honesta cuando no los tiene. La característica de precio de coste de WooCommerce viene desactivada por defecto, así que el plugin también lee los plugins de costes que las tiendas usan de verdad:"
 
 #. Found in description paragraph.
 msgid ""
@@ -314,7 +314,7 @@ msgstr "Cost of Goods for WooCommerce, de WPFactory"
 
 #. Found in description list item.
 msgid "WooCommerce's built-in Cost of Goods (10.3 and later)"
-msgstr "El Coste de los bienes integrado en WooCommerce (10.3 y posteriores)"
+msgstr "El Precio de coste integrado en WooCommerce (10.3 y posteriores)"
 
 #. Found in description list item.
 msgid ""
@@ -357,7 +357,7 @@ msgstr "La auditoría"
 
 #. Screenshot description.
 msgid "Settings: which cost-of-goods system to read, and whether uninstalling should take the data with it."
-msgstr "Ajustes: qué sistema de coste de los bienes leer, y si al desinstalar deben borrarse también los datos."
+msgstr "Ajustes: qué sistema de precio de coste leer, y si al desinstalar deben borrarse también los datos."
 
 #. Screenshot description.
 msgid "Warnings on the coupon edit screen, against the coupon in front of you. They never block a save."
@@ -403,7 +403,7 @@ msgid ""
 "Clearer answer on cost data: WooCommerce has included its own Cost of Goods\n"
 "feature since 10.3, so no separate plugin is needed for margins — the\n"
 "third-party ones are still read if your shop already uses one."
-msgstr "Respuesta más clara sobre los datos de coste: WooCommerce incluye su propia característica de Coste de los bienes desde la 10.3, así que no hace falta un plugin aparte para los márgenes; los de terceros se siguen leyendo si tu tienda ya usa alguno."
+msgstr "Respuesta más clara sobre los datos de coste: WooCommerce incluye su propia característica de Precio de coste desde la 10.3, así que no hace falta un plugin aparte para los márgenes; los de terceros se siguen leyendo si tu tienda ya usa alguno."
 
 #. Found in changelog list item.
 #, gp-priority: low

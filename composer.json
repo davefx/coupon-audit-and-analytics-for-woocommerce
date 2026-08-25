@@ -64,7 +64,8 @@
 		"assets": "bash bin/wporg-assets/generate.sh",
 		"deploy": "bash bin/deploy-wporg.sh",
 		"package": "bash bin/build-premium-package.sh",
-		"verify:free": "bash bin/verify-free-build.sh"
+		"verify:free": "bash bin/verify-free-build.sh",
+		"stats": "bash bin/stats.sh"
 	},
 	"scripts-descriptions": {
 		"test": "Run the full PHPUnit suite.",
@@ -75,6 +76,7 @@
 		"analyse": "Run PHPStan static analysis at level 8.",
 		"package": "Build the premium zip that Freemius generates the free build from.",
 		"verify:free": "Check a Freemius free build: stripped, parses, and passes the suite.",
+		"stats": "Installs and sales, from WordPress.org and Freemius together.",
 		"check": "Run coding standards, static analysis and unit tests.",
 		"dist": "Build the distributable zip for WordPress.org.",
 		"screenshots": "Rebuild the readme screenshots from a throwaway demo shop.",
