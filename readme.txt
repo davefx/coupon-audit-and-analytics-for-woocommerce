@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, analytics, discounts, profit
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.5.3
+Stable tag: 0.5.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -195,6 +195,10 @@ calculated on your own server, from your own database, and stays there.
 
 == Changelog ==
 
+= 0.5.4 =
+* Fixes a second fatal error on activation in the paid version. The free plugin
+  was never affected by either.
+
 = 0.5.3 =
 * Fixes a fatal error on activation in the paid version. The free plugin was
   never affected.
@@ -275,6 +279,10 @@ calculated on your own server, from your own database, and stays there.
   30-day gross margin.
 
 == Upgrade Notice ==
+
+= 0.5.4 =
+Fixes a fatal error when activating the paid version. If you use the free
+plugin, nothing changes.
 
 = 0.5.3 =
 Fixes a fatal error when activating the paid version. If you use the free

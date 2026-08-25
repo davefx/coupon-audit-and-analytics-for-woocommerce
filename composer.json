@@ -65,7 +65,9 @@
 		"deploy": "bash bin/deploy-wporg.sh",
 		"package": "bash bin/build-premium-package.sh",
 		"verify:free": "bash bin/verify-free-build.sh",
-		"stats": "bash bin/stats.sh"
+		"stats": "bash bin/stats.sh",
+		"e2e": "bash bin/e2e.sh",
+		"e2e:ui": "bash bin/e2e-ui.sh"
 	},
 	"scripts-descriptions": {
 		"test": "Run the full PHPUnit suite.",
@@ -77,6 +79,8 @@
 		"package": "Build the premium zip that Freemius generates the free build from.",
 		"verify:free": "Check a Freemius free build: stripped, parses, and passes the suite.",
 		"stats": "Installs and sales, from WordPress.org and Freemius together.",
+		"e2e": "Install the paid build into a real WordPress and load it. Required before any release.",
+		"e2e:ui": "Drive the paid build's screens in a browser, licensed and unlicensed. Required before any release.",
 		"check": "Run coding standards, static analysis and unit tests.",
 		"dist": "Build the distributable zip for WordPress.org.",
 		"screenshots": "Rebuild the readme screenshots from a throwaway demo shop.",
