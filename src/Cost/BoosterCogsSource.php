@@ -20,7 +20,7 @@ final class BoosterCogsSource extends ProductMetaCostSource {
 	/**
 	 * Whether Booster is active.
 	 */
-	public function is_available(): bool {
+	protected function plugin_is_present(): bool {
 		return defined( 'WCJ_VERSION' ) || function_exists( 'wcj_get_product_purchase_price' );
 	}
 

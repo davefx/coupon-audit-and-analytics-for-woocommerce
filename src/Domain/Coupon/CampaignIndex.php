@@ -42,10 +42,10 @@ final class CampaignIndex {
 	 * the remnant of anything, and calling it a dead campaign would report a
 	 * finding about a campaign that never existed.
 	 *
-	 * @param CouponSnapshot $coupon   The coupon being judged.
-	 * @param string|null    $campaign Its campaign, or null if its code names none.
+	 * @param Judgeable   $coupon   The coupon being judged.
+	 * @param string|null $campaign Its campaign, or null if its code names none.
 	 */
-	public function every_sibling_expired( CouponSnapshot $coupon, ?string $campaign ): bool {
+	public function every_sibling_expired( Judgeable $coupon, ?string $campaign ): bool {
 		if ( null === $campaign ) {
 			return false;
 		}
@@ -60,7 +60,7 @@ final class CampaignIndex {
 		 * not part of — which the single-coupon entry point allows — is compared
 		 * against the whole tally instead.
 		 */
-		if ( isset( $this->ids[ $coupon->id->value ] ) ) {
+		if ( isset( $this->ids[ $coupon->id()->value ] ) ) {
 			--$total;
 		}
 

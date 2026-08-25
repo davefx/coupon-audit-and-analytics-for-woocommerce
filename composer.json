@@ -1,90 +1,20 @@
 {
-	"name": "dfx/coupon-audit-and-analytics-for-woocommerce",
-	"description": "Coupon inventory audit and per-coupon profitability analytics for WooCommerce.",
-	"type": "wordpress-plugin",
-	"license": "GPL-3.0-or-later",
-	"authors": [
-		{
-			"name": "David Mar\u00edn Carre\u00f1o",
-			"email": "davefx@davefx.com"
-		}
-	],
-	"require": {
-		"php": ">=8.1"
-	},
-	"require-dev": {
-		"brain/monkey": "^2.6",
-		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
-		"php-stubs/woocommerce-stubs": "^10.3",
-		"phpstan/phpstan": "^2.0",
-		"phpstan/phpstan-phpunit": "^2.0",
-		"phpunit/phpunit": "^9.6",
-		"szepeviktor/phpstan-wordpress": "^2.0",
-		"woocommerce/woocommerce-sniffs": "^1.0",
-		"wp-phpunit/wp-phpunit": "^7.0",
-		"yoast/phpunit-polyfills": "^2.0"
-	},
-	"autoload": {
-		"psr-4": {
-			"DFX\\CouponAAW\\": "src/"
-		}
-	},
-	"autoload-dev": {
-		"psr-4": {
-			"DFX\\CouponAAW\\Tests\\": "tests/"
-		}
-	},
-	"config": {
-		"platform": {
-			"php": "8.1"
-		},
-		"allow-plugins": {
-			"dealerdirect/phpcodesniffer-composer-installer": true
-		},
-		"sort-packages": true
-	},
-	"minimum-stability": "stable",
-	"prefer-stable": true,
-	"scripts": {
-		"test": "phpunit",
-		"test:unit": "phpunit --testsuite unit",
-		"test:integration": "phpunit -c phpunit-integration.xml.dist",
-		"lint": "phpcs",
-		"lint:fix": "phpcbf",
-		"lint:boundary": "phpcs --standard=PHPCompatibility --runtime-set testVersion 7.0- coupon-audit-and-analytics-for-woocommerce.php",
-		"analyse": "phpstan analyse",
-		"check": [
-			"@lint",
-			"@lint:boundary",
-			"@analyse",
-			"@test:unit"
-		],
-		"dist": "bash bin/build-dist.sh",
-		"screenshots": "bash bin/screenshots/regenerate.sh",
-		"assets": "bash bin/wporg-assets/generate.sh",
-		"deploy": "bash bin/deploy-wporg.sh",
-		"package": "bash bin/build-premium-package.sh",
-		"verify:free": "bash bin/verify-free-build.sh",
-		"stats": "bash bin/stats.sh",
-		"e2e": "bash bin/e2e.sh",
-		"e2e:ui": "bash bin/e2e-ui.sh"
-	},
-	"scripts-descriptions": {
-		"test": "Run the full PHPUnit suite.",
-		"test:unit": "Run the pure-domain unit suite (no WordPress, no database).",
-		"lint": "Check coding standards with PHPCS.",
-		"lint:boundary": "Verify the main file still parses on PHP 7, so its version guard can run.",
-		"lint:fix": "Auto-fix coding standard violations with PHPCBF.",
-		"analyse": "Run PHPStan static analysis at level 8.",
-		"package": "Build the premium zip that Freemius generates the free build from.",
-		"verify:free": "Check a Freemius free build: stripped, parses, and passes the suite.",
-		"stats": "Installs and sales, from WordPress.org and Freemius together.",
-		"e2e": "Install the paid build into a real WordPress and load it. Required before any release.",
-		"e2e:ui": "Drive the paid build's screens in a browser, licensed and unlicensed. Required before any release.",
-		"check": "Run coding standards, static analysis and unit tests.",
-		"dist": "Build the distributable zip for WordPress.org.",
-		"screenshots": "Rebuild the readme screenshots from a throwaway demo shop.",
-		"assets": "Render the WordPress.org banner and icon.",
-		"deploy": "Show what publishing to WordPress.org would change; add -- --commit to publish."
-	}
+    "name": "dfx/coupon-audit-and-analytics-for-woocommerce",
+    "description": "Coupon inventory audit and per-coupon profitability analytics for WooCommerce.",
+    "type": "wordpress-plugin",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "David Mar\u00edn Carre\u00f1o",
+            "email": "davefx@davefx.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "DFX\\CouponAAW\\": "src/"
+        }
+    }
 }

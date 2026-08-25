@@ -57,19 +57,31 @@ final class InventoryPage {
 			);
 		}
 
-		$inventory = $this->inventory->build();
-
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading a filter from the URL, not acting on a submission.
-		$filter = InventoryFilterRequest::from( $_GET );
+		$query = $_GET;
+
+		$filter = InventoryFilterRequest::from( $query );
+
+		$screen = $this->inventory->screen(
+			$filter,
+			InventoryOrderRequest::from( $query ),
+			InventoryOrderRequest::page( $query ),
+			InventoryListTable::PER_PAGE
+		);
 
 		$this->table->set_filter( $filter );
-		$this->table->set_entries( $inventory->matching( $filter ) );
+		$this->table->set_page( $screen->entries, $screen->total, $screen->summary );
 		$this->table->prepare_items();
 
 		echo '<div class="wrap dfxcaaw-inventory">';
 		printf( '<h1>%s</h1>', esc_html__( 'Coupon Audit', 'coupon-audit-and-analytics-for-woocommerce' ) );
 
-		$this->render_summary( $inventory->summary );
+		$this->render_summary( $screen->summary );
+
+		// Outside the form: these are links, and a link inside a GET form is
+		// still a link, but WordPress puts the views above the filter controls
+		// on every screen that has both and a reader expects them there.
+		$this->table->views();
 
 		echo '<form method="get">';
 		printf(

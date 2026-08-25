@@ -13,6 +13,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use DFX\CouponAAW\Domain\Coupon\CouponId;
 use DFX\CouponAAW\Domain\Coupon\CouponScope;
+use DFX\CouponAAW\Domain\Coupon\CouponProjection;
 use DFX\CouponAAW\Domain\Coupon\CouponSnapshot;
 use DFX\CouponAAW\Domain\Coupon\CouponTerms;
 use DFX\CouponAAW\Domain\Coupon\DiscountAmount;
@@ -132,6 +133,117 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	}
 
 	/**
+	 * Build only the coupons named, in the order they were named.
+	 *
+	 * The audit screen shows twenty rows. It used to reach them by building
+	 * every coupon in the shop and slicing, which at the customer's twenty-six
+	 * thousand is most of a gigabyte to display four hundred bytes of table.
+	 * Deciding *which* twenty is now done on projections, and this builds those.
+	 *
+	 * The order is the caller's, not the database's. Whoever chose these already
+	 * sorted them, and re-sorting here would silently override that.
+	 *
+	 * @param list<CouponId> $ids The coupons wanted.
+	 *
+	 * @return list<CouponSnapshot>
+	 */
+	public function some( array $ids ): array {
+		if ( array() === $ids ) {
+			return array();
+		}
+
+		$wanted = array_values( array_map( static fn ( CouponId $id ): int => $id->value, $ids ) );
+
+		$posts = array_filter(
+			get_posts(
+				array(
+					'post_type'        => self::POST_TYPE,
+					'post_status'      => $this->listed_statuses(),
+					'post__in'         => $wanted,
+					'numberposts'      => count( $wanted ),
+					'orderby'          => 'post__in',
+					'suppress_filters' => false,
+				)
+			),
+			static fn ( $post ): bool => $post instanceof WP_Post
+		);
+
+		if ( array() === $posts ) {
+			return array();
+		}
+
+		$found = array_values( array_map( static fn ( WP_Post $post ): int => $post->ID, $posts ) );
+
+		$last_used = $this->last_used( $found );
+
+		$this->prime_meta_cache( $found );
+
+		return array_values(
+			array_map(
+				fn ( WP_Post $post ): CouponSnapshot => $this->to_snapshot( $post, $last_used ),
+				$posts
+			)
+		);
+	}
+
+	/**
+	 * The codes of the coupons named, keyed by ID.
+	 *
+	 * One query against the posts table, because a coupon's code *is* its
+	 * `post_title` — the same fact `project()` relies on. There is nothing to
+	 * build and no meta to read.
+	 *
+	 * A placeholder per ID is acceptable here for the reason it is nowhere else:
+	 * the callers name a page or a chunk of one, never the shop.
+	 *
+	 * @param list<CouponId> $ids The coupons wanted.
+	 *
+	 * @return array<int, string>
+	 */
+	public function codes( array $ids ): array {
+		if ( array() === $ids ) {
+			return array();
+		}
+
+		// Aliased so that WPCS can recognise the prepare() call; the sniff only
+		// follows a variable literally named $wpdb.
+		$wpdb = $this->wpdb;
+
+		$wanted = array_values( array_map( static fn ( CouponId $id ): int => $id->value, $ids ) );
+
+		// Concatenated from literals rather than built with implode(), so that
+		// the statement stays a literal-string for prepare().
+		$placeholders = '%d';
+
+		for ( $i = count( $wanted ); $i > 1; $i-- ) {
+			$placeholders .= ', %d';
+		}
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT ID, post_title
+				FROM %i
+				WHERE post_type = %s
+					AND ID IN ( ' . $placeholders . ' )',
+				array_merge( array( $wpdb->posts, self::POST_TYPE ), $wanted )
+			),
+			ARRAY_A
+		);
+		// phpcs:enable
+
+		$codes = array();
+
+		foreach ( (array) $rows as $row ) {
+			if ( is_array( $row ) ) {
+				$codes[ (int) $row['ID'] ] = (string) $row['post_title'];
+			}
+		}
+
+		return $codes;
+	}
+
+	/**
 	 * How many coupons exist.
 	 */
 	public function count(): int {
@@ -150,6 +262,261 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	 * past a few hundred they would silently switch overlap detection off for
 	 * everything else. Excluding them belongs in the query rather than in a
 	 * filter applied afterwards, or the shop pays to load them first.
+	 *
+	 * @return array<string, mixed>
+	 */
+	/**
+	 * Every coupon, as scalars, in a fixed number of queries.
+	 *
+	 * This was one pivot: a nine-key `GROUP BY` over the join of posts and
+	 * postmeta. It was correct and it was slow — seven seconds at twenty-five
+	 * thousand coupons, nearly all of it in the database, because the pivot
+	 * builds a temporary table over a quarter of a million joined rows.
+	 *
+	 * A handful of plain reads do the same work in about a third of the time:
+	 *
+	 * 1. the coupons themselves, straight off the `type_status_date` index;
+	 * 2. one flat map per meta value the audit reads;
+	 * 3. which coupons have a restriction at all.
+	 *
+	 * The third is what keeps this small as well as quick. `is_universal` only
+	 * ever asks whether the four restriction lists are empty, and those lists
+	 * are the large values in coupon meta — a category coupon can carry a long
+	 * one. Asking the database for them in order to compute a boolean moved a
+	 * hundred megabytes to decide twenty-six thousand yes-or-nos, so the
+	 * emptiness is decided in SQL and only the IDs of the restricted coupons
+	 * come back. The test that pins this reads the queries and fails if one of
+	 * them ever asks for `meta_value` alongside a list key.
+	 *
+	 * Nothing is ordered. The screen sorts projections itself — it has to, since
+	 * status is derived rather than stored — so an `ORDER BY` here would be a
+	 * filesort whose result is thrown away.
+	 *
+	 * @return list<CouponProjection>
+	 */
+	public function project(): array {
+		$rows = $this->coupon_rows();
+
+		if ( array() === $rows ) {
+			return array();
+		}
+
+		$expires    = $this->meta_column( 'date_expires' );
+		$limits     = $this->meta_column( 'usage_limit' );
+		$counts     = $this->meta_column( 'usage_count' );
+		$types      = $this->meta_column( 'discount_type' );
+		$sale_items = $this->meta_column( 'exclude_sale_items' );
+		$restricted = $this->restricted_coupons();
+		$last_used  = $this->last_used_for_all();
+
+		$projections = array();
+
+		foreach ( $rows as $row ) {
+			$id     = (int) $row['ID'];
+			$status = (string) $row['post_status'];
+			$limit  = (int) ( $limits[ $id ] ?? 0 );
+
+			$projections[] = new CouponProjection(
+				new CouponId( $id ),
+				(string) $row['post_title'],
+				in_array( $status, self::LIVE_STATUSES, true ),
+				$this->local_datetime( (string) $row['post_date'] ),
+				'future' === $status ? $this->local_datetime( (string) $row['post_date'] ) : null,
+				$this->expiry_from_meta( $expires[ $id ] ?? null ),
+				$limit > 0 ? $limit : null,
+				(int) ( $counts[ $id ] ?? 0 ),
+				isset( $last_used[ $id ] ) ? $this->local_datetime( $last_used[ $id ] ) : null,
+				! isset( $restricted[ $id ] ) && 'yes' !== ( $sale_items[ $id ] ?? 'no' ),
+				(string) ( $types[ $id ] ?? '' )
+			);
+		}
+
+		return $projections;
+	}
+
+	/**
+	 * The coupons themselves, without their meta.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private function coupon_rows(): array {
+		// Aliased so that WPCS can recognise the prepare() call; the sniff only
+		// follows a variable literally named $wpdb.
+		$wpdb = $this->wpdb;
+
+		// The statuses are not constant — they come from get_post_stati() — so
+		// they go through a single placeholder as a comma-separated set rather
+		// than a placeholder each, which would make the statement's length
+		// follow the number of registered statuses. Table names go through %i
+		// because prepare() wants a literal string and an interpolated
+		// $wpdb->posts is not one.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT ID, post_title, post_status, post_date
+				FROM %i
+				WHERE post_type = %s
+					AND FIND_IN_SET( post_status, %s )',
+				$wpdb->posts,
+				self::POST_TYPE,
+				implode( ',', $this->listed_statuses() )
+			),
+			ARRAY_A
+		);
+
+		return is_array( $rows ) ? array_values( $rows ) : array();
+	}
+
+	/**
+	 * One meta key's value for every coupon, as a flat map.
+	 *
+	 * A key each rather than all five at once, which is the difference between
+	 * one result of a hundred and twenty-five thousand three-column rows and
+	 * five results of twenty-five thousand two-column ones. The first costs
+	 * seventy megabytes at the customer's size and the second costs almost
+	 * nothing, because each result is turned into a flat array and released
+	 * before the next is asked for. It is about a fifth of a second slower, on
+	 * a screen that has to fit inside a 256MB admin.
+	 *
+	 * Still a fixed number of queries. That is the invariant — not the number
+	 * itself, but that it does not follow the number of coupons.
+	 *
+	 * @param string $key The meta key to read.
+	 *
+	 * @return array<int, string>
+	 */
+	private function meta_column( string $key ): array {
+		// Aliased so that WPCS can recognise the prepare() call; the sniff only
+		// follows a variable literally named $wpdb.
+		$wpdb = $this->wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT m.post_id, m.meta_value
+				FROM %i m
+				JOIN %i p
+					ON p.ID = m.post_id
+					AND p.post_type = %s
+					AND FIND_IN_SET( p.post_status, %s )
+				WHERE m.meta_key = %s',
+				$wpdb->postmeta,
+				$wpdb->posts,
+				self::POST_TYPE,
+				implode( ',', $this->listed_statuses() ),
+				$key
+			),
+			ARRAY_N
+		);
+
+		$values = array();
+
+		foreach ( (array) $rows as $row ) {
+			$values[ (int) $row[0] ] = (string) $row[1];
+		}
+
+		return $values;
+	}
+
+	/**
+	 * Which coupons are restricted to some part of the catalogue.
+	 *
+	 * Only the IDs come back. The lists themselves are the largest values in
+	 * coupon meta and the audit never reads one — it asks whether there is one —
+	 * so the emptiness is decided here, where the rows already are.
+	 *
+	 * The two values treated as empty are the two the snapshot path treats as
+	 * empty: nothing at all, and a serialised empty array. A stored '0' counts
+	 * as a restriction in both, which is odd but is what WooCommerce means by
+	 * it, and this is not the place to start disagreeing.
+	 *
+	 * @return array<int, true>
+	 */
+	private function restricted_coupons(): array {
+		$wpdb = $this->wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT m.post_id
+				FROM %i m
+				JOIN %i p
+					ON p.ID = m.post_id
+					AND p.post_type = %s
+					AND FIND_IN_SET( p.post_status, %s )
+				WHERE m.meta_key IN (
+					'product_ids', 'exclude_product_ids',
+					'product_categories', 'exclude_product_categories'
+				)
+					AND TRIM( m.meta_value ) NOT IN ( '', 'a:0:{}' )",
+				$wpdb->postmeta,
+				$wpdb->posts,
+				self::POST_TYPE,
+				implode( ',', $this->listed_statuses() )
+			)
+		);
+
+		$restricted = array();
+
+		foreach ( (array) $ids as $id ) {
+			$restricted[ (int) $id ] = true;
+		}
+
+		return $restricted;
+	}
+
+	/**
+	 * When each coupon was last redeemed, for the whole shop at once.
+	 *
+	 * Grouped over the lookup table with no IN list: the aggregate is the same
+	 * work whether it is asked about one coupon or all of them, and asking about
+	 * all of them by name is what does not scale.
+	 *
+	 * @return array<int, string>
+	 */
+	private function last_used_for_all(): array {
+		if ( ! $this->has_lookup_table() ) {
+			return array();
+		}
+
+		$wpdb = $this->wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT coupon_id, MAX(date_created) AS last_used FROM %i GROUP BY coupon_id',
+				$this->lookup_table()
+			)
+		);
+
+		$last_used = array();
+
+		foreach ( (array) $rows as $row ) {
+			$last_used[ (int) $row->coupon_id ] = (string) $row->last_used;
+		}
+
+		return $last_used;
+	}
+
+	/**
+	 * A coupon's expiry, from the raw meta value WooCommerce stores.
+	 *
+	 * It keeps a Unix timestamp there, and an empty string for no expiry. The
+	 * snapshot path reaches the same instant through WC_Coupon; this reaches it
+	 * from the column, and the two are asserted to agree.
+	 *
+	 * @param mixed $stored The raw meta value.
+	 */
+	private function expiry_from_meta( $stored ): ?DateTimeImmutable {
+		if ( ! is_scalar( $stored ) || '' === (string) $stored ) {
+			return null;
+		}
+
+		return $this->local_datetime( gmdate( 'Y-m-d H:i:s', (int) $stored ) );
+	}
+
+	/**
+	 * The query that lists coupons for the audit.
 	 *
 	 * @return array<string, mixed>
 	 */

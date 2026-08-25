@@ -67,7 +67,11 @@ final class Inventory {
 		return array_values(
 			array_filter(
 				$this->entries,
-				static fn ( InventoryEntry $entry ): bool => $filter->matches( $entry->coupon )
+				static fn ( InventoryEntry $entry ): bool => $filter->matches(
+					$entry->coupon,
+					$entry->status,
+					$entry->orphan_reasons
+				)
 			)
 		);
 	}
@@ -86,13 +90,21 @@ final class Inventory {
 	 * @param list<Overlap>|null   $overlaps Every collision, or null when not checked.
 	 */
 	private static function summarise( array $entries, ?array $overlaps ): InventorySummary {
-		$by_status    = array();
+		// Seeded with every status rather than filled in afterwards, so that a
+		// screen can show a zero rather than a gap *and* the order of the map
+		// is the enum's rather than whichever status the database happened to
+		// return first. Two summaries of the same shop must be the same value.
+		$by_status = array();
+
+		foreach ( CouponStatus::cases() as $status ) {
+			$by_status[ $status->value ] = 0;
+		}
 		$orphans      = 0;
 		$unrestricted = 0;
 
 		foreach ( $entries as $entry ) {
-			$key               = $entry->status->value;
-			$by_status[ $key ] = ( $by_status[ $key ] ?? 0 ) + 1;
+			$key = $entry->status->value;
+			++$by_status[ $key ];
 
 			if ( $entry->is_orphan() ) {
 				++$orphans;
@@ -101,11 +113,6 @@ final class Inventory {
 			if ( $entry->is_live_and_unrestricted() ) {
 				++$unrestricted;
 			}
-		}
-
-		// Every status appears, so a screen can show a zero rather than a gap.
-		foreach ( CouponStatus::cases() as $status ) {
-			$by_status[ $status->value ] = $by_status[ $status->value ] ?? 0;
 		}
 
 		return new InventorySummary(

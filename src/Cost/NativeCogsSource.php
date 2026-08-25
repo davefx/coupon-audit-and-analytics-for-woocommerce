@@ -11,8 +11,6 @@ namespace DFX\CouponAAW\Cost;
 
 use Automattic\WooCommerce\Utilities\FeaturesUtil;
 use DFX\CouponAAW\Domain\Profit\Money;
-use WC_Abstract_Order;
-use WC_Order_Item;
 
 /**
  * Cost of goods as recorded by WooCommerce itself, from 10.3 onwards.
@@ -24,6 +22,11 @@ use WC_Order_Item;
  * that has none. Trusting the API alone would report full cost coverage and zero
  * costs for any store that switched the feature on without filling anything in —
  * a margin equal to revenue, stated with total confidence.
+ *
+ * Read straight from the line rather than through the order it belongs to. The
+ * `has_cogs()` guard that used to stand in front of it always answered yes for a
+ * product line, which is the only kind of line that ever reaches here, and
+ * building an order to ask it cost five queries per order across a backfill.
  *
  * WooCommerce deletes the meta outright when the value is 0.0, so a genuinely
  * free line is indistinguishable from an unrecorded one and both read as
@@ -93,19 +96,7 @@ final class NativeCogsSource implements CostSourceInterface {
 	 * @param int $line_item_id The line within it.
 	 */
 	public function get_line_cost( int $order_id, int $line_item_id ): ?Money {
-		$order = wc_get_order( $order_id );
-
-		if ( ! $order instanceof WC_Abstract_Order ) {
-			return null;
-		}
-
-		$item = $order->get_item( $line_item_id );
-
-		if ( ! $item instanceof WC_Order_Item || ! $item->has_cogs() ) {
-			return null;
-		}
-
-		$stored = wc_get_order_item_meta( $line_item_id, self::VALUE_META, true );
+		$stored = wc_get_order_item_meta( $line_item_id, self::VALUE_META );
 
 		if ( ! is_numeric( $stored ) ) {
 			return null;
@@ -126,5 +117,20 @@ final class NativeCogsSource implements CostSourceInterface {
 	 */
 	public function records_cost_at_sale(): bool {
 		return true;
+	}
+
+	/**
+	 * Warm the line meta.
+	 *
+	 * Core keeps its figure on the line item, so there is no product meta to
+	 * warm and nothing else to read.
+	 *
+	 * @param list<int> $order_ids     The orders about to be asked about.
+	 * @param list<int> $line_item_ids Every line of those orders.
+	 */
+	public function prime( array $order_ids, array $line_item_ids ): void {
+		if ( array() !== $line_item_ids ) {
+			update_meta_cache( 'order_item', $line_item_ids );
+		}
 	}
 }

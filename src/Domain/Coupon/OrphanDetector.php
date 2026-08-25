@@ -52,14 +52,14 @@ final class OrphanDetector {
 	 * The order is stable — expiry, dormancy, campaign — so callers and tests
 	 * can compare the result directly.
 	 *
-	 * @param CouponSnapshot       $coupon    The coupon to judge.
-	 * @param list<CouponSnapshot> $inventory The surrounding coupons, needed only to
+	 * @param Judgeable       $coupon    The coupon to judge.
+	 * @param list<Judgeable> $inventory The surrounding coupons, needed only to
 	 *                                        judge whether a campaign has died. Omit it
 	 *                                        and that rule simply does not fire.
 	 *
 	 * @return list<OrphanReason>
 	 */
-	public function reasons( CouponSnapshot $coupon, array $inventory = array() ): array {
+	public function reasons( Judgeable $coupon, array $inventory = array() ): array {
 		return $this->judge( $coupon, $this->index( $inventory ) );
 	}
 
@@ -72,7 +72,7 @@ final class OrphanDetector {
 	 * The campaigns are counted once here instead, and each coupon is then judged
 	 * against the tally.
 	 *
-	 * @param list<CouponSnapshot> $inventory Every coupon in the shop.
+	 * @param list<Judgeable> $inventory Every coupon in the shop.
 	 *
 	 * @return array<int, list<OrphanReason>> Reasons keyed by coupon ID.
 	 */
@@ -81,7 +81,7 @@ final class OrphanDetector {
 		$reasons = array();
 
 		foreach ( $inventory as $coupon ) {
-			$reasons[ $coupon->id->value ] = $this->judge( $coupon, $index );
+			$reasons[ $coupon->id()->value ] = $this->judge( $coupon, $index );
 		}
 
 		return $reasons;
@@ -90,19 +90,19 @@ final class OrphanDetector {
 	/**
 	 * Judge one coupon against an already-counted inventory.
 	 *
-	 * @param CouponSnapshot $coupon The coupon to judge.
-	 * @param CampaignIndex  $index  The counted inventory.
+	 * @param Judgeable     $coupon The coupon to judge.
+	 * @param CampaignIndex $index  The counted inventory.
 	 *
 	 * @return list<OrphanReason>
 	 */
-	private function judge( CouponSnapshot $coupon, CampaignIndex $index ): array {
+	private function judge( Judgeable $coupon, CampaignIndex $index ): array {
 		if ( ! $this->status->resolve( $coupon )->is_usable() ) {
 			return array();
 		}
 
 		$reasons = array();
 
-		if ( null === $coupon->expires_at ) {
+		if ( null === $coupon->expires_at() ) {
 			$reasons[] = OrphanReason::NO_EXPIRY_DATE;
 		}
 
@@ -110,7 +110,7 @@ final class OrphanDetector {
 			$reasons[] = OrphanReason::DORMANT;
 		}
 
-		if ( $index->every_sibling_expired( $coupon, $this->campaign_of( $coupon->code ) ) ) {
+		if ( $index->every_sibling_expired( $coupon, $this->campaign_of( $coupon->code() ) ) ) {
 			$reasons[] = OrphanReason::DEAD_CAMPAIGN;
 		}
 
@@ -120,7 +120,7 @@ final class OrphanDetector {
 	/**
 	 * Count the campaigns in an inventory.
 	 *
-	 * @param list<CouponSnapshot> $inventory The surrounding coupons.
+	 * @param list<Judgeable> $inventory The surrounding coupons.
 	 */
 	private function index( array $inventory ): CampaignIndex {
 		$members = array();
@@ -128,9 +128,9 @@ final class OrphanDetector {
 		$ids     = array();
 
 		foreach ( $inventory as $candidate ) {
-			$ids[ $candidate->id->value ] = true;
+			$ids[ $candidate->id()->value ] = true;
 
-			$campaign = $this->campaign_of( $candidate->code );
+			$campaign = $this->campaign_of( $candidate->code() );
 
 			if ( null === $campaign ) {
 				continue;
@@ -147,10 +147,10 @@ final class OrphanDetector {
 	/**
 	 * Whether the coupon is an orphan on any ground at all.
 	 *
-	 * @param CouponSnapshot       $coupon    The coupon to judge.
-	 * @param list<CouponSnapshot> $inventory The surrounding coupons.
+	 * @param Judgeable       $coupon    The coupon to judge.
+	 * @param list<Judgeable> $inventory The surrounding coupons.
 	 */
-	public function is_orphan( CouponSnapshot $coupon, array $inventory = array() ): bool {
+	public function is_orphan( Judgeable $coupon, array $inventory = array() ): bool {
 		return array() !== $this->reasons( $coupon, $inventory );
 	}
 
@@ -161,10 +161,10 @@ final class OrphanDetector {
 	 * instead, so that one created yesterday is not reported as dormant on the
 	 * day the report is most likely to be read.
 	 *
-	 * @param CouponSnapshot $coupon The coupon to judge.
+	 * @param Judgeable $coupon The coupon to judge.
 	 */
-	private function is_dormant( CouponSnapshot $coupon ): bool {
-		$last_activity = $coupon->last_used_at ?? $coupon->created_at;
+	private function is_dormant( Judgeable $coupon ): bool {
+		$last_activity = $coupon->last_used_at() ?? $coupon->created_at();
 
 		return $last_activity < $this->dormancy_cutoff();
 	}

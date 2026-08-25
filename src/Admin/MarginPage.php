@@ -12,6 +12,7 @@ use DateTimeImmutable;
 use DFX\CouponAAW\Domain\Profit\CostCoverage;
 use DFX\CouponAAW\Domain\Profit\CouponMargin;
 use DFX\CouponAAW\Install\Aggregator;
+use DFX\CouponAAW\Service\MarginPageResult;
 use DFX\CouponAAW\Service\MarginService;
 /**
  * The analytics half, and the screen §6.3 was written for.
@@ -43,9 +44,34 @@ final class MarginPage {
         if ( !current_user_can( InventoryPage::CAPABILITY ) ) {
             wp_die( esc_html__( 'You do not have permission to view coupon margins.', 'coupon-audit-and-analytics-for-woocommerce' ), 403 );
         }
-        $margins = $this->margins->margins();
         [$from, $to] = $this->margins->window();
-        $this->table->set_margins( $margins );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading a page number from the URL, not acting on a submission.
+        $page = InventoryOrderRequest::page( $_GET );
+        $result = $this->margins->page( $page, MarginListTable::PER_PAGE );
+        /**
+         * Fires with the margin rows the screen is about to draw.
+         *
+         * The rows of one page, in the order they will appear. An add-on
+         * rendering a column of its own needs this: without it, it has no way to
+         * know which twenty coupons are on screen, so it reads the whole window
+         * to fill twenty cells — which is the cost the paging exists to remove,
+         * moved one plugin over.
+         *
+         * The whole result is passed rather than the list of rows, and not only
+         * because the window totals are useful. `do_action()` carries a legacy
+         * branch: an array holding exactly one object is unwrapped, and the
+         * listener is handed that object instead of the array. A shop whose
+         * window contains a single coupon would call every listener with a
+         * `CouponMargin` where it expected a list. An object argument never
+         * takes that path.
+         *
+         * @since 0.6.0
+         *
+         * @param MarginPageResult $result The page about to be drawn, and what
+         *                                 the window came to.
+         */
+        do_action( 'dfxcaaw_margin_rows', $result );
+        $this->table->set_page( $result->margins, $result->total );
         $this->table->prepare_items();
         echo '<div class="wrap dfxcaaw-margins">';
         printf( '<h1>%s</h1>', esc_html__( 'Coupon Margin', 'coupon-audit-and-analytics-for-woocommerce' ) );
@@ -56,7 +82,7 @@ final class MarginPage {
             $this->date( $to )
          ) ) );
         $this->render_backfill_notice();
-        $this->render_coverage_notice( $margins );
+        $this->render_coverage_notice( $result );
         echo '<form method="get">';
         printf( '<input type="hidden" name="page" value="%s" />', esc_attr( self::PAGE_SLUG ) );
         $this->table->display();
@@ -95,21 +121,21 @@ final class MarginPage {
     /**
      * Explain an empty or partial table, which is the common case.
      *
-     * @param list<CouponMargin> $margins The figures being shown.
+     * Decided from the window rather than from the twenty rows on screen. A
+     * notice saying that none of these orders has a cost recorded must not
+     * become true on page three and false on page four.
+     *
+     * @param MarginPageResult $result The page, and what the window came to.
      */
-    private function render_coverage_notice( array $margins ) : void {
-        if ( array() === $margins ) {
+    private function render_coverage_notice( MarginPageResult $result ) : void {
+        if ( 0 === $result->total ) {
             return;
         }
-        $known = 0;
-        foreach ( $margins as $margin ) {
-            $known += ( CostCoverage::NONE === $margin->coverage() ? 0 : 1 );
-        }
-        if ( 0 === $known ) {
+        if ( 0 === $result->with_cost ) {
             printf( '<div class="notice notice-warning inline"><p>%s</p></div>', esc_html__( 'No margin can be shown yet, because none of these orders has a cost recorded against it. Set product costs in WooCommerce, or in whichever cost-of-goods plugin your shop already uses, and the figures will appear.', 'coupon-audit-and-analytics-for-woocommerce' ) );
             return;
         }
-        if ( $known < count( $margins ) ) {
+        if ( !$result->cost_is_complete() ) {
             printf( '<div class="notice notice-info inline"><p>%s</p></div>', esc_html__( 'Some coupons have no cost recorded against their orders, so no margin is shown for them. Margins marked as an estimate cover only part of their lines.', 'coupon-audit-and-analytics-for-woocommerce' ) );
         }
     }

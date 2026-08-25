@@ -21,7 +21,7 @@ use InvalidArgumentException;
  * computed its own status would need a clock of its own, and every repository
  * would have to thread one through.
  */
-final class CouponSnapshot {
+final class CouponSnapshot implements Judgeable {
 
 	/**
 	 * Constructor.
@@ -68,6 +68,74 @@ final class CouponSnapshot {
 				'A coupon usage limit must be null for unlimited, or at least 1.'
 			);
 		}
+	}
+
+	/**
+	 * Which coupon this is.
+	 */
+	public function id(): CouponId {
+		return $this->id;
+	}
+
+	/**
+	 * Its code.
+	 */
+	public function discount_type(): string {
+		return $this->terms->amount->type;
+	}
+
+	/**
+	 * The code as entered at the basket.
+	 */
+	public function code(): string {
+		return $this->code;
+	}
+
+	/**
+	 * When it was created.
+	 */
+	public function created_at(): DateTimeImmutable {
+		return $this->created_at;
+	}
+
+	/**
+	 * When it was last redeemed, if it ever was.
+	 */
+	public function last_used_at(): ?DateTimeImmutable {
+		return $this->last_used_at;
+	}
+
+	/**
+	 * Whether it applies to the whole catalogue.
+	 *
+	 * Delegated to the scope, which is the only thing the bulk rules ask of it.
+	 */
+	public function is_universal(): bool {
+		return $this->scope->is_universal();
+	}
+
+	/**
+	 * Whether the coupon is in a status the storefront would honour.
+	 *
+	 * The property and the accessor say the same thing; the accessor exists so
+	 * that a projection and a snapshot can be judged by the same rule.
+	 */
+	public function is_published(): bool {
+		return $this->is_published;
+	}
+
+	/**
+	 * When it starts, where that is in the future.
+	 */
+	public function starts_at(): ?DateTimeImmutable {
+		return $this->starts_at;
+	}
+
+	/**
+	 * When it expires, if it does.
+	 */
+	public function expires_at(): ?DateTimeImmutable {
+		return $this->expires_at;
 	}
 
 	/**

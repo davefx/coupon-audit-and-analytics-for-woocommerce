@@ -21,9 +21,9 @@ final class MenuRegistrar {
 	public const PAGE_SLUG = 'dfxcaaw-inventory';
 
 	/**
-	 * The WooCommerce top-level menu this hangs from.
+	 * Where WooCommerce keeps Coupons when it has not moved them.
 	 */
-	private const PARENT_SLUG = 'woocommerce';
+	private const WOOCOMMERCE_SLUG = 'woocommerce';
 
 	/**
 	 * Constructor.
@@ -39,11 +39,39 @@ final class MenuRegistrar {
 	) {}
 
 	/**
+	 * The menu these screens belong under.
+	 *
+	 * Beside Coupons, wherever WooCommerce currently keeps them — and it does
+	 * move them: they sit under Marketing when that feature is enabled, which it
+	 * is by default, and under WooCommerce when it is not.
+	 *
+	 * Hardcoding either would put these screens in an empty menu on half of all
+	 * shops, and leave them behind the next time Coupons move.
+	 */
+	public function parent_slug(): string {
+		$coupons = get_post_type_object( 'shop_coupon' );
+
+		// WooCommerce answers this itself: Internal\Admin\Coupons sets the
+		// coupon post type's show_in_menu to woocommerce-marketing when the
+		// marketing feature is on, and leaves it alone when it is not. Reading
+		// that is better than repeating the condition, for the same reason
+		// StatusResolver judges one rule rather than two — this cannot fall out
+		// of step with WooCommerce, because it is asking WooCommerce.
+		if ( null !== $coupons && is_string( $coupons->show_in_menu ) && '' !== $coupons->show_in_menu ) {
+			return $coupons->show_in_menu;
+		}
+
+		return self::WOOCOMMERCE_SLUG;
+	}
+
+	/**
 	 * Register the submenu page.
 	 */
 	public function register(): void {
+		$parent = $this->parent_slug();
+
 		add_submenu_page(
-			self::PARENT_SLUG,
+			$parent,
 			__( 'Coupon Audit', 'coupon-audit-and-analytics-for-woocommerce' ),
 			__( 'Coupon Audit', 'coupon-audit-and-analytics-for-woocommerce' ),
 			InventoryPage::CAPABILITY,
@@ -52,7 +80,7 @@ final class MenuRegistrar {
 		);
 
 		add_submenu_page(
-			self::PARENT_SLUG,
+			$parent,
 			__( 'Coupon Margin', 'coupon-audit-and-analytics-for-woocommerce' ),
 			__( 'Coupon Margin', 'coupon-audit-and-analytics-for-woocommerce' ),
 			InventoryPage::CAPABILITY,
@@ -61,7 +89,7 @@ final class MenuRegistrar {
 		);
 
 		add_submenu_page(
-			self::PARENT_SLUG,
+			$parent,
 			__( 'Coupon Audit Settings', 'coupon-audit-and-analytics-for-woocommerce' ),
 			__( 'Coupon Audit Settings', 'coupon-audit-and-analytics-for-woocommerce' ),
 			InventoryPage::CAPABILITY,

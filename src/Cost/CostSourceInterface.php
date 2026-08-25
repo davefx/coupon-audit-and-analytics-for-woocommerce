@@ -49,6 +49,24 @@ interface CostSourceInterface {
 	public function get_line_cost( int $order_id, int $line_item_id ): ?Money;
 
 	/**
+	 * Warm whatever `get_line_cost()` is about to ask for, in bulk.
+	 *
+	 * A day is aggregated as a whole and every source answers line by line, so
+	 * without this a day costs a handful of queries per order — the order, its
+	 * items, each item's meta, each product's cost. Paid once per day of a
+	 * shop's history that is millions of queries for a backfill, which is the
+	 * one job that has to survive a shop with years behind it.
+	 *
+	 * An adapter that has nothing to warm may leave this empty; the default in
+	 * `ProductMetaCostSource` covers everything that reads product meta, which
+	 * is most of them. Priming must never change an answer, only its cost.
+	 *
+	 * @param list<int> $order_ids     The orders about to be asked about.
+	 * @param list<int> $line_item_ids Every line of those orders.
+	 */
+	public function prime( array $order_ids, array $line_item_ids ): void;
+
+	/**
 	 * Where this source sits when several are installed. Lower wins.
 	 */
 	public function get_priority(): int;

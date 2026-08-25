@@ -22,8 +22,12 @@ use WP_List_Table;
 final class MarginListTable extends WP_List_Table {
     /**
      * Coupons shown per page.
+     *
+     * Public because the screen has to know it before the table does: it is the
+     * screen that asks the service for a page, and the table is handed the
+     * result.
      */
-    private const PER_PAGE = 20;
+    public const PER_PAGE = 20;
 
     /**
      * The rows to display.
@@ -31,6 +35,13 @@ final class MarginListTable extends WP_List_Table {
      * @var list<CouponMargin>
      */
     private array $margins = array();
+
+    /**
+     * How many lines the window comes to, of which this page shows some.
+     *
+     * @var int
+     */
+    private int $total = 0;
 
     /**
      * Constructor.
@@ -44,12 +55,19 @@ final class MarginListTable extends WP_List_Table {
     }
 
     /**
-     * Supply the rows.
+     * Supply the rows of one page, and how many rows there are altogether.
+     *
+     * It used to be given every line in the window and to count and slice them
+     * itself, which meant the window had to be summed in PHP before the screen
+     * could draw twenty rows of it. The summing and the paging both happen in
+     * the database now, and the table is handed the answer.
      *
      * @param list<CouponMargin> $margins The figures to display.
+     * @param int                $total   How many lines the window comes to.
      */
-    public function set_margins( array $margins ) : void {
+    public function set_page( array $margins, int $total ) : void {
         $this->margins = $margins;
+        $this->total = $total;
     }
 
     /**
@@ -73,15 +91,12 @@ final class MarginListTable extends WP_List_Table {
      * Build the rows for the current page.
      */
     public function prepare_items() : void {
-        $total = count( $this->margins );
-        $page = max( 1, $this->get_pagenum() );
-        $offset = ($page - 1) * self::PER_PAGE;
         $this->_column_headers = array($this->get_columns(), array(), array());
-        $this->items = array_slice( $this->margins, $offset, self::PER_PAGE );
+        $this->items = $this->margins;
         $this->set_pagination_args( array(
-            'total_items' => $total,
+            'total_items' => $this->total,
             'per_page'    => self::PER_PAGE,
-            'total_pages' => (int) ceil( $total / self::PER_PAGE ),
+            'total_pages' => (int) ceil( $this->total / self::PER_PAGE ),
         ) );
     }
 

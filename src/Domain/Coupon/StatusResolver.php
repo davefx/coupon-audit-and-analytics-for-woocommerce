@@ -37,10 +37,10 @@ final class StatusResolver {
 	 * - Exhaustion beats scheduling: a coupon that can never be redeemed is not
 	 *   meaningfully "coming soon".
 	 *
-	 * @param CouponSnapshot $coupon The coupon to inspect.
+	 * @param Judgeable $coupon The coupon, or a projection of one.
 	 */
-	public function resolve( CouponSnapshot $coupon ): CouponStatus {
-		if ( ! $coupon->is_published ) {
+	public function resolve( Judgeable $coupon ): CouponStatus {
+		if ( ! $coupon->is_published() ) {
 			return CouponStatus::INACTIVE;
 		}
 
@@ -49,7 +49,9 @@ final class StatusResolver {
 		// Strictly later, matching how WooCommerce itself decides a coupon has
 		// expired. A coupon the storefront still accepts must not be reported
 		// here as dead.
-		if ( null !== $coupon->expires_at && $now > $coupon->expires_at ) {
+		$expires_at = $coupon->expires_at();
+
+		if ( null !== $expires_at && $now > $expires_at ) {
 			return CouponStatus::EXPIRED;
 		}
 
@@ -57,7 +59,9 @@ final class StatusResolver {
 			return CouponStatus::EXHAUSTED;
 		}
 
-		if ( null !== $coupon->starts_at && $coupon->starts_at > $now ) {
+		$starts_at = $coupon->starts_at();
+
+		if ( null !== $starts_at && $starts_at > $now ) {
 			return CouponStatus::SCHEDULED;
 		}
 

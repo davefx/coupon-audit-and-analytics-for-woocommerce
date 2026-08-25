@@ -30,7 +30,7 @@ final class SkyvergeCogsSource extends ProductMetaCostSource {
 	/**
 	 * Whether the extension is active.
 	 */
-	public function is_available(): bool {
+	protected function plugin_is_present(): bool {
 		return class_exists( 'WC_COG' ) || defined( 'WC_COG_VERSION' );
 	}
 

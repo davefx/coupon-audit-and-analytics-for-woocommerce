@@ -52,9 +52,14 @@ final class AggregationService implements AggregationInterface {
 	 */
 	public function aggregate_day( DateTimeImmutable $day ): int {
 		$source  = $this->costs->active();
+		$orders  = $this->orders->orders_on( $day );
 		$buckets = array();
 
-		foreach ( $this->orders->orders_on( $day ) as $order ) {
+		if ( null !== $source ) {
+			$source->prime( $this->order_ids( $orders ), $this->line_item_ids( $orders ) );
+		}
+
+		foreach ( $orders as $order ) {
 			$this->add_order( $buckets, $order, $source );
 		}
 
@@ -63,6 +68,36 @@ final class AggregationService implements AggregationInterface {
 		$this->stats->replace_day( $day, $rows, null === $source ? '' : $source->get_identifier() );
 
 		return count( $rows );
+	}
+
+	/**
+	 * The IDs of a day's orders.
+	 *
+	 * @param list<OrderSnapshot> $orders The day's orders.
+	 *
+	 * @return list<int>
+	 */
+	private function order_ids( array $orders ): array {
+		return array_values( array_map( static fn ( OrderSnapshot $order ): int => $order->id, $orders ) );
+	}
+
+	/**
+	 * Every line of a day's orders.
+	 *
+	 * @param list<OrderSnapshot> $orders The day's orders.
+	 *
+	 * @return list<int>
+	 */
+	private function line_item_ids( array $orders ): array {
+		$ids = array();
+
+		foreach ( $orders as $order ) {
+			foreach ( $order->line_item_ids as $line_item_id ) {
+				$ids[] = $line_item_id;
+			}
+		}
+
+		return $ids;
 	}
 
 	/**

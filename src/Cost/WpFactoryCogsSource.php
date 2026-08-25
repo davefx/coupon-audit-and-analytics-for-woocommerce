@@ -10,8 +10,6 @@ declare( strict_types=1 );
 namespace DFX\CouponAAW\Cost;
 
 use DFX\CouponAAW\Domain\Profit\Money;
-use WC_Abstract_Order;
-use WC_Order_Item;
 
 /**
  * The most capable of the third-party systems, and the only one besides core
@@ -32,7 +30,7 @@ final class WpFactoryCogsSource extends ProductMetaCostSource {
 	/**
 	 * Whether the plugin is active.
 	 */
-	public function is_available(): bool {
+	protected function plugin_is_present(): bool {
 		return defined( 'ALG_WC_COST_OF_GOODS_VERSION' )
 			|| function_exists( 'alg_wc_cog' )
 			|| function_exists( 'wpfcogs' );
@@ -63,19 +61,11 @@ final class WpFactoryCogsSource extends ProductMetaCostSource {
 	 * @param int $line_item_id The line within it.
 	 */
 	public function get_line_cost( int $order_id, int $line_item_id ): ?Money {
-		$order = wc_get_order( $order_id );
+		$stored = wc_get_order_item_meta( $line_item_id, self::LINE_COST_META );
 
-		if ( $order instanceof WC_Abstract_Order ) {
-			$item = $order->get_item( $line_item_id );
-
-			if ( $item instanceof WC_Order_Item ) {
-				$stored = $item->get_meta( self::LINE_COST_META, true );
-
-				if ( is_numeric( $stored ) ) {
-					return Money::from_decimal( (float) $stored, $this->currency, $this->decimals )
-						->times( max( 1, (int) $item->get_quantity() ) );
-				}
-			}
+		if ( is_numeric( $stored ) ) {
+			return Money::from_decimal( (float) $stored, $this->currency, $this->decimals )
+				->times( max( 1, (int) wc_get_order_item_meta( $line_item_id, '_qty' ) ) );
 		}
 
 		return parent::get_line_cost( $order_id, $line_item_id );

@@ -82,11 +82,25 @@ final class PrePublishValidator {
 	 * skipped, exactly as the inventory screen skips it. The cheap checks above
 	 * still run: a large store is precisely where a forgotten expiry hides.
 	 *
+	 * The size is asked for *before* the coupons are read, and that ordering is
+	 * the whole point. It used to load every coupon in the shop as a full
+	 * snapshot and count them afterwards, so the one screen that skips this work
+	 * paid all of it — most of a gigabyte, on the coupon editor, every time
+	 * somebody opened a coupon in a shop with twenty-six thousand of them.
+	 *
+	 * Counting one more than the store holds is deliberate: the coupon being
+	 * edited may not be saved yet, so it may not be among them, and the check
+	 * has to be affordable for the larger of the two readings.
+	 *
 	 * @param CouponSnapshot $coupon The coupon being edited.
 	 *
 	 * @return list<Overlap>
 	 */
 	private function collisions( CouponSnapshot $coupon ): array {
+		if ( $this->coupons->count() + 1 > OverlapDetector::SYNCHRONOUS_LIMIT ) {
+			return array();
+		}
+
 		$others = array_values(
 			array_filter(
 				$this->coupons->all(),

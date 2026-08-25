@@ -10,10 +10,10 @@ declare( strict_types=1 );
 namespace DFX\CouponAAW\Repository;
 
 use DateTimeImmutable;
+use Automattic\WooCommerce\Utilities\OrderUtil;
 use DateTimeZone;
 use DFX\CouponAAW\Domain\Profit\Money;
 use DFX\CouponAAW\Domain\Profit\OrderSnapshot;
-use WC_Abstract_Order;
 
 /**
  * Reads the orders behind the aggregates from WooCommerce Analytics (§6.1).
@@ -57,33 +57,66 @@ final class WcOrderStatsRepository implements OrderStatsRepositoryInterface {
 		$to   = $day->modify( '+1 day' )->setTime( 0, 0 )->format( 'Y-m-d H:i:s' );
 
 		$statuses     = $this->countable_statuses();
-		$placeholders = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
+		$placeholders = self::placeholders( count( $statuses ) );
 
 		/*
+		 * The currency is joined rather than looked up. It used to come from
+		 * wc_get_order() once per order, which is a full order object — the post
+		 * or the HPOS row, plus its meta — built to read one column. On the shop
+		 * this was written for the backfill walks about eleven hundred days at a
+		 * couple of thousand coupon orders each, so that was millions of order
+		 * loads, and a busy day loaded every one of its orders into memory at
+		 * once.
+		 *
+		 * Where the column lives depends on how the shop stores orders, so there
+		 * are two spellings of the same query and no third path: both were read
+		 * out of the WooCommerce source rather than remembered. Each calls
+		 * prepare() on its own literal rather than choosing a statement into a
+		 * variable first — prepare() is typed to take a literal-string, and a
+		 * string that has been through a variable is no longer one.
+		 *
 		 * Table names go through %i and every value through a placeholder. Only
 		 * the IN list is interpolated, and what it interpolates is a run of %s
-		 * built from a count — placeholders, not values. The sniff cannot follow
-		 * that, nor count arguments passed through array_merge.
+		 * built from a count — placeholders, not values. The sniff can follow
+		 * neither that nor arguments passed through array_merge.
 		 */
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT c.order_id, c.coupon_id, c.discount_amount, s.date_created, s.net_total
+		$prepared = $this->orders_have_their_own_table()
+			? $wpdb->prepare(
+				"SELECT c.order_id, c.coupon_id, c.discount_amount, s.date_created, s.net_total,
+					o.currency AS currency
 				FROM %i c
 				INNER JOIN %i s ON s.order_id = c.order_id
+				INNER JOIN %i o ON o.id = s.order_id
 				WHERE s.date_created >= %s AND s.date_created < %s
-				AND s.parent_id = 0
-				AND s.status IN ({$placeholders})",
+					AND s.parent_id = 0
+					AND s.status IN ({$placeholders})",
 				array_merge(
-					array( $this->coupon_lookup_table(), $this->order_stats_table(), $from, $to ),
+					array( $this->coupon_lookup_table(), $this->order_stats_table(), $this->orders_table(), $from, $to ),
 					$statuses
 				)
-			),
-			ARRAY_A
-		);
+			)
+			: $wpdb->prepare(
+				"SELECT c.order_id, c.coupon_id, c.discount_amount, s.date_created, s.net_total,
+					m.meta_value AS currency
+				FROM %i c
+				INNER JOIN %i s ON s.order_id = c.order_id
+				INNER JOIN %i p ON p.ID = s.order_id
+				LEFT JOIN %i m ON m.post_id = s.order_id AND m.meta_key = '_order_currency'
+				WHERE s.date_created >= %s AND s.date_created < %s
+					AND s.parent_id = 0
+					AND s.status IN ({$placeholders})",
+				array_merge(
+					array( $this->coupon_lookup_table(), $this->order_stats_table(), $wpdb->posts, $wpdb->postmeta, $from, $to ),
+					$statuses
+				)
+			);
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared just above, in whichever branch applies.
+		$rows = $wpdb->get_results( $prepared, ARRAY_A );
 		// phpcs:enable
 
-		return $this->to_snapshots( (array) $rows );
+		return $this->to_snapshots( (array) $rows, $from, $to );
 	}
 
 	/**
@@ -113,9 +146,12 @@ final class WcOrderStatsRepository implements OrderStatsRepositoryInterface {
 	 *
 	 * @param array<int, mixed> $rows Rows of order-and-coupon, as the database returned them.
 	 *
+	 * @param string            $from  Start of the window, as stored.
+	 * @param string            $to    End of the window, exclusive.
+	 *
 	 * @return list<OrderSnapshot>
 	 */
-	private function to_snapshots( array $rows ): array {
+	private function to_snapshots( array $rows, string $from, string $to ): array {
 		$orders = array();
 
 		foreach ( $rows as $row ) {
@@ -130,11 +166,7 @@ final class WcOrderStatsRepository implements OrderStatsRepositoryInterface {
 			}
 
 			if ( ! isset( $orders[ $order_id ] ) ) {
-				$currency = $this->currency_of( $order_id );
-
-				if ( null === $currency ) {
-					continue;
-				}
+				$currency = $this->currency_of( $row );
 
 				$orders[ $order_id ] = array(
 					'date'      => new DateTimeImmutable( (string) ( $row['date_created'] ?? 'now' ), $this->timezone ),
@@ -151,7 +183,7 @@ final class WcOrderStatsRepository implements OrderStatsRepositoryInterface {
 			);
 		}
 
-		$line_items = $this->line_items_of( array_keys( $orders ) );
+		$line_items = $this->line_items_on( $from, $to );
 		$snapshots  = array();
 
 		foreach ( $orders as $order_id => $order ) {
@@ -168,30 +200,42 @@ final class WcOrderStatsRepository implements OrderStatsRepositoryInterface {
 	}
 
 	/**
-	 * The line item IDs of each of the given orders.
+	 * The line item IDs of every countable coupon order on a day.
 	 *
-	 * One query for the lot rather than one per order: a busy day is exactly
-	 * when this runs, and it runs in the background where nobody is watching it
-	 * be slow.
+	 * Joined by the same window rather than by an IN list of the day's orders.
+	 * A busy day at the shop this was written for is tens of thousands of
+	 * orders, and a prepared statement with a placeholder each is the thing this
+	 * project's performance rules name outright — the query grows with the
+	 * shop's best day, which is when it is least welcome.
 	 *
-	 * @param list<int> $order_ids The orders.
+	 * Only `line_item` rows: fees, shipping and tax lines are not goods and have
+	 * no cost of their own, and counting them would put the coverage figure out.
 	 *
-	 * @return array<int, list<int>>
+	 * @param string $from Start of the window, as stored.
+	 * @param string $to   End of the window, exclusive.
+	 *
+	 * @return array<int, list<int>> Line item IDs by order ID.
 	 */
-	private function line_items_of( array $order_ids ): array {
-		if ( array() === $order_ids ) {
-			return array();
-		}
+	private function line_items_on( string $from, string $to ): array {
+		$wpdb = $this->wpdb;
 
-		$wpdb         = $this->wpdb;
-		$placeholders = implode( ', ', array_fill( 0, count( $order_ids ), '%d' ) );
+		$statuses     = $this->countable_statuses();
+		$placeholders = self::placeholders( count( $statuses ) );
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT order_id, order_item_id FROM %i
-				WHERE order_id IN ({$placeholders}) AND order_item_type = 'line_item'",
-				array_merge( array( $wpdb->prefix . 'woocommerce_order_items' ), $order_ids )
+				"SELECT i.order_id, i.order_item_id
+				FROM %i i
+				INNER JOIN %i s ON s.order_id = i.order_id
+				WHERE i.order_item_type = 'line_item'
+					AND s.date_created >= %s AND s.date_created < %s
+					AND s.parent_id = 0
+					AND s.status IN ({$placeholders})",
+				array_merge(
+					array( $wpdb->prefix . 'woocommerce_order_items', $this->order_stats_table(), $from, $to ),
+					$statuses
+				)
 			),
 			ARRAY_A
 		);
@@ -211,25 +255,78 @@ final class WcOrderStatsRepository implements OrderStatsRepositoryInterface {
 	}
 
 	/**
-	 * An order's currency.
+	 * The currency of an order, from the row already read.
 	 *
-	 * Neither analytics table records it, and it cannot be assumed to be the
-	 * store's current currency: a multi-currency shop's old orders were placed
-	 * in whatever it was then. Loading the order is the only reliable answer
-	 * that works on both post storage and HPOS.
+	 * Empty means the shop's own currency, which is what WooCommerce does with
+	 * it: `OrdersTableDataStore` falls back to `get_woocommerce_currency()` when
+	 * the stored value is empty. Orders placed before WooCommerce recorded a
+	 * currency at all have nothing stored, and they used to be dropped from the
+	 * aggregates entirely — a shop that predates the field saw a hole in its
+	 * history rather than a currency.
 	 *
-	 * @param int $order_id The order.
+	 * @param array<string, mixed> $row One row of the day's read.
 	 */
-	private function currency_of( int $order_id ): ?string {
-		$order = wc_get_order( $order_id );
+	private function currency_of( array $row ): string {
+		$currency = (string) ( $row['currency'] ?? '' );
 
-		if ( ! $order instanceof WC_Abstract_Order ) {
-			return null;
+		return '' === $currency ? $this->store_currency() : $currency;
+	}
+
+	/**
+	 * The shop's own currency, asked once per request.
+	 */
+	private function store_currency(): string {
+		static $currency = null;
+
+		if ( null === $currency ) {
+			$currency = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : '';
 		}
 
-		$currency = $order->get_currency();
+		return $currency;
+	}
 
-		return '' === $currency ? null : $currency;
+	/**
+	 * Whether orders live in WooCommerce's own tables rather than as posts.
+	 *
+	 * Asked of WooCommerce rather than of the database. A shop mid-migration has
+	 * both, and which one is authoritative is WooCommerce's answer to give.
+	 */
+	private function orders_have_their_own_table(): bool {
+		return class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled();
+	}
+
+	/**
+	 * WooCommerce's own orders table.
+	 */
+	private function orders_table(): string {
+		return $this->wpdb->prefix . 'wc_orders';
+	}
+
+	/**
+	 * A run of `%s` placeholders, as a literal.
+	 *
+	 * Concatenated from literals rather than built with `implode()`, which
+	 * returns a plain string: `prepare()` is typed to take a literal-string, and
+	 * that type is the whole reason a generated fragment cannot quietly become a
+	 * generated *value*. What varies here is how many placeholders there are,
+	 * never what is in them.
+	 *
+	 * @param int $count How many.
+	 *
+	 * @return literal-string
+	 */
+	private static function placeholders( int $count ): string {
+		if ( $count < 1 ) {
+			return '';
+		}
+
+		$list = '%s';
+
+		for ( $i = $count; $i > 1; $i-- ) {
+			$list .= ', %s';
+		}
+
+		return $list;
 	}
 
 	/**
