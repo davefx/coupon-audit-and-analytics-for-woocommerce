@@ -128,7 +128,15 @@ final class WcOrderStatsRepository implements OrderStatsRepositoryInterface {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$earliest = $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT MIN(s.date_created) FROM %i c INNER JOIN %i s ON s.order_id = c.order_id',
+				// Only rows that can be attributed to a coupon. A negative ID is
+				// WooCommerce recording a coupon it could not identify, and
+				// orders_on() drops those — so counting one here would start the
+				// backfill at a day it is going to store nothing for, and walk
+				// forward a scheduled step at a time until it reached a real one.
+				'SELECT MIN(s.date_created)
+				FROM %i c
+				INNER JOIN %i s ON s.order_id = c.order_id
+				WHERE c.coupon_id > 0',
 				$this->coupon_lookup_table(),
 				$this->order_stats_table()
 			)
@@ -159,9 +167,33 @@ final class WcOrderStatsRepository implements OrderStatsRepositoryInterface {
 				continue;
 			}
 
-			$order_id = (int) ( $row['order_id'] ?? 0 );
+			$order_id  = (int) ( $row['order_id'] ?? 0 );
+			$coupon_id = (int) ( $row['coupon_id'] ?? 0 );
 
 			if ( $order_id < 1 ) {
+				continue;
+			}
+
+			/*
+			 * A coupon ID below one is WooCommerce saying it does not know which
+			 * coupon this was. Its own comment in Reports\Coupons\DataStore reads
+			 * "Insert a unique, but obviously invalid ID for this deleted coupon",
+			 * and the value it writes is -1, -2 and so on, numbered per order.
+			 *
+			 * It reaches that path when the line carries neither `coupon_info`
+			 * (which WooCommerce only began writing in 8.7) nor the older
+			 * `coupon_data`, and the code no longer resolves to a coupon — an old
+			 * order for a coupon that has since been deleted. Any shop that has
+			 * ever deleted a coupon has these rows.
+			 *
+			 * They are dropped rather than carried, because there is nothing they
+			 * could be attributed to. The IDs are unique *per order*, so the -1 on
+			 * one order and the -1 on another are different coupons; summing them
+			 * would invent a coupon that never existed and report its margin. An
+			 * order keeps its other coupons, and an order whose coupons have all
+			 * been deleted contributes nothing, which is the honest answer.
+			 */
+			if ( $coupon_id < 1 ) {
 				continue;
 			}
 
@@ -176,7 +208,7 @@ final class WcOrderStatsRepository implements OrderStatsRepositoryInterface {
 				);
 			}
 
-			$orders[ $order_id ]['discounts'][ (int) ( $row['coupon_id'] ?? 0 ) ] = Money::from_decimal(
+			$orders[ $order_id ]['discounts'][ $coupon_id ] = Money::from_decimal(
 				(float) ( $row['discount_amount'] ?? 0 ),
 				$orders[ $order_id ]['currency'],
 				$this->decimals

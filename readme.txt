@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, analytics, discounts, profit
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.6.0
+Stable tag: 0.6.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -137,6 +137,12 @@ No coupon, order, customer or revenue data. Every figure this plugin reports is 
 4. Settings: which cost-of-goods system to read, and whether uninstalling should take the data with it.
 
 == Changelog ==
+
+= 0.6.1 =
+* Fixes a failure that stopped a day's figures being built. WooCommerce records an order's coupon with a placeholder when it can no longer tell which coupon was used — an old order for a coupon that has since been deleted — and reading one stopped the whole day. Any shop that has ever deleted a coupon could hit this.
+* Days whose figures could not be built are now tried again by themselves, and again whenever this plugin is updated, rather than being lost.
+* Reading past orders no longer stops at the first day it cannot build. It used to halt there, so a shop with years of history behind that day never saw any of it.
+* The margin screen says when figures for some days could not be built, instead of leaving a gap that reads like a quiet week.
 
 = 0.6.0 =
 * The coupon audit works on shops with tens of thousands of coupons. It used to read every coupon in the shop before it could draw a single row, so past about ten thousand it ran out of memory and showed nothing at all. It now reads the page it is showing you. A shop with 26,000 coupons opens in a few seconds.

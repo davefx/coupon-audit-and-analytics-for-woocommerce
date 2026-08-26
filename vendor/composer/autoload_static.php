@@ -81,6 +81,7 @@ class ComposerStaticInit8f5de6229158b913cb87740431bc1fdc
         'DFX\\CouponAAW\\Install\\Aggregator' => __DIR__ . '/../..' . '/src/Install/Aggregator.php',
         'DFX\\CouponAAW\\Install\\SchemaMigrator' => __DIR__ . '/../..' . '/src/Install/SchemaMigrator.php',
         'DFX\\CouponAAW\\Install\\Uninstaller' => __DIR__ . '/../..' . '/src/Install/Uninstaller.php',
+        'DFX\\CouponAAW\\Install\\Upgrader' => __DIR__ . '/../..' . '/src/Install/Upgrader.php',
         'DFX\\CouponAAW\\Integration\\IntegrationInterface' => __DIR__ . '/../..' . '/src/Integration/IntegrationInterface.php',
         'DFX\\CouponAAW\\Integration\\IntegrationRegistry' => __DIR__ . '/../..' . '/src/Integration/IntegrationRegistry.php',
         'DFX\\CouponAAW\\Integration\\WjecfIntegration' => __DIR__ . '/../..' . '/src/Integration/WjecfIntegration.php',

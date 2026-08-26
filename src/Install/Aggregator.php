@@ -11,6 +11,7 @@ namespace DFX\CouponAAW\Install;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use Throwable;
 use DFX\CouponAAW\Domain\Clock\ClockInterface;
 use DFX\CouponAAW\Repository\OrderStatsRepositoryInterface;
 use DFX\CouponAAW\Service\AggregationInterface;
@@ -51,6 +52,30 @@ final class Aggregator {
 	 * Where the backfill records that it has finished.
 	 */
 	private const BACKFILL_DONE = 'backfill_complete';
+
+	/**
+	 * Where the days that would not aggregate are remembered.
+	 */
+	private const FAILED_DAYS = 'failed_days';
+
+	/**
+	 * How many times a day is tried again before it is left alone.
+	 *
+	 * Retrying for ever is doing nothing, at the cost of a job every quarter of
+	 * an hour. What must not happen is forgetting: a day that has given up is
+	 * still missing, and `failed_days()` is how something can say so.
+	 */
+	public const RETRY_ATTEMPTS = 5;
+
+	/**
+	 * How long to wait before trying a failed day again, in seconds.
+	 *
+	 * Multiplied by the attempt, so the gaps widen. A day that fails because the
+	 * database was briefly away wants a short wait; a day that fails because the
+	 * shop holds something this plugin cannot read wants to stop wasting the
+	 * shop's queue.
+	 */
+	private const RETRY_DELAY = 900;
 
 	/**
 	 * The queue group, so a store can see whose jobs these are.
@@ -126,10 +151,157 @@ final class Aggregator {
 	/**
 	 * Aggregate one day. The queue's callback.
 	 *
+	 * A day that throws is remembered and queued again rather than lost. Before
+	 * this, a day whose aggregation failed looked exactly like a day on which no
+	 * coupon was used — no figures, no retry, and nothing anywhere saying which
+	 * of the two had happened.
+	 *
+	 * The exception is re-thrown after being recorded, so that Action Scheduler
+	 * logs what went wrong. The retry is queued independently of that: the point
+	 * of catching is to remember and try again, not to hide.
+	 *
 	 * @param string $day The day, as `Y-m-d`.
+	 *
+	 * @throws Throwable Whatever aggregation threw, after recording it.
 	 */
 	public function run_day( string $day ): void {
-		$this->aggregation->aggregate_day( new DateTimeImmutable( $day, $this->timezone ) );
+		try {
+			$this->aggregation->aggregate_day( new DateTimeImmutable( $day, $this->timezone ) );
+		} catch ( Throwable $failure ) {
+			$this->remember_failure( $day );
+
+			throw $failure;
+		}
+
+		$this->forget_failure( $day );
+	}
+
+	/**
+	 * The days that would not aggregate, oldest first.
+	 *
+	 * @return list<string>
+	 */
+	public function failed_days(): array {
+		$failures = $this->failures();
+
+		ksort( $failures );
+
+		return array_keys( $failures );
+	}
+
+	/**
+	 * Give every recorded day another go, from a clean slate.
+	 *
+	 * Called when a new version arrives. The attempt counts start over, because
+	 * what is being retried is not the same attempt — the code that failed has
+	 * been replaced, and a day that had used up its retries against the old one
+	 * deserves a full set against the new.
+	 *
+	 * The jobs are spread a minute apart. A shop that was broken for a year has
+	 * a year of days recorded, and queueing them all for the same instant makes
+	 * the update itself the outage.
+	 */
+	public function retry_failed_days(): void {
+		$days = $this->failed_days();
+
+		if ( array() === $days ) {
+			return;
+		}
+
+		$this->settings->set( self::FAILED_DAYS, array_fill_keys( $days, 0 ) );
+
+		if ( ! function_exists( 'as_schedule_single_action' ) || ! function_exists( 'as_next_scheduled_action' ) ) {
+			// Deliberately not aggregating inline here. queue_day() does that
+			// when there is no queue, which is right for one day at the moment
+			// an order changes and quite wrong for a year of them during a page
+			// load.
+			return;
+		}
+
+		$at = $this->clock->now()->getTimestamp();
+
+		foreach ( $days as $offset => $day ) {
+			$args = array( 'day' => $day );
+
+			if ( as_next_scheduled_action( self::AGGREGATE_DAY, $args, self::GROUP ) ) {
+				continue;
+			}
+
+			as_schedule_single_action( $at + ( 60 * ( $offset + 1 ) ), self::AGGREGATE_DAY, $args, self::GROUP );
+		}
+	}
+
+	/**
+	 * Record that a day would not aggregate, and queue it to be tried again.
+	 *
+	 * @param string $day The day, as `Y-m-d`.
+	 */
+	private function remember_failure( string $day ): void {
+		$failures = $this->failures();
+		$attempts = ( $failures[ $day ] ?? 0 ) + 1;
+
+		$failures[ $day ] = $attempts;
+		$this->settings->set( self::FAILED_DAYS, $failures );
+
+		if ( $attempts > self::RETRY_ATTEMPTS ) {
+			return;
+		}
+
+		if ( ! function_exists( 'as_schedule_single_action' ) || ! function_exists( 'as_next_scheduled_action' ) ) {
+			// Without a queue there is nothing to retry with. The day stays
+			// recorded, which is the part that matters: it is still missing.
+			return;
+		}
+
+		$args = array( 'day' => $day );
+
+		if ( as_next_scheduled_action( self::AGGREGATE_DAY, $args, self::GROUP ) ) {
+			return;
+		}
+
+		as_schedule_single_action(
+			$this->clock->now()->getTimestamp() + ( self::RETRY_DELAY * $attempts ),
+			self::AGGREGATE_DAY,
+			$args,
+			self::GROUP
+		);
+	}
+
+	/**
+	 * Forget a day that aggregated after all.
+	 *
+	 * @param string $day The day, as `Y-m-d`.
+	 */
+	private function forget_failure( string $day ): void {
+		$failures = $this->failures();
+
+		if ( ! isset( $failures[ $day ] ) ) {
+			return;
+		}
+
+		unset( $failures[ $day ] );
+		$this->settings->set( self::FAILED_DAYS, $failures );
+	}
+
+	/**
+	 * The recorded failures, as day to attempts.
+	 *
+	 * @return array<string, int>
+	 */
+	private function failures(): array {
+		$stored = $this->settings->get( self::FAILED_DAYS, array() );
+
+		if ( ! is_array( $stored ) ) {
+			return array();
+		}
+
+		$failures = array();
+
+		foreach ( $stored as $day => $attempts ) {
+			$failures[ (string) $day ] = (int) $attempts;
+		}
+
+		return $failures;
 	}
 
 	/**
@@ -181,7 +353,23 @@ final class Aggregator {
 			return;
 		}
 
-		$this->aggregation->aggregate_day( $day );
+		/*
+		 * The cursor advances and the successor is queued whether or not the day
+		 * aggregated. This is the half that mattered: both used to happen after
+		 * the aggregation, so a day that threw stopped the walk where it stood,
+		 * and a shop with years of history behind that day never saw any of it.
+		 *
+		 * The failure is not swallowed — it is recorded and retried on its own
+		 * schedule, which is what lets the walk carry on without losing the day.
+		 */
+		try {
+			$this->aggregation->aggregate_day( $day );
+			$this->forget_failure( $cursor );
+		} catch ( Throwable $failure ) {
+			unset( $failure );
+
+			$this->remember_failure( $cursor );
+		}
 
 		$this->settings->set( self::BACKFILL_CURSOR, $day->modify( '+1 day' )->format( 'Y-m-d' ) );
 		$this->schedule_step();

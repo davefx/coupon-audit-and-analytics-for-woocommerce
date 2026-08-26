@@ -82,6 +82,7 @@ final class MarginPage {
             $this->date( $to )
          ) ) );
         $this->render_backfill_notice();
+        $this->render_failed_days_notice();
         $this->render_coverage_notice( $result );
         echo '<form method="get">';
         printf( '<input type="hidden" name="page" value="%s" />', esc_attr( self::PAGE_SLUG ) );
@@ -115,6 +116,36 @@ final class MarginPage {
             /* translators: %s: the date the backfill has reached. */
             __( 'Still reading past orders — figures are complete up to %s and will fill in as the work continues.', 'coupon-audit-and-analytics-for-woocommerce' ),
             $cursor
+         ) ) );
+    }
+
+    /**
+     * Name the days whose figures could not be built.
+     *
+     * A day that failed and a day on which no coupon was used look identical
+     * here — both are simply absent from the table. Recording a failure and
+     * never saying so is the same as forgetting it, and a shop would read the
+     * gap as a quiet week rather than as missing data.
+     *
+     * Said plainly and without a remedy attached, because there is nothing for
+     * the reader to do: the days are retried on their own, and again whenever a
+     * new version of this plugin arrives.
+     */
+    private function render_failed_days_notice() : void {
+        $days = $this->aggregator->failed_days();
+        if ( array() === $days ) {
+            return;
+        }
+        printf( '<div class="notice notice-warning inline"><p>%s</p></div>', esc_html( sprintf( 
+            /* translators: 1: how many days, 2: the earliest of them. */
+            _n(
+                'Figures for %1$d day could not be built, the earliest being %2$s. It will be tried again.',
+                'Figures for %1$d days could not be built, the earliest being %2$s. They will be tried again.',
+                count( $days ),
+                'coupon-audit-and-analytics-for-woocommerce'
+            ),
+            count( $days ),
+            $days[0]
          ) ) );
     }
 

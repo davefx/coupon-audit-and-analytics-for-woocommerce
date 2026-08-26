@@ -4,7 +4,7 @@
  * Plugin Name:          Coupon Audit and Analytics for WooCommerce
  * Plugin URI:           https://davefx.com/en/wordpress-plugins/coupon-audit-and-analytics-for-woocommerce/
  * Description:          Audits your coupon inventory — what is live, what it really applies to, what overlaps — and measures what each coupon actually earns.
- * Version:              0.6.0
+ * Version:              0.6.1
  * Requires at least:    6.4
  * Requires PHP:         8.1
  * Requires Plugins:     woocommerce
@@ -26,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
  * itself be a syntax error on the installs it exists to protect. Everything
  * under src/ is free to use the full PHP 8.1 feature set.
  */
-define( 'DFXCAAW_VERSION', '0.6.0' );
+define( 'DFXCAAW_VERSION', '0.6.1' );
 define( 'DFXCAAW_FILE', __FILE__ );
 define( 'DFXCAAW_SLUG', 'coupon-audit-and-analytics-for-woocommerce' );
 define( 'DFXCAAW_MIN_PHP', '8.1' );
@@ -208,6 +208,26 @@ if ( function_exists( 'dfxcaaw_fs' ) ) {
             DFXCAAW_SLUG
         );
         \DFX\CouponAAW\Plugin::get_instance()->add_provider( new \DFX\CouponAAW\Providers\CoreServiceProvider($context, wp_timezone()) )->add_provider( new \DFX\CouponAAW\Providers\AdminServiceProvider() )->boot();
+        /*
+         * Once per version, not once per activation. WordPress runs the
+         * activation hook when a plugin is switched on and not when it is
+         * replaced by a newer copy, so a shop that simply presses update never
+         * reaches Activator — and there is no dependable hook for "this was just
+         * updated" either: upgrader_process_complete misses an update made over
+         * FTP, over WP-CLI, or by a deployment.
+         *
+         * On admin_init, and not here. Resolving the upgrader builds the cost
+         * sources behind it, and during plugins_loaded WooCommerce has not
+         * finished starting: get_woocommerce_currency() answers false and the
+         * construction fails. It is also work the front of a shop has no reason
+         * to do — everything it leads to is queue and admin work.
+         */
+        // No return type on the closure: this file has to parse on PHP 7.0 so
+        // that an unsupported shop sees the notice above rather than a syntax
+        // error, and `void` arrived in 7.1. bin/ checks that boundary.
+        add_action( 'admin_init', static function () {
+            \DFX\CouponAAW\Plugin::get_instance()->container()->get( \DFX\CouponAAW\Install\Upgrader::class )->run( DFXCAAW_VERSION );
+        } );
     }
 
     add_action( 'plugins_loaded', 'dfxcaaw_bootstrap', 20 );

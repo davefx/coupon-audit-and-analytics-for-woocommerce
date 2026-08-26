@@ -27,6 +27,7 @@ use DFX\CouponAAW\Integration\YithPointsIntegration;
 use DFX\CouponAAW\Install\Activator;
 use DFX\CouponAAW\Install\Aggregator;
 use DFX\CouponAAW\Install\SchemaMigrator;
+use DFX\CouponAAW\Install\Upgrader;
 use DFX\CouponAAW\Repository\CouponRepositoryInterface;
 use DFX\CouponAAW\Repository\CouponStatsRepositoryInterface;
 use DFX\CouponAAW\Repository\OrderStatsRepositoryInterface;
@@ -187,6 +188,15 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 		$container->bind(
 			Activator::class,
 			static fn ( ContainerInterface $c ): Activator => new Activator(
+				$c->get( SchemaMigrator::class ),
+				$c->get( Aggregator::class )
+			)
+		);
+
+		$container->bind(
+			Upgrader::class,
+			static fn ( ContainerInterface $c ): Upgrader => new Upgrader(
+				$c->get( SettingsInterface::class ),
 				$c->get( SchemaMigrator::class ),
 				$c->get( Aggregator::class )
 			)

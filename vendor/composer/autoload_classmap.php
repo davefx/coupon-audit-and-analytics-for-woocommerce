@@ -66,6 +66,7 @@ return array(
     'DFX\\CouponAAW\\Install\\Aggregator' => $baseDir . '/src/Install/Aggregator.php',
     'DFX\\CouponAAW\\Install\\SchemaMigrator' => $baseDir . '/src/Install/SchemaMigrator.php',
     'DFX\\CouponAAW\\Install\\Uninstaller' => $baseDir . '/src/Install/Uninstaller.php',
+    'DFX\\CouponAAW\\Install\\Upgrader' => $baseDir . '/src/Install/Upgrader.php',
     'DFX\\CouponAAW\\Integration\\IntegrationInterface' => $baseDir . '/src/Integration/IntegrationInterface.php',
     'DFX\\CouponAAW\\Integration\\IntegrationRegistry' => $baseDir . '/src/Integration/IntegrationRegistry.php',
     'DFX\\CouponAAW\\Integration\\WjecfIntegration' => $baseDir . '/src/Integration/WjecfIntegration.php',
