@@ -20,8 +20,12 @@ on:
         type: boolean
         default: true
 
+# write rather than read, for one reason: the last step creates the GitHub
+# release for the tag being deployed. Nothing else here writes to the
+# repository — the deploy goes to WordPress.org over SVN, and the tree is
+# generated upstream and pushed here already built.
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   # One deploy at a time. Two commits racing into the same trunk is not a thing
@@ -72,3 +76,44 @@ jobs:
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           VERSION: ${{ github.ref_name }}
+
+      # The tag is what publishes; this is what people read. The two came apart
+      # once: the trigger moved from "a release was published" to "a tag was
+      # pushed", nothing replaced the release, and this repository sat at
+      # "Latest: 0.4.1" for five versions while the code was five ahead.
+      #
+      # Last, and only on a real run, so a release never announces something
+      # WordPress.org was not given. Skipped rather than failed if one already
+      # exists: a re-run of a deploy should not be an error.
+      #
+      # The notes are the readme's own changelog entry for this version, because
+      # it is already written for somebody deciding whether to update and there
+      # is no second audience wanting different words. The awk is inline because
+      # everything in this repository except these workflows is generated —
+      # bin/ is not shipped. Its counterpart upstream is bin/changelog-entry.sh.
+      - name: Announce the release
+        if: ${{ github.event_name == 'push' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          v='${{ github.ref_name }}'
+
+          if gh release view "${v}" >/dev/null 2>&1; then
+            echo "::warning::A release for ${v} already exists; leaving it alone."
+            exit 0
+          fi
+
+          notes="$( awk -v want="= ${v} =" '
+            $0 == want         { grabbing = 1; next }
+            grabbing && /^= /  { exit }
+            grabbing && /^== / { exit }
+            grabbing           { print }
+          ' readme.txt | sed -e '/./,$!d' | tac | sed -e '/./,$!d' | tac )"
+
+          if [[ -z "${notes}" ]]; then
+            echo "::error::readme.txt has no changelog entry for ${v}."
+            exit 1
+          fi
+
+          gh release create "${v}" --title "${v}" --notes "${notes}" --latest
