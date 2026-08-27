@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, analytics, discounts, profit
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.7.0
+Stable tag: 0.7.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -138,6 +138,10 @@ No coupon, order, customer or revenue data. Every figure this plugin reports is 
 
 == Changelog ==
 
+= 0.7.1 =
+* Fixes reward coupons coming back into the coupon audit. If your shop uses YITH WooCommerce Points and Rewards, the coupons it generates are kept out of the audit again. They had been reappearing since the audit screen was rebuilt for large shops, and on a busy points shop that also switched overlap detection off for every real coupon you have.
+* For developers: coupons are now kept out of the audit with a new filter, `dfxcaaw_coupon_rows_where`, which applies to every read the plugin makes. The older `dfxcaaw_coupon_query_args` still works where it always did, but it cannot reach the audit screen any more — that screen stopped reading through `get_posts()` when it was rebuilt. Anything relying on it to filter the audit needs to move to the new filter.
+
 = 0.7.0 =
 * The coupon audit shows when each coupon was created and when it was last used. Both columns sort, which is how you find the coupons that have been sitting there longest and the ones nobody has ever redeemed.
 * Sorting by "Last used" puts the never-used coupons first. One nobody has redeemed is staler than one redeemed two years ago, not fresher than one redeemed today.
@@ -210,6 +214,9 @@ No coupon, order, customer or revenue data. Every figure this plugin reports is 
 * First release: coupon audit, overlap detection, pre-publish warnings and 30-day gross margin.
 
 == Upgrade Notice ==
+
+= 0.7.1 =
+Restores the exclusion of machine-generated reward coupons from the audit. Worth taking if your shop runs a points scheme, or if you filter the audit with your own code.
 
 = 0.5.4 =
 Fixes a fatal error when activating the paid version. If you use the free plugin, nothing changes.

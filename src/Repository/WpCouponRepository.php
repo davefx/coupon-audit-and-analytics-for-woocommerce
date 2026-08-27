@@ -21,6 +21,7 @@ use DFX\CouponAAW\Domain\Profit\Money;
 use WC_Coupon;
 use WC_Data;
 use WP_Post;
+use WP_Query;
 use wpdb;
 
 /**
@@ -108,7 +109,7 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 		 */
 		$posts = array_values(
 			array_filter(
-				get_posts( $this->query_args() ),
+				$this->excluding( fn (): array => get_posts( $this->query_args() ) ),
 				static fn ( $post ): bool => $post instanceof WP_Post
 			)
 		);
@@ -250,7 +251,7 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 		$args           = $this->query_args();
 		$args['fields'] = 'ids';
 
-		return count( get_posts( $args ) );
+		return count( $this->excluding( static fn (): array => get_posts( $args ) ) );
 	}
 
 	/**
@@ -335,6 +336,117 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	}
 
 	/**
+	 * The shop's own exclusion, as a SQL fragment to append to a WHERE.
+	 *
+	 * Some shops mint a coupon per customer. A points-and-rewards install can
+	 * hold tens of thousands of generated codes that nobody audits, and they
+	 * would bury the real ones. Excluding them has to happen in the query:
+	 * anything applied afterwards means the shop has already paid to read them,
+	 * which is the cost this whole class is arranged around not paying.
+	 *
+	 * The same fragment goes into every read of the shop's coupons — the bulk
+	 * statements here and the WP_Query behind `all()` and `count()` — so one
+	 * shop has one exclusion and the three cannot disagree about what it holds.
+	 *
+	 * That is why the contract names columns without a table. WP_Query writes
+	 * the posts table by its full name and the statements here alias it `p`, so
+	 * a condition qualified either way would fit only half of them.
+	 *
+	 * @return string A fragment beginning with ` AND `, or an empty string.
+	 */
+	private function excluded_by_filter(): string {
+		$wpdb = $this->wpdb;
+
+		/**
+		 * Filters the coupons the audit reads, as a SQL fragment.
+		 *
+		 * Appended to the WHERE clause of every read of the shop's coupons: the
+		 * bulk statements the audit screen uses, and the WP_Query behind `all()`
+		 * and `count()`, which the exports and the pre-publish check use.
+		 *
+		 * Name columns without a table. WP_Query writes the posts table by its
+		 * full name and the bulk statements alias it `p`, so a condition
+		 * qualified either way fits only half of them.
+		 *
+		 * Begin with ` AND `, and escape everything: this is interpolated into
+		 * the statement, so whatever answers is responsible for its own quoting,
+		 * exactly as it is for WordPress's own `posts_where`.
+		 *
+		 *     add_filter(
+		 *         'dfxcaaw_coupon_rows_where',
+		 *         fn ( $where, $wpdb ) => $where . $wpdb->prepare(
+		 *             ' AND post_title NOT LIKE %s',
+		 *             $wpdb->esc_like( 'reward-' ) . '%'
+		 *         ),
+		 *         10,
+		 *         2
+		 *     );
+		 *
+		 * This is what `dfxcaaw_coupon_query_args` used to do for the audit
+		 * screen. That filter reaches `get_posts()`, and the screen stopped
+		 * reading through `get_posts()` when it was rewritten to read scalars in
+		 * bulk — so it silently stopped applying there. This one applies
+		 * everywhere, which is the point of it; the older filter still works on
+		 * the reads that go through WP_Query and is kept for the shops already
+		 * using it.
+		 *
+		 * @since 0.7.1
+		 *
+		 * @param string $where A SQL fragment, beginning with ` AND `, or ''.
+		 * @param \wpdb  $wpdb  The database handle, for prepare() and esc_like().
+		 */
+		$where = apply_filters( 'dfxcaaw_coupon_rows_where', '', $wpdb );
+
+		// A listener that answers with something other than a string is ignored
+		// rather than interpolated. The alternative is a broken statement and an
+		// empty audit, and an empty audit reads to a shop as though its coupons
+		// have gone.
+		return is_string( $where ) ? $where : '';
+	}
+
+	/**
+	 * Run a WP_Query-backed read with the shop's exclusion applied.
+	 *
+	 * `all()` and `count()` go through `get_posts()`, which builds its own
+	 * statement — so the fragment reaches them the way WordPress intends one to,
+	 * through `posts_where`, rather than by this class trying to rewrite what
+	 * WP_Query wrote.
+	 *
+	 * The filter checks the post type before touching anything. `posts_where`
+	 * fires for every query made while it is attached, and something hooked to
+	 * `pre_get_posts` is entitled to run one of its own; narrowing somebody
+	 * else's query with this shop's coupon exclusion would be a strange and
+	 * very quiet bug.
+	 *
+	 * @template T
+	 *
+	 * @param callable(): T $read The read to perform.
+	 *
+	 * @return T
+	 */
+	private function excluding( callable $read ): mixed {
+		$where = $this->excluded_by_filter();
+
+		if ( '' === $where ) {
+			return $read();
+		}
+
+		$apply = static function ( $sql, $query ) use ( $where ) {
+			return $query instanceof WP_Query && self::POST_TYPE === $query->get( 'post_type' )
+				? $sql . $where
+				: $sql;
+		};
+
+		add_filter( 'posts_where', $apply, 10, 2 );
+
+		try {
+			return $read();
+		} finally {
+			remove_filter( 'posts_where', $apply, 10 );
+		}
+	}
+
+	/**
 	 * The coupons themselves, without their meta.
 	 *
 	 * @return list<array<string, mixed>>
@@ -344,23 +456,34 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 		// follows a variable literally named $wpdb.
 		$wpdb = $this->wpdb;
 
+		/*
+		 * Worked out once and used by every read below that touches the posts
+		 * table. See excluded_by_filter() for the contract.
+		 */
+		$where = $this->excluded_by_filter();
+
 		// The statuses are not constant — they come from get_post_stati() — so
 		// they go through a single placeholder as a comma-separated set rather
 		// than a placeholder each, which would make the statement's length
 		// follow the number of registered statuses. Table names go through %i
 		// because prepare() wants a literal string and an interpolated
 		// $wpdb->posts is not one.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		//
+		// The filtered fragment is concatenated *after* prepare() rather than
+		// inside it, which is what keeps the statement above a literal-string
+		// and the placeholders it carries honest. What the filter returns is
+		// its own responsibility, and the docblock says so.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT ID, post_title, post_status, post_date
-				FROM %i
-				WHERE post_type = %s
-					AND FIND_IN_SET( post_status, %s )',
+				'SELECT p.ID, p.post_title, p.post_status, p.post_date
+				FROM %i p
+				WHERE p.post_type = %s
+					AND FIND_IN_SET( p.post_status, %s )',
 				$wpdb->posts,
 				self::POST_TYPE,
 				implode( ',', $this->listed_statuses() )
-			),
+			) . $where,
 			ARRAY_A
 		);
 
@@ -390,6 +513,8 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 		// follows a variable literally named $wpdb.
 		$wpdb = $this->wpdb;
 
+		$where = $this->excluded_by_filter();
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
@@ -405,7 +530,7 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 				self::POST_TYPE,
 				implode( ',', $this->listed_statuses() ),
 				$key
-			),
+			) . $where,
 			ARRAY_N
 		);
 
@@ -435,6 +560,8 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	private function restricted_coupons(): array {
 		$wpdb = $this->wpdb;
 
+		$where = $this->excluded_by_filter();
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$ids = $wpdb->get_col(
 			$wpdb->prepare(
@@ -453,7 +580,7 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 				$wpdb->posts,
 				self::POST_TYPE,
 				implode( ',', $this->listed_statuses() )
-			)
+			) . $where
 		);
 
 		$restricted = array();
@@ -534,7 +661,14 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 		 * Filters the query that lists coupons for the audit.
 		 *
 		 * Adding a meta query here is how an integration keeps machine-generated
-		 * coupons out of the inventory.
+		 * coupons out of `all()` — the exports and the pre-publish check.
+		 *
+		 * It no longer reaches the audit screen. That screen stopped reading
+		 * through `get_posts()` when it was rewritten to read scalars in bulk,
+		 * and this filter goes nowhere near the statements it reads with;
+		 * `dfxcaaw_coupon_rows_where` is the one that does. A shop excluding
+		 * coupons should answer both, and this note is here because the two
+		 * being different is not something anybody would guess.
 		 *
 		 * @since 0.2.0
 		 *

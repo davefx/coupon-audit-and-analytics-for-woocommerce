@@ -58,31 +58,43 @@ final class YithPointsIntegration implements IntegrationInterface {
 	 * Attach the hooks.
 	 */
 	public function register(): void {
-		add_filter( 'dfxcaaw_coupon_query_args', array( $this, 'exclude_generated_coupons' ) );
+		add_filter( 'dfxcaaw_coupon_rows_where', array( $this, 'exclude_generated_coupons' ), 10, 2 );
 	}
 
 	/**
-	 * Leave the generated coupons out of the query.
+	 * Leave the generated coupons out of every read.
 	 *
 	 * Excluded in the query rather than filtered afterwards, because the point
 	 * is not to load them: a shop with fifty thousand reward coupons cannot
 	 * afford to build fifty thousand objects and throw them away.
 	 *
-	 * @param array<string, mixed> $args Arguments for get_posts().
+	 * This used to hook `dfxcaaw_coupon_query_args`, which reaches the arguments
+	 * `get_posts()` takes. The audit screen stopped reading through `get_posts()`
+	 * when it was rewritten to read a page at a time, so the exclusion quietly
+	 * stopped applying there — on precisely the shop this class exists for. The
+	 * SQL filter reaches every read, which is why it replaced it rather than
+	 * joining it.
 	 *
-	 * @return array<string, mixed>
+	 * `NOT EXISTS` rather than `ID NOT IN ( ... )`: the subquery would return
+	 * one row per reward coupon, which on the shop this is for is the fifty
+	 * thousand rows the whole exercise is about not moving.
+	 *
+	 * The column is named without a table because the fragment goes into
+	 * statements that alias the posts table `p` and into WP_Query's, which
+	 * writes it out in full. Nothing else in scope has an `ID`, so an
+	 * unqualified one is the coupon's.
+	 *
+	 * @param string $where The fragment so far.
+	 * @param \wpdb  $wpdb  The database handle.
 	 */
-	public function exclude_generated_coupons( array $args ): array {
-		$meta_query = isset( $args['meta_query'] ) && is_array( $args['meta_query'] ) ? $args['meta_query'] : array();
-
-		$meta_query[] = array(
-			'key'     => self::GENERATED_META,
-			'compare' => 'NOT EXISTS',
+	public function exclude_generated_coupons( string $where, \wpdb $wpdb ): string {
+		return $where . $wpdb->prepare(
+			' AND NOT EXISTS (
+				SELECT 1 FROM %i pm
+				WHERE pm.post_id = ID AND pm.meta_key = %s
+			)',
+			$wpdb->postmeta,
+			self::GENERATED_META
 		);
-
-		// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-		$args['meta_query'] = $meta_query;
-
-		return $args;
 	}
 }
