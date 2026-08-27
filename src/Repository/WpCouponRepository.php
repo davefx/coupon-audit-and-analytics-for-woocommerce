@@ -285,9 +285,7 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	 * ID and judged, which is the same handful `usable()` judges and usually
 	 * none at all.
 	 *
-	 * This no longer answers `dfxcaaw_coupon_query_args`, which reaches
-	 * `get_posts()` and nothing else. `dfxcaaw_coupon_rows_where` applies here
-	 * as it does everywhere.
+	 * `dfxcaaw_coupon_rows_where` applies here as it does everywhere.
 	 */
 	public function count(): int {
 		// Aliased so that WPCS can recognise the prepare() call; the sniff only
@@ -491,13 +489,13 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 		 *         2
 		 *     );
 		 *
-		 * This is what `dfxcaaw_coupon_query_args` used to do for the audit
-		 * screen. That filter reaches `get_posts()`, and the screen stopped
-		 * reading through `get_posts()` when it was rewritten to read scalars in
-		 * bulk — so it silently stopped applying there. This one applies
-		 * everywhere, which is the point of it; the older filter still works on
-		 * the reads that go through WP_Query and is kept for the shops already
-		 * using it.
+		 * This replaced `dfxcaaw_coupon_query_args`, which reached `get_posts()`
+		 * and so stopped applying to the audit screen when that screen was
+		 * rewritten to read scalars in bulk. The old hook was removed in 0.9.0
+		 * rather than kept, because what was left of it fired only below the
+		 * three-hundred-coupon overlap cap: a filter that worked on a small shop
+		 * and quietly did nothing on a large one. This one applies to every
+		 * read, at every size, which is the point of it.
 		 *
 		 * @since 0.7.1
 		 *
@@ -807,7 +805,24 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	 * @return array<string, mixed>
 	 */
 	private function query_args(): array {
-		$args = array(
+		/*
+		 * Not filterable. `dfxcaaw_coupon_query_args` used to be applied here
+		 * and was removed in 0.9.0, because of where it had ended up rather
+		 * than because anything was wrong with it.
+		 *
+		 * It reached `get_posts()`, and the audit screen stopped reading that
+		 * way when it was rewritten to read scalars in bulk. What was left fired
+		 * only from `all()`, which in production runs only below the
+		 * three-hundred-coupon overlap cap — so the filter worked on a small
+		 * shop and silently did nothing on a large one. A hook whose behaviour
+		 * depends on the size of the shop is worse than no hook: it is tested on
+		 * a small install, believed, and wrong in production, which is exactly
+		 * how the audit came to be missing exclusions in the first place.
+		 *
+		 * `dfxcaaw_coupon_rows_where` does the same job on every read at every
+		 * size, and is applied to this query too, through `posts_where`.
+		 */
+		return array(
 			'post_type'        => self::POST_TYPE,
 			'post_status'      => $this->listed_statuses(),
 			'numberposts'      => -1,
@@ -815,25 +830,6 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 			'order'            => 'ASC',
 			'suppress_filters' => false,
 		);
-
-		/**
-		 * Filters the query that lists coupons for the audit.
-		 *
-		 * Adding a meta query here is how an integration keeps machine-generated
-		 * coupons out of `all()` — the exports and the pre-publish check.
-		 *
-		 * It no longer reaches the audit screen. That screen stopped reading
-		 * through `get_posts()` when it was rewritten to read scalars in bulk,
-		 * and this filter goes nowhere near the statements it reads with;
-		 * `dfxcaaw_coupon_rows_where` is the one that does. A shop excluding
-		 * coupons should answer both, and this note is here because the two
-		 * being different is not something anybody would guess.
-		 *
-		 * @since 0.2.0
-		 *
-		 * @param array<string, mixed> $args Arguments for get_posts().
-		 */
-		return apply_filters( 'dfxcaaw_coupon_query_args', $args );
 	}
 
 	/**

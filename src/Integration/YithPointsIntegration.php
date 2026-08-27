@@ -68,12 +68,12 @@ final class YithPointsIntegration implements IntegrationInterface {
 	 * is not to load them: a shop with fifty thousand reward coupons cannot
 	 * afford to build fifty thousand objects and throw them away.
 	 *
-	 * This used to hook `dfxcaaw_coupon_query_args`, which reaches the arguments
-	 * `get_posts()` takes. The audit screen stopped reading through `get_posts()`
-	 * when it was rewritten to read a page at a time, so the exclusion quietly
-	 * stopped applying there — on precisely the shop this class exists for. The
-	 * SQL filter reaches every read, which is why it replaced it rather than
-	 * joining it.
+	 * This used to hook `dfxcaaw_coupon_query_args`, which reached the arguments
+	 * `get_posts()` takes. The audit screen stopped reading that way when it was
+	 * rewritten to read a page at a time, so the exclusion quietly stopped
+	 * applying there — on precisely the shop this class exists for. The SQL
+	 * filter reaches every read, which is why it replaced it; the old hook was
+	 * removed in 0.9.0 once nothing was left that it could reliably reach.
 	 *
 	 * `NOT EXISTS` rather than `ID NOT IN ( ... )`: the subquery would return
 	 * one row per reward coupon, which on the shop this is for is the fifty

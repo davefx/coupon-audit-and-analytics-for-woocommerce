@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, analytics, discounts, profit
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.8.0
+Stable tag: 0.9.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -138,6 +138,10 @@ No coupon, order, customer or revenue data. Every figure this plugin reports is 
 
 == Changelog ==
 
+= 0.9.0 =
+* For developers: the `dfxcaaw_coupon_query_args` filter has been removed. Use `dfxcaaw_coupon_rows_where` instead — it does the same job on every read the plugin makes, at any shop size. The old filter reached `get_posts()`, which the audit stopped using when it was rebuilt for large shops; what remained of it applied only to shops with fewer than three hundred coupons, so it worked on a small site and quietly did nothing on a large one. If you filter the audit and have not moved yet, this is the release that requires it.
+* No change to any screen or to any figure.
+
 = 0.8.0 =
 * The audit no longer lists coupons nobody can use. WooCommerce only finds a coupon by code when it is published, so a private, draft or pending coupon cannot be entered at the basket — and this screen is about what might cost you money. **If your shop has any, the number of coupons it reports will drop after this update.** Nothing has been deleted; they are simply not audited.
 * Coupons in those states are kept when something applies them automatically, because those genuinely can discount an order — applying a coupon by ID does not check its status. Scheduled coupons are kept as well: they publish themselves when their date arrives.
@@ -219,6 +223,9 @@ No coupon, order, customer or revenue data. Every figure this plugin reports is 
 * First release: coupon audit, overlap detection, pre-publish warnings and 30-day gross margin.
 
 == Upgrade Notice ==
+
+= 0.9.0 =
+Removes the `dfxcaaw_coupon_query_args` filter. Only affects sites with custom code filtering the coupon audit; use `dfxcaaw_coupon_rows_where`. Nothing else changes.
 
 = 0.8.0 =
 Coupons nobody can use — private, draft and pending — are no longer listed in the audit unless something applies them automatically. Your reported coupon count may drop. Nothing is deleted.
