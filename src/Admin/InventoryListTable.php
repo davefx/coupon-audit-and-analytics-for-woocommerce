@@ -8,6 +8,7 @@
 declare (strict_types = 1);
 namespace DFX\CouponAAW\Admin;
 
+use DateTimeImmutable;
 use DFX\CouponAAW\Domain\Coupon\CouponStatus;
 use DFX\CouponAAW\Domain\Coupon\ConfigurationIssue;
 use DFX\CouponAAW\Domain\Coupon\CouponFilter;
@@ -76,15 +77,17 @@ final class InventoryListTable extends WP_List_Table {
      */
     public function get_columns() {
         $columns = array(
-            'code'     => __( 'Code', 'coupon-audit-and-analytics-for-woocommerce' ),
-            'status'   => __( 'Status', 'coupon-audit-and-analytics-for-woocommerce' ),
-            'discount' => __( 'Discount', 'coupon-audit-and-analytics-for-woocommerce' ),
-            'spend'    => __( 'Basket', 'coupon-audit-and-analytics-for-woocommerce' ),
-            'scope'    => __( 'Applies to', 'coupon-audit-and-analytics-for-woocommerce' ),
-            'terms'    => __( 'Terms', 'coupon-audit-and-analytics-for-woocommerce' ),
-            'expires'  => __( 'Expires', 'coupon-audit-and-analytics-for-woocommerce' ),
-            'usage'    => __( 'Used', 'coupon-audit-and-analytics-for-woocommerce' ),
-            'findings' => __( 'Findings', 'coupon-audit-and-analytics-for-woocommerce' ),
+            'code'      => __( 'Code', 'coupon-audit-and-analytics-for-woocommerce' ),
+            'status'    => __( 'Status', 'coupon-audit-and-analytics-for-woocommerce' ),
+            'discount'  => __( 'Discount', 'coupon-audit-and-analytics-for-woocommerce' ),
+            'spend'     => __( 'Basket', 'coupon-audit-and-analytics-for-woocommerce' ),
+            'scope'     => __( 'Applies to', 'coupon-audit-and-analytics-for-woocommerce' ),
+            'terms'     => __( 'Terms', 'coupon-audit-and-analytics-for-woocommerce' ),
+            'expires'   => __( 'Expires', 'coupon-audit-and-analytics-for-woocommerce' ),
+            'created'   => __( 'Created', 'coupon-audit-and-analytics-for-woocommerce' ),
+            'usage'     => __( 'Used', 'coupon-audit-and-analytics-for-woocommerce' ),
+            'last_used' => __( 'Last used', 'coupon-audit-and-analytics-for-woocommerce' ),
+            'findings'  => __( 'Findings', 'coupon-audit-and-analytics-for-woocommerce' ),
         );
         /**
          * Filters the columns of the coupon audit table.
@@ -106,9 +109,11 @@ final class InventoryListTable extends WP_List_Table {
      */
     public function get_sortable_columns() {
         return array(
-            'code'    => array('code', false),
-            'status'  => array('status', false),
-            'expires' => array('expires', false),
+            'code'      => array('code', false),
+            'status'    => array('status', false),
+            'expires'   => array('expires', false),
+            'created'   => array('created', false),
+            'last_used' => array('last_used', false),
         );
     }
 
@@ -376,6 +381,10 @@ final class InventoryListTable extends WP_List_Table {
                 return $this->formatter->flags( $item->coupon->terms );
             case 'expires':
                 return $this->expiry_cell( $item );
+            case 'created':
+                return $this->date_cell( $item->coupon->created_at );
+            case 'last_used':
+                return $this->date_cell( $item->coupon->last_used_at );
             case 'usage':
                 return $this->formatter->usage( $item->coupon->usage_count, $item->coupon->usage_limit, $item->coupon->terms );
             case 'findings':
@@ -426,10 +435,24 @@ final class InventoryListTable extends WP_List_Table {
      * @param InventoryEntry $entry The row.
      */
     private function expiry_cell( InventoryEntry $entry ) : string {
-        if ( null === $entry->coupon->expires_at ) {
+        return $this->date_cell( $entry->coupon->expires_at );
+    }
+
+    /**
+     * A date in the shop's own format, or a note that there is not one.
+     *
+     * "Never" rather than an empty cell. An empty cell reads as data that failed
+     * to load; on this screen an absent date is a fact, and usually the
+     * interesting one — a coupon nobody has ever redeemed, or one that will
+     * never stop working.
+     *
+     * @param DateTimeImmutable|null $date The date, or null when there is none.
+     */
+    private function date_cell( ?DateTimeImmutable $date ) : string {
+        if ( null === $date ) {
             return sprintf( '<em>%s</em>', esc_html__( 'Never', 'coupon-audit-and-analytics-for-woocommerce' ) );
         }
-        $formatted = wp_date( (string) get_option( 'date_format' ), $entry->coupon->expires_at->getTimestamp() );
+        $formatted = wp_date( (string) get_option( 'date_format' ), $date->getTimestamp() );
         return esc_html( ( false === $formatted ? '' : $formatted ) );
     }
 

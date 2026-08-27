@@ -302,6 +302,32 @@ final class InventoryService {
 			return array_values( array_map( static fn ( array $pair ): CouponProjection => $pair[1], $keyed ) );
 		}
 
+		if ( InventoryOrder::BY_CREATED === $order->by ) {
+			usort(
+				$coupons,
+				static fn ( CouponProjection $a, CouponProjection $b ): int => (
+					$a->created_at->getTimestamp() <=> $b->created_at->getTimestamp()
+				) * $direction
+			);
+
+			return $coupons;
+		}
+
+		if ( InventoryOrder::BY_LAST_USED === $order->by ) {
+			// PHP_INT_MIN, not PHP_INT_MAX. A coupon nobody has ever redeemed is
+			// the stalest thing in the shop, not the freshest — see the note on
+			// the constant, which is where the difference from expiry is argued.
+			usort(
+				$coupons,
+				static fn ( CouponProjection $a, CouponProjection $b ): int => (
+					( $a->last_used_at?->getTimestamp() ?? PHP_INT_MIN )
+						<=> ( $b->last_used_at?->getTimestamp() ?? PHP_INT_MIN )
+				) * $direction
+			);
+
+			return $coupons;
+		}
+
 		if ( InventoryOrder::BY_EXPIRES === $order->by ) {
 			usort(
 				$coupons,

@@ -39,6 +39,22 @@ final class InventoryOrder {
 	public const BY_EXPIRES = 'expires';
 
 	/**
+	 * Order by when the coupon was created.
+	 */
+	public const BY_CREATED = 'created';
+
+	/**
+	 * Order by when the coupon was last redeemed, never-used first.
+	 *
+	 * The opposite of how BY_EXPIRES treats an absent date, and deliberately. No
+	 * expiry means "not until the end of time", so it sorts last; never used
+	 * means there is no date at all, and a coupon nobody has ever redeemed is
+	 * staler than one redeemed two years ago rather than fresher than one
+	 * redeemed today.
+	 */
+	public const BY_LAST_USED = 'last_used';
+
+	/**
 	 * The column being sorted on.
 	 *
 	 * @var string
@@ -52,7 +68,11 @@ final class InventoryOrder {
 	 * @param bool   $descending Whether to reverse the order.
 	 */
 	public function __construct( string $by = self::BY_CODE, public readonly bool $descending = false ) {
-		$this->by = in_array( $by, array( self::BY_CODE, self::BY_STATUS, self::BY_EXPIRES ), true )
+		$this->by = in_array(
+			$by,
+			array( self::BY_CODE, self::BY_STATUS, self::BY_EXPIRES, self::BY_CREATED, self::BY_LAST_USED ),
+			true
+		)
 			? $by
 			: self::BY_CODE;
 	}

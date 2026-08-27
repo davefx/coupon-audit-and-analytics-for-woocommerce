@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, analytics, discounts, profit
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.6.1
+Stable tag: 0.7.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -137,6 +137,11 @@ No coupon, order, customer or revenue data. Every figure this plugin reports is 
 4. Settings: which cost-of-goods system to read, and whether uninstalling should take the data with it.
 
 == Changelog ==
+
+= 0.7.0 =
+* The coupon audit shows when each coupon was created and when it was last used. Both columns sort, which is how you find the coupons that have been sitting there longest and the ones nobody has ever redeemed.
+* Sorting by "Last used" puts the never-used coupons first. One nobody has redeemed is staler than one redeemed two years ago, not fresher than one redeemed today.
+* Both dates are in the audit CSV export as well, in the paid version, and that file's columns now run in the same order as the table on screen.
 
 = 0.6.1 =
 * Fixes a failure that stopped a day's figures being built. WooCommerce records an order's coupon with a placeholder when it can no longer tell which coupon was used — an old order for a coupon that has since been deleted — and reading one stopped the whole day. Any shop that has ever deleted a coupon could hit this.
