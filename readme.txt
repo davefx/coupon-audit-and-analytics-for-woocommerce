@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, analytics, discounts, profit
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.7.1
+Stable tag: 0.8.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -138,6 +138,11 @@ No coupon, order, customer or revenue data. Every figure this plugin reports is 
 
 == Changelog ==
 
+= 0.8.0 =
+* The audit no longer lists coupons nobody can use. WooCommerce only finds a coupon by code when it is published, so a private, draft or pending coupon cannot be entered at the basket — and this screen is about what might cost you money. **If your shop has any, the number of coupons it reports will drop after this update.** Nothing has been deleted; they are simply not audited.
+* Coupons in those states are kept when something applies them automatically, because those genuinely can discount an order — applying a coupon by ID does not check its status. Scheduled coupons are kept as well: they publish themselves when their date arrives.
+* For developers: counting and the audit's other reads now agree about what the shop holds, and counting no longer reads every coupon to produce a number. It also no longer answers `dfxcaaw_coupon_query_args`; `dfxcaaw_coupon_rows_where` applies to every read, including this one.
+
 = 0.7.1 =
 * Fixes reward coupons coming back into the coupon audit. If your shop uses YITH WooCommerce Points and Rewards, the coupons it generates are kept out of the audit again. They had been reappearing since the audit screen was rebuilt for large shops, and on a busy points shop that also switched overlap detection off for every real coupon you have.
 * For developers: coupons are now kept out of the audit with a new filter, `dfxcaaw_coupon_rows_where`, which applies to every read the plugin makes. The older `dfxcaaw_coupon_query_args` still works where it always did, but it cannot reach the audit screen any more — that screen stopped reading through `get_posts()` when it was rebuilt. Anything relying on it to filter the audit needs to move to the new filter.
@@ -214,6 +219,9 @@ No coupon, order, customer or revenue data. Every figure this plugin reports is 
 * First release: coupon audit, overlap detection, pre-publish warnings and 30-day gross margin.
 
 == Upgrade Notice ==
+
+= 0.8.0 =
+Coupons nobody can use — private, draft and pending — are no longer listed in the audit unless something applies them automatically. Your reported coupon count may drop. Nothing is deleted.
 
 = 0.7.1 =
 Restores the exclusion of machine-generated reward coupons from the audit. Worth taking if your shop runs a points scheme, or if you filter the audit with your own code.

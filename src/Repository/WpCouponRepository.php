@@ -61,6 +61,28 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	private const LIVE_STATUSES = array( 'publish', 'future' );
 
 	/**
+	 * Whether a coupon in this state can be reached by anybody typing its code.
+	 *
+	 * WooCommerce looks a coupon up with `post_status = 'publish'` hard-coded,
+	 * so nothing else is reachable. `future` is the exception worth keeping:
+	 * it is not redeemable today and becomes so without anybody doing anything,
+	 * when WordPress publishes it on its date. That is "not yet" rather than
+	 * "not ever", which is why this is written against the statuses the audit
+	 * already calls live rather than against a list of statuses to exclude —
+	 * a status this plugin has never seen is then judged by the same rule.
+	 *
+	 * Unreachable is not the same as harmless. Loading a coupon by ID does not
+	 * check the status, and WooCommerce's validation rejects only `trash`, so
+	 * anything applying coupons without them being typed will discount an order
+	 * with one. They belong in the audit exactly when something does.
+	 *
+	 * @param string $status The post status.
+	 */
+	private static function is_reachable( string $status ): bool {
+		return in_array( $status, self::LIVE_STATUSES, true );
+	}
+
+	/**
 	 * Whether the analytics lookup table has been checked for this request.
 	 *
 	 * @var bool|null
@@ -125,10 +147,16 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 
 		$this->prime_meta_cache( $ids );
 
+		// The same rule project() applies, and the snapshot already carries both
+		// halves of it — `is_published` is exactly "in a live status" — so
+		// listing and projecting agree about what the shop holds.
 		return array_values(
-			array_map(
-				fn ( WP_Post $post ): CouponSnapshot => $this->to_snapshot( $post, $last_used ),
-				$posts
+			array_filter(
+				array_map(
+					fn ( WP_Post $post ): CouponSnapshot => $this->to_snapshot( $post, $last_used ),
+					$posts
+				),
+				static fn ( CouponSnapshot $coupon ): bool => $coupon->is_published || $coupon->is_auto_applied
 			)
 		);
 	}
@@ -245,13 +273,94 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	}
 
 	/**
-	 * How many coupons exist.
+	 * How many coupons the audit holds.
+	 *
+	 * Two statements, on the same schema as every other read here, rather than
+	 * WP_Query. It used to fetch every coupon's ID through `get_posts()` and
+	 * count the array — twenty-six thousand rows moved to produce one number,
+	 * and no way to ask whether a coupon applies itself, so it could not follow
+	 * the rule the other reads follow and disagreed with them by design.
+	 *
+	 * The reachable ones are counted in the database. The rest are asked for by
+	 * ID and judged, which is the same handful `usable()` judges and usually
+	 * none at all.
+	 *
+	 * This no longer answers `dfxcaaw_coupon_query_args`, which reaches
+	 * `get_posts()` and nothing else. `dfxcaaw_coupon_rows_where` applies here
+	 * as it does everywhere.
 	 */
 	public function count(): int {
-		$args           = $this->query_args();
-		$args['fields'] = 'ids';
+		// Aliased so that WPCS can recognise the prepare() call; the sniff only
+		// follows a variable literally named $wpdb.
+		$wpdb = $this->wpdb;
 
-		return count( $this->excluding( static fn (): array => get_posts( $args ) ) );
+		$where = $this->excluded_by_filter();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+		$reachable = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*)
+				FROM %i p
+				WHERE p.post_type = %s
+					AND FIND_IN_SET( p.post_status, %s )',
+				$wpdb->posts,
+				self::POST_TYPE,
+				implode( ',', self::LIVE_STATUSES )
+			) . $where
+		);
+
+		return $reachable + count( $this->auto_applied_among_unreachable() );
+	}
+
+	/**
+	 * The unreachable coupons that something applies without them being typed.
+	 *
+	 * Separated from `count()` because both it and `usable()` need exactly this
+	 * and neither should ask twice, and because it is the one part of counting
+	 * that cannot be done in the database: whether a coupon applies itself is
+	 * answered by a filter holding a `WC_Coupon`.
+	 *
+	 * @return array<int, true> Coupon IDs, as a set.
+	 */
+	private function auto_applied_among_unreachable(): array {
+		$wpdb = $this->wpdb;
+
+		$where = $this->excluded_by_filter();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT p.ID
+				FROM %i p
+				WHERE p.post_type = %s
+					AND FIND_IN_SET( p.post_status, %s )
+					AND NOT FIND_IN_SET( p.post_status, %s )',
+				$wpdb->posts,
+				self::POST_TYPE,
+				implode( ',', $this->listed_statuses() ),
+				implode( ',', self::LIVE_STATUSES )
+			) . $where
+		);
+
+		$wanted = array();
+
+		foreach ( (array) $ids as $id ) {
+			$wanted[] = new CouponId( (int) $id );
+		}
+
+		if ( array() === $wanted ) {
+			return array();
+		}
+
+		$keep = array();
+
+		foreach ( $this->some( $wanted ) as $coupon ) {
+			if ( $coupon->is_auto_applied ) {
+				$keep[ $coupon->id->value ] = true;
+			}
+		}
+
+		return $keep;
 	}
 
 	/**
@@ -296,7 +405,7 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	 * @return list<CouponProjection>
 	 */
 	public function project(): array {
-		$rows = $this->coupon_rows();
+		$rows = $this->usable( $this->coupon_rows() );
 
 		if ( array() === $rows ) {
 			return array();
@@ -488,6 +597,56 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 		);
 
 		return is_array( $rows ) ? array_values( $rows ) : array();
+	}
+
+	/**
+	 * Drop the coupons nobody can enter and nothing applies for them.
+	 *
+	 * Asked only of the coupons it could remove. Deciding whether a coupon
+	 * applies itself means asking `dfxcaaw_coupon_is_auto_applied`, which is
+	 * handed a `WC_Coupon` — the expensive object this whole class is arranged
+	 * around not building. Asking it about every coupon would build twenty-six
+	 * thousand of them and undo the reason any of this reads scalars.
+	 *
+	 * Asking it about the private and the draft ones is different: a shop has a
+	 * handful, and a shop with none is never asked at all. A shop with tens of
+	 * thousands of drafts would pay for them, and would also be a shop with a
+	 * stranger problem than this.
+	 *
+	 * @param list<array<string, mixed>> $rows The coupons as read.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private function usable( array $rows ): array {
+		$questionable = array();
+
+		foreach ( $rows as $row ) {
+			if ( ! self::is_reachable( (string) ( $row['post_status'] ?? '' ) ) ) {
+				$questionable[] = new CouponId( (int) $row['ID'] );
+			}
+		}
+
+		if ( array() === $questionable ) {
+			return $rows;
+		}
+
+		$keep = array();
+
+		foreach ( $this->some( $questionable ) as $coupon ) {
+			if ( $coupon->is_auto_applied ) {
+				$keep[ $coupon->id->value ] = true;
+			}
+		}
+
+		return array_values(
+			array_filter(
+				$rows,
+				static function ( array $row ) use ( $keep ): bool {
+					return self::is_reachable( (string) ( $row['post_status'] ?? '' ) )
+						|| isset( $keep[ (int) $row['ID'] ] );
+				}
+			)
+		);
 	}
 
 	/**
