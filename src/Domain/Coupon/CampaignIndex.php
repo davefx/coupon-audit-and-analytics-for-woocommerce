@@ -23,17 +23,33 @@ namespace DFX\CouponAAW\Domain\Coupon;
 final class CampaignIndex {
 
 	/**
+     * @var array<string, int>
+     * @readonly
+     */
+    private array $members;
+    /**
+     * @var array<string, int>
+     * @readonly
+     */
+    private array $expired;
+    /**
+     * @var array<int, bool>
+     * @readonly
+     */
+    private array $ids;
+    /**
 	 * Constructor.
 	 *
 	 * @param array<string, int> $members How many codes each campaign has.
 	 * @param array<string, int> $expired How many of those have expired.
 	 * @param array<int, bool>   $ids     Which coupons were counted.
 	 */
-	public function __construct(
-		private readonly array $members,
-		private readonly array $expired,
-		private readonly array $ids
-	) {}
+	public function __construct(array $members, array $expired, array $ids)
+    {
+        $this->members = $members;
+        $this->expired = $expired;
+        $this->ids = $ids;
+    }
 
 	/**
 	 * Whether every other code in this coupon's campaign has expired.

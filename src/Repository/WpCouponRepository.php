@@ -37,6 +37,21 @@ use wpdb;
 final class WpCouponRepository implements CouponRepositoryInterface {
 
 	/**
+     * @var wpdb
+     * @readonly
+     */
+    private wpdb $wpdb;
+    /**
+     * @var DateTimeZone
+     * @readonly
+     */
+    private DateTimeZone $timezone;
+    /**
+     * @var int
+     * @readonly
+     */
+    private int $decimals = 2;
+    /**
 	 * The post type coupons live in.
 	 */
 	private const POST_TYPE = 'shop_coupon';
@@ -96,11 +111,12 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	 * @param DateTimeZone $timezone The site's timezone.
 	 * @param int          $decimals Places in the currency's minor unit.
 	 */
-	public function __construct(
-		private readonly wpdb $wpdb,
-		private readonly DateTimeZone $timezone,
-		private readonly int $decimals = 2
-	) {}
+	public function __construct(wpdb $wpdb, DateTimeZone $timezone, int $decimals = 2)
+    {
+        $this->wpdb = $wpdb;
+        $this->timezone = $timezone;
+        $this->decimals = $decimals;
+    }
 
 	/**
 	 * Find one coupon.
@@ -531,7 +547,7 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	 *
 	 * @return T
 	 */
-	private function excluding( callable $read ): mixed {
+	private function excluding( callable $read ) {
 		$where = $this->excluded_by_filter();
 
 		if ( '' === $where ) {
@@ -991,7 +1007,7 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 		$type   = (string) $coupon->get_discount_type();
 		$amount = (float) $coupon->get_amount();
 
-		if ( str_contains( $type, 'percent' ) ) {
+		if ( strpos($type, 'percent') !== false ) {
 			return DiscountAmount::percentage( $amount, $type );
 		}
 
@@ -1033,7 +1049,7 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	 *
 	 * @param mixed $value The stored value.
 	 */
-	private function optional_count( mixed $value ): ?int {
+	private function optional_count( $value ): ?int {
 		$count = (int) $value;
 
 		return $count > 0 ? $count : null;
@@ -1100,11 +1116,11 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	 */
 	private function scope_of( WC_Coupon $coupon ): CouponScope {
 		return new CouponScope(
-			included_products: self::ids( $coupon->get_product_ids() ),
-			excluded_products: self::ids( $coupon->get_excluded_product_ids() ),
-			included_categories: self::ids( $coupon->get_product_categories() ),
-			excluded_categories: self::ids( $coupon->get_excluded_product_categories() ),
-			excludes_sale_items: (bool) $coupon->get_exclude_sale_items()
+			self::ids( $coupon->get_product_ids() ),
+			self::ids( $coupon->get_excluded_product_ids() ),
+			self::ids( $coupon->get_product_categories() ),
+			self::ids( $coupon->get_excluded_product_categories() ),
+			(bool) $coupon->get_exclude_sale_items()
 		);
 	}
 

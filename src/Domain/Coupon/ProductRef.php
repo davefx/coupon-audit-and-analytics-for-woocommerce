@@ -21,11 +21,22 @@ use InvalidArgumentException;
 final class ProductRef {
 
 	/**
-	 * Category term IDs, deduplicated and sorted.
-	 *
-	 * @var list<int>
-	 */
-	public readonly array $category_ids;
+     * @var int
+     * @readonly
+     */
+    public int $id;
+    /**
+     * @var bool
+     * @readonly
+     */
+    public bool $is_on_sale = false;
+    /**
+     * Category term IDs, deduplicated and sorted.
+     *
+     * @var list<int>
+     * @readonly
+     */
+    public array $category_ids;
 
 	/**
 	 * Constructor.
@@ -37,11 +48,13 @@ final class ProductRef {
 	 * @throws InvalidArgumentException When the ID is not a possible post ID.
 	 */
 	public function __construct(
-		public readonly int $id,
+		int $id,
 		array $category_ids = array(),
-		public readonly bool $is_on_sale = false
+		bool $is_on_sale = false
 	) {
-		if ( $id < 1 ) {
+		$this->id = $id;
+        $this->is_on_sale = $is_on_sale;
+        if ( $id < 1 ) {
 			throw new InvalidArgumentException( 'A product ID must be a positive integer.' );
 		}
 

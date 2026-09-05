@@ -16,6 +16,21 @@ namespace DFX\CouponAAW\Admin;
 final class MenuRegistrar {
 
 	/**
+     * @var InventoryPage
+     * @readonly
+     */
+    private InventoryPage $inventory;
+    /**
+     * @var MarginPage
+     * @readonly
+     */
+    private MarginPage $margins;
+    /**
+     * @var SettingsPage
+     * @readonly
+     */
+    private SettingsPage $settings;
+    /**
 	 * The screen's page slug.
 	 */
 	public const PAGE_SLUG = 'dfxcaaw-inventory';
@@ -32,11 +47,12 @@ final class MenuRegistrar {
 	 * @param MarginPage    $margins   The analytics screen.
 	 * @param SettingsPage  $settings  The settings screen.
 	 */
-	public function __construct(
-		private readonly InventoryPage $inventory,
-		private readonly MarginPage $margins,
-		private readonly SettingsPage $settings
-	) {}
+	public function __construct(InventoryPage $inventory, MarginPage $margins, SettingsPage $settings)
+    {
+        $this->inventory = $inventory;
+        $this->margins = $margins;
+        $this->settings = $settings;
+    }
 
 	/**
 	 * The menu these screens belong under.

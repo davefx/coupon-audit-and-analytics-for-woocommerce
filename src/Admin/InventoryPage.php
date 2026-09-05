@@ -24,6 +24,16 @@ use DFX\CouponAAW\Service\InventorySummary;
 final class InventoryPage {
 
 	/**
+     * @var InventoryService
+     * @readonly
+     */
+    private InventoryService $inventory;
+    /**
+     * @var InventoryListTable
+     * @readonly
+     */
+    private InventoryListTable $table;
+    /**
 	 * The capability required to see any of this.
 	 */
 	public const CAPABILITY = 'manage_woocommerce';
@@ -34,10 +44,11 @@ final class InventoryPage {
 	 * @param InventoryService   $inventory Supplies the figures.
 	 * @param InventoryListTable $table   Renders the rows.
 	 */
-	public function __construct(
-		private readonly InventoryService $inventory,
-		private readonly InventoryListTable $table
-	) {}
+	public function __construct(InventoryService $inventory, InventoryListTable $table)
+    {
+        $this->inventory = $inventory;
+        $this->table = $table;
+    }
 
 	/**
 	 * Render the screen.
@@ -109,7 +120,7 @@ final class InventoryPage {
 		);
 		$this->render_tile(
 			__( 'Active', 'coupon-audit-and-analytics-for-woocommerce' ),
-			$summary->of( CouponStatus::ACTIVE ),
+			$summary->of( CouponStatus::ACTIVE() ),
 			''
 		);
 		$this->render_tile(

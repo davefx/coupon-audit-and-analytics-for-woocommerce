@@ -22,15 +22,31 @@ use DFX\CouponAAW\Domain\Overlap\OverlapSeverity;
 final class PrePublishWarning {
 
 	/**
+     * @var PrePublishWarningType
+     * @readonly
+     */
+    public PrePublishWarningType $type;
+    /**
+     * @var list<CouponSnapshot>
+     * @readonly
+     */
+    public array $related = array();
+    /**
+     * @var OverlapSeverity|null
+     * @readonly
+     */
+    public ?OverlapSeverity $severity = null;
+    /**
 	 * Constructor.
 	 *
 	 * @param PrePublishWarningType $type     What the warning is about.
 	 * @param list<CouponSnapshot>  $related  Other coupons the warning concerns, if any.
 	 * @param OverlapSeverity|null  $severity How serious the collision is, for overlap warnings.
 	 */
-	public function __construct(
-		public readonly PrePublishWarningType $type,
-		public readonly array $related = array(),
-		public readonly ?OverlapSeverity $severity = null
-	) {}
+	public function __construct(PrePublishWarningType $type, array $related = array(), ?OverlapSeverity $severity = null)
+    {
+        $this->type = $type;
+        $this->related = $related;
+        $this->severity = $severity;
+    }
 }

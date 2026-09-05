@@ -27,11 +27,22 @@ use DFX\CouponAAW\Domain\Overlap\Overlap;
 final class Inventory {
 
 	/**
-	 * The figures, derived once from the entries.
-	 *
-	 * @var InventorySummary
-	 */
-	public readonly InventorySummary $summary;
+     * @var list<InventoryEntry>
+     * @readonly
+     */
+    public array $entries;
+    /**
+     * @var list<Overlap>|null
+     * @readonly
+     */
+    public ?array $overlaps = null;
+    /**
+     * The figures, derived once from the entries.
+     *
+     * @var InventorySummary
+     * @readonly
+     */
+    public InventorySummary $summary;
 
 	/**
 	 * Constructor.
@@ -41,10 +52,12 @@ final class Inventory {
 	 *                                       was too large to check on page load.
 	 */
 	public function __construct(
-		public readonly array $entries,
-		public readonly ?array $overlaps = null
+		array $entries,
+		?array $overlaps = null
 	) {
-		$this->summary = self::summarise( $entries, $overlaps );
+		$this->entries = $entries;
+        $this->overlaps = $overlaps;
+        $this->summary = self::summarise( $entries, $overlaps );
 	}
 
 	/**

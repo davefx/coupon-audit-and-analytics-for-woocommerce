@@ -156,11 +156,11 @@ final class MarginListTable extends WP_List_Table {
      * @param CouponMargin $margin The row.
      */
     private function cost_cell( CouponMargin $margin ) : string {
-        if ( CostCoverage::NONE === $margin->coverage() ) {
+        if ( CostCoverage::NONE() === $margin->coverage() ) {
             return sprintf( '<span class="dfxcaaw-unknown">%s</span>', esc_html__( 'Not known', 'coupon-audit-and-analytics-for-woocommerce' ) );
         }
         $cost = $this->money( $margin->cost->amount, $margin->currency() );
-        if ( CostCoverage::FULL === $margin->coverage() ) {
+        if ( CostCoverage::FULL() === $margin->coverage() ) {
             return $cost;
         }
         return $cost . sprintf( '<br /><span class="dfxcaaw-coverage">%s</span>', esc_html( sprintf( 
@@ -189,7 +189,7 @@ final class MarginListTable extends WP_List_Table {
                 number_format_i18n( $share, 1 )
              ) ) );
         }
-        if ( CostCoverage::PARTIAL === $margin->coverage() ) {
+        if ( CostCoverage::PARTIAL() === $margin->coverage() ) {
             $rendered .= sprintf( '<br /><span class="dfxcaaw-coverage">%s</span>', esc_html__( 'estimate', 'coupon-audit-and-analytics-for-woocommerce' ) );
         }
         return $rendered;

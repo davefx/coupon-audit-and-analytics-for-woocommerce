@@ -23,6 +23,46 @@ use DFX\CouponAAW\Domain\Profit\Money;
 final class CouponTerms {
 
 	/**
+     * @var DiscountAmount
+     * @readonly
+     */
+    public DiscountAmount $amount;
+    /**
+     * @var Money|null
+     * @readonly
+     */
+    public ?Money $minimum_spend = null;
+    /**
+     * @var Money|null
+     * @readonly
+     */
+    public ?Money $maximum_spend = null;
+    /**
+     * @var bool
+     * @readonly
+     */
+    public bool $grants_free_shipping = false;
+    /**
+     * @var bool
+     * @readonly
+     */
+    public bool $is_individual_use = false;
+    /**
+     * @var int|null
+     * @readonly
+     */
+    public ?int $usage_limit_per_user = null;
+    /**
+     * @var int|null
+     * @readonly
+     */
+    public ?int $limit_usage_to_items = null;
+    /**
+     * @var list<string>
+     * @readonly
+     */
+    public array $email_restrictions = array();
+    /**
 	 * Constructor.
 	 *
 	 * @param DiscountAmount $amount                What the coupon takes off.
@@ -34,16 +74,17 @@ final class CouponTerms {
 	 * @param int|null       $limit_usage_to_items  Items in one basket it may apply to, if capped.
 	 * @param list<string>   $email_restrictions    Billing addresses it is limited to.
 	 */
-	public function __construct(
-		public readonly DiscountAmount $amount,
-		public readonly ?Money $minimum_spend = null,
-		public readonly ?Money $maximum_spend = null,
-		public readonly bool $grants_free_shipping = false,
-		public readonly bool $is_individual_use = false,
-		public readonly ?int $usage_limit_per_user = null,
-		public readonly ?int $limit_usage_to_items = null,
-		public readonly array $email_restrictions = array()
-	) {}
+	public function __construct(DiscountAmount $amount, ?Money $minimum_spend = null, ?Money $maximum_spend = null, bool $grants_free_shipping = false, bool $is_individual_use = false, ?int $usage_limit_per_user = null, ?int $limit_usage_to_items = null, array $email_restrictions = array())
+    {
+        $this->amount = $amount;
+        $this->minimum_spend = $minimum_spend;
+        $this->maximum_spend = $maximum_spend;
+        $this->grants_free_shipping = $grants_free_shipping;
+        $this->is_individual_use = $is_individual_use;
+        $this->usage_limit_per_user = $usage_limit_per_user;
+        $this->limit_usage_to_items = $limit_usage_to_items;
+        $this->email_restrictions = $email_restrictions;
+    }
 
 	/**
 	 * Whether the coupon is restricted to particular billing addresses.

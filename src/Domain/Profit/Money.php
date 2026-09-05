@@ -25,11 +25,17 @@ use InvalidArgumentException;
 final class Money {
 
 	/**
-	 * ISO 4217 code, upper-cased.
-	 *
-	 * @var string
-	 */
-	public readonly string $currency;
+     * @var int
+     * @readonly
+     */
+    public int $amount;
+    /**
+     * ISO 4217 code, upper-cased.
+     *
+     * @var string
+     * @readonly
+     */
+    public string $currency;
 
 	/**
 	 * Constructor.
@@ -40,10 +46,11 @@ final class Money {
 	 * @throws InvalidArgumentException When the currency is not a three-letter code.
 	 */
 	public function __construct(
-		public readonly int $amount,
+		int $amount,
 		string $currency
 	) {
-		$normalised = strtoupper( trim( $currency ) );
+		$this->amount = $amount;
+        $normalised = strtoupper( trim( $currency ) );
 
 		if ( 1 !== preg_match( '/^[A-Z]{3}$/', $normalised ) ) {
 			throw new InvalidArgumentException( 'A currency must be a three-letter ISO 4217 code.' );
@@ -73,7 +80,7 @@ final class Money {
 	 * @param string       $currency ISO 4217 code.
 	 * @param int          $decimals Places in the currency's minor unit.
 	 */
-	public static function from_decimal( float|string $amount, string $currency, int $decimals ): self {
+	public static function from_decimal( $amount, string $currency, int $decimals ): self {
 		return new self(
 			(int) round( (float) $amount * ( 10 ** $decimals ) ),
 			$currency

@@ -1,14 +1,14 @@
 === Coupon Audit and Analytics for WooCommerce ===
 Contributors: davefx
-Tags: woocommerce, coupons, analytics, discounts, profit
+Tags: woocommerce, coupons, coupon analytics, profit margin, coupon report
 Requires at least: 6.4
 Tested up to: 7.1
-Requires PHP: 8.1
-Stable tag: 0.9.0
+Requires PHP: 7.4
+Stable tag: 0.9.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Find the coupons quietly costing you money: what is still live, what it really applies to, what overlaps, and what each one actually earns.
+Audit your WooCommerce coupons and see each one's profit margin: which are still live, which overlap, and which are quietly losing money.
 
 == Description ==
 
@@ -137,6 +137,9 @@ No coupon, order, customer or revenue data. Every figure this plugin reports is 
 4. Settings: which cost-of-goods system to read, and whether uninstalling should take the data with it.
 
 == Changelog ==
+
+= 0.9.1 =
+* Now runs on PHP 7.4. The plugin used to require PHP 8.1, which shut it out of the many shops — most of them on managed hosting that chooses the PHP for them — still on 7.4. It installs and runs there now. Nothing about what it does has changed.
 
 = 0.9.0 =
 * For developers: the `dfxcaaw_coupon_query_args` filter has been removed. Use `dfxcaaw_coupon_rows_where` instead — it does the same job on every read the plugin makes, at any shop size. The old filter reached `get_posts()`, which the audit stopped using when it was rebuilt for large shops; what remained of it applied only to shops with fewer than three hundred coupons, so it worked on a small site and quietly did nothing on a large one. If you filter the audit and have not moved yet, this is the release that requires it.

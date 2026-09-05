@@ -31,17 +31,33 @@ use DFX\CouponAAW\Domain\Profit\OrderSnapshot;
 final class WcOrderStatsRepository implements OrderStatsRepositoryInterface {
 
 	/**
+     * @var \wpdb
+     * @readonly
+     */
+    private \wpdb $wpdb;
+    /**
+     * @var DateTimeZone
+     * @readonly
+     */
+    private DateTimeZone $timezone;
+    /**
+     * @var int
+     * @readonly
+     */
+    private int $decimals;
+    /**
 	 * Constructor.
 	 *
 	 * @param \wpdb        $wpdb     WordPress database handle.
 	 * @param DateTimeZone $timezone The store's timezone.
 	 * @param int          $decimals Places in the currency's minor unit.
 	 */
-	public function __construct(
-		private readonly \wpdb $wpdb,
-		private readonly DateTimeZone $timezone,
-		private readonly int $decimals
-	) {}
+	public function __construct(\wpdb $wpdb, DateTimeZone $timezone, int $decimals)
+    {
+        $this->wpdb = $wpdb;
+        $this->timezone = $timezone;
+        $this->decimals = $decimals;
+    }
 
 	/**
 	 * Every countable order on a day that used at least one coupon.
@@ -142,7 +158,7 @@ final class WcOrderStatsRepository implements OrderStatsRepositoryInterface {
 			)
 		);
 
-		if ( ! is_string( $earliest ) || '' === $earliest || str_starts_with( $earliest, '0000' ) ) {
+		if ( ! is_string( $earliest ) || '' === $earliest || strncmp($earliest, '0000', strlen('0000')) === 0 ) {
 			return null;
 		}
 
@@ -376,7 +392,7 @@ final class WcOrderStatsRepository implements OrderStatsRepositoryInterface {
 		return array_values(
 			array_map(
 				static fn ( string $status ): string
-					=> str_starts_with( $status, 'wc-' ) ? $status : 'wc-' . $status,
+					=> strncmp($status, 'wc-', strlen('wc-')) === 0 ? $status : 'wc-' . $status,
 				wc_get_is_paid_statuses()
 			)
 		);

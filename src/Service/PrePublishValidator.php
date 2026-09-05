@@ -27,15 +27,26 @@ use DFX\CouponAAW\Repository\CouponRepositoryInterface;
 final class PrePublishValidator {
 
 	/**
+     * @var CouponRepositoryInterface
+     * @readonly
+     */
+    private CouponRepositoryInterface $coupons;
+    /**
+     * @var OverlapDetector
+     * @readonly
+     */
+    private OverlapDetector $overlaps;
+    /**
 	 * Constructor.
 	 *
 	 * @param CouponRepositoryInterface $coupons  The coupons already in the store.
 	 * @param OverlapDetector           $overlaps Finds colliding pairs.
 	 */
-	public function __construct(
-		private readonly CouponRepositoryInterface $coupons,
-		private readonly OverlapDetector $overlaps
-	) {}
+	public function __construct(CouponRepositoryInterface $coupons, OverlapDetector $overlaps)
+    {
+        $this->coupons = $coupons;
+        $this->overlaps = $overlaps;
+    }
 
 	/**
 	 * Everything worth saying about this coupon, in a stable order.
@@ -48,18 +59,18 @@ final class PrePublishValidator {
 		$warnings = array();
 
 		if ( null === $coupon->expires_at ) {
-			$warnings[] = new PrePublishWarning( PrePublishWarningType::NO_EXPIRY_DATE );
+			$warnings[] = new PrePublishWarning( PrePublishWarningType::NO_EXPIRY_DATE() );
 		}
 
 		if ( null === $coupon->usage_limit ) {
-			$warnings[] = new PrePublishWarning( PrePublishWarningType::NO_USAGE_LIMIT );
+			$warnings[] = new PrePublishWarning( PrePublishWarningType::NO_USAGE_LIMIT() );
 		}
 
 		$collisions = $this->collisions( $coupon );
 
 		if ( array() !== $collisions ) {
 			$warnings[] = new PrePublishWarning(
-				PrePublishWarningType::OVERLAPS_EXISTING,
+				PrePublishWarningType::OVERLAPS_EXISTING(),
 				array_map(
 					static fn ( Overlap $overlap ): CouponSnapshot => $overlap->counterpart( $coupon->id ),
 					$collisions

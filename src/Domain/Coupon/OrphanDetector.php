@@ -23,6 +23,21 @@ use InvalidArgumentException;
 final class OrphanDetector {
 
 	/**
+     * @var StatusResolver
+     * @readonly
+     */
+    private StatusResolver $status;
+    /**
+     * @var ClockInterface
+     * @readonly
+     */
+    private ClockInterface $clock;
+    /**
+     * @var int
+     * @readonly
+     */
+    private int $dormant_after_days = 90;
+    /**
 	 * Characters that separate a campaign from the code that belongs to it.
 	 */
 	private const CAMPAIGN_SEPARATORS = array( '-', '_' );
@@ -37,11 +52,14 @@ final class OrphanDetector {
 	 * @throws InvalidArgumentException When the threshold is not a positive number of days.
 	 */
 	public function __construct(
-		private readonly StatusResolver $status,
-		private readonly ClockInterface $clock,
-		private readonly int $dormant_after_days = 90
+		StatusResolver $status,
+		ClockInterface $clock,
+		int $dormant_after_days = 90
 	) {
-		if ( $dormant_after_days < 1 ) {
+		$this->status = $status;
+        $this->clock = $clock;
+        $this->dormant_after_days = $dormant_after_days;
+        if ( $dormant_after_days < 1 ) {
 			throw new InvalidArgumentException( 'The dormancy threshold must be at least one day.' );
 		}
 	}
@@ -103,15 +121,15 @@ final class OrphanDetector {
 		$reasons = array();
 
 		if ( null === $coupon->expires_at() ) {
-			$reasons[] = OrphanReason::NO_EXPIRY_DATE;
+			$reasons[] = OrphanReason::NO_EXPIRY_DATE();
 		}
 
 		if ( $this->is_dormant( $coupon ) ) {
-			$reasons[] = OrphanReason::DORMANT;
+			$reasons[] = OrphanReason::DORMANT();
 		}
 
 		if ( $index->every_sibling_expired( $coupon, $this->campaign_of( $coupon->code() ) ) ) {
-			$reasons[] = OrphanReason::DEAD_CAMPAIGN;
+			$reasons[] = OrphanReason::DEAD_CAMPAIGN();
 		}
 
 		return $reasons;
@@ -138,7 +156,7 @@ final class OrphanDetector {
 
 			$members[ $campaign ] = ( $members[ $campaign ] ?? 0 ) + 1;
 			$expired[ $campaign ] = ( $expired[ $campaign ] ?? 0 )
-				+ ( CouponStatus::EXPIRED === $this->status->resolve( $candidate ) ? 1 : 0 );
+				+ ( CouponStatus::EXPIRED() === $this->status->resolve( $candidate ) ? 1 : 0 );
 		}
 
 		return new CampaignIndex( $members, $expired, $ids );
@@ -201,6 +219,6 @@ final class OrphanDetector {
 			return null;
 		}
 
-		return substr( $code, 0, $position );
+		return (string) substr( $code, 0, $position );
 	}
 }

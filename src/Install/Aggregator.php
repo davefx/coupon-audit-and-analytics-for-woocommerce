@@ -34,6 +34,31 @@ use WC_Abstract_Order;
 final class Aggregator {
 
 	/**
+     * @var AggregationInterface
+     * @readonly
+     */
+    private AggregationInterface $aggregation;
+    /**
+     * @var OrderStatsRepositoryInterface
+     * @readonly
+     */
+    private OrderStatsRepositoryInterface $orders;
+    /**
+     * @var SettingsInterface
+     * @readonly
+     */
+    private SettingsInterface $settings;
+    /**
+     * @var ClockInterface
+     * @readonly
+     */
+    private ClockInterface $clock;
+    /**
+     * @var DateTimeZone
+     * @readonly
+     */
+    private DateTimeZone $timezone;
+    /**
 	 * Action fired to aggregate one day.
 	 */
 	public const AGGREGATE_DAY = 'dfxcaaw_aggregate_day';
@@ -91,13 +116,14 @@ final class Aggregator {
 	 * @param ClockInterface                $clock       Supplies today.
 	 * @param DateTimeZone                  $timezone    The store's timezone.
 	 */
-	public function __construct(
-		private readonly AggregationInterface $aggregation,
-		private readonly OrderStatsRepositoryInterface $orders,
-		private readonly SettingsInterface $settings,
-		private readonly ClockInterface $clock,
-		private readonly DateTimeZone $timezone
-	) {}
+	public function __construct(AggregationInterface $aggregation, OrderStatsRepositoryInterface $orders, SettingsInterface $settings, ClockInterface $clock, DateTimeZone $timezone)
+    {
+        $this->aggregation = $aggregation;
+        $this->orders = $orders;
+        $this->settings = $settings;
+        $this->clock = $clock;
+        $this->timezone = $timezone;
+    }
 
 	/**
 	 * Queue the day an order belongs to.

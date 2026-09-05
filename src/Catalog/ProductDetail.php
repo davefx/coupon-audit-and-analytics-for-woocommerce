@@ -21,6 +21,31 @@ use DFX\CouponAAW\Domain\Profit\Money;
 final class ProductDetail {
 
 	/**
+     * @var int
+     * @readonly
+     */
+    public int $id;
+    /**
+     * @var string
+     * @readonly
+     */
+    public string $name;
+    /**
+     * @var Money|null
+     * @readonly
+     */
+    public ?Money $price;
+    /**
+     * @var bool
+     * @readonly
+     */
+    public bool $is_available;
+    /**
+     * @var string|null
+     * @readonly
+     */
+    public ?string $unavailable = null;
+    /**
 	 * Constructor.
 	 *
 	 * @param int         $id           The product ID.
@@ -29,11 +54,12 @@ final class ProductDetail {
 	 * @param bool        $is_available Whether a customer could buy it today.
 	 * @param string|null $unavailable  Why not, when they could not.
 	 */
-	public function __construct(
-		public readonly int $id,
-		public readonly string $name,
-		public readonly ?Money $price,
-		public readonly bool $is_available,
-		public readonly ?string $unavailable = null
-	) {}
+	public function __construct(int $id, string $name, ?Money $price, bool $is_available, ?string $unavailable = null)
+    {
+        $this->id = $id;
+        $this->name = $name;
+        $this->price = $price;
+        $this->is_available = $is_available;
+        $this->unavailable = $unavailable;
+    }
 }

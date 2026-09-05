@@ -32,15 +32,26 @@ use DFX\CouponAAW\Service\PrePublishWarningType;
 final class CouponEditorNotices {
 
 	/**
+     * @var PrePublishValidator
+     * @readonly
+     */
+    private PrePublishValidator $validator;
+    /**
+     * @var CouponRepositoryInterface
+     * @readonly
+     */
+    private CouponRepositoryInterface $coupons;
+    /**
 	 * Constructor.
 	 *
 	 * @param PrePublishValidator       $validator Produces the warnings.
 	 * @param CouponRepositoryInterface $coupons   Loads the coupon being edited.
 	 */
-	public function __construct(
-		private readonly PrePublishValidator $validator,
-		private readonly CouponRepositoryInterface $coupons
-	) {}
+	public function __construct(PrePublishValidator $validator, CouponRepositoryInterface $coupons)
+    {
+        $this->validator = $validator;
+        $this->coupons = $coupons;
+    }
 
 	/**
 	 * Render the warnings, if this is a coupon being edited.
@@ -99,19 +110,31 @@ final class CouponEditorNotices {
 	 * The sentence shown for one warning.
 	 *
 	 * @param PrePublishWarning $warning The warning to phrase.
+	 *
+	 * @throws \InvalidArgumentException When the warning type is not one this method knows.
 	 */
 	private function message( PrePublishWarning $warning ): string {
-		return match ( $warning->type ) {
-			PrePublishWarningType::NO_EXPIRY_DATE => __(
+		$type = $warning->type;
+
+		if ( PrePublishWarningType::NO_EXPIRY_DATE() === $type ) {
+			return __(
 				'This coupon has no expiry date, so nothing will ever turn it off.',
 				'coupon-audit-and-analytics-for-woocommerce'
-			),
-			PrePublishWarningType::NO_USAGE_LIMIT => __(
+			);
+		}
+
+		if ( PrePublishWarningType::NO_USAGE_LIMIT() === $type ) {
+			return __(
 				'This coupon has no usage limit, so it can be redeemed any number of times.',
 				'coupon-audit-and-analytics-for-woocommerce'
-			),
-			PrePublishWarningType::OVERLAPS_EXISTING => $this->overlap_message( $warning ),
-		};
+			);
+		}
+
+		if ( PrePublishWarningType::OVERLAPS_EXISTING() === $type ) {
+			return $this->overlap_message( $warning );
+		}
+
+		throw new \InvalidArgumentException( 'Unhandled pre-publish warning type.' );
 	}
 
 	/**
@@ -140,7 +163,7 @@ final class CouponEditorNotices {
 			implode( ', ', $codes )
 		);
 
-		if ( OverlapSeverity::HIGH === $warning->severity ) {
+		if ( OverlapSeverity::HIGH() === $warning->severity ) {
 			$sentence .= ' ' . __(
 				'Both are applied automatically, so a customer does not have to find them.',
 				'coupon-audit-and-analytics-for-woocommerce'

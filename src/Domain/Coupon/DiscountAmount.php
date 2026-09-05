@@ -27,6 +27,21 @@ use InvalidArgumentException;
 final class DiscountAmount {
 
 	/**
+     * @var string
+     * @readonly
+     */
+    public string $type;
+    /**
+     * @var Money|null
+     * @readonly
+     */
+    public ?Money $fixed;
+    /**
+     * @var float|null
+     * @readonly
+     */
+    public ?float $percent;
+    /**
 	 * Constructor.
 	 *
 	 * @param string     $type    WooCommerce's discount type slug.
@@ -36,11 +51,14 @@ final class DiscountAmount {
 	 * @throws InvalidArgumentException When neither or both are given.
 	 */
 	private function __construct(
-		public readonly string $type,
-		public readonly ?Money $fixed,
-		public readonly ?float $percent
+		string $type,
+		?Money $fixed,
+		?float $percent
 	) {
-		if ( ( null === $fixed ) === ( null === $percent ) ) {
+		$this->type = $type;
+        $this->fixed = $fixed;
+        $this->percent = $percent;
+        if ( ( null === $fixed ) === ( null === $percent ) ) {
 			throw new InvalidArgumentException( 'A discount is either a fixed sum or a percentage, not both and not neither.' );
 		}
 	}

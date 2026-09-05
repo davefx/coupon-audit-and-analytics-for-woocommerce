@@ -17,11 +17,19 @@ use DFX\CouponAAW\Domain\Clock\ClockInterface;
 final class StatusResolver {
 
 	/**
+     * @var ClockInterface
+     * @readonly
+     */
+    private ClockInterface $clock;
+    /**
 	 * Constructor.
 	 *
 	 * @param ClockInterface $clock Supplies the current instant.
 	 */
-	public function __construct( private readonly ClockInterface $clock ) {}
+	public function __construct(ClockInterface $clock)
+    {
+        $this->clock = $clock;
+    }
 
 	/**
 	 * Resolve a coupon's status.
@@ -41,7 +49,7 @@ final class StatusResolver {
 	 */
 	public function resolve( Judgeable $coupon ): CouponStatus {
 		if ( ! $coupon->is_published() ) {
-			return CouponStatus::INACTIVE;
+			return CouponStatus::INACTIVE();
 		}
 
 		$now = $this->clock->now();
@@ -52,19 +60,19 @@ final class StatusResolver {
 		$expires_at = $coupon->expires_at();
 
 		if ( null !== $expires_at && $now > $expires_at ) {
-			return CouponStatus::EXPIRED;
+			return CouponStatus::EXPIRED();
 		}
 
 		if ( $coupon->has_reached_usage_limit() ) {
-			return CouponStatus::EXHAUSTED;
+			return CouponStatus::EXHAUSTED();
 		}
 
 		$starts_at = $coupon->starts_at();
 
 		if ( null !== $starts_at && $starts_at > $now ) {
-			return CouponStatus::SCHEDULED;
+			return CouponStatus::SCHEDULED();
 		}
 
-		return CouponStatus::ACTIVE;
+		return CouponStatus::ACTIVE();
 	}
 }

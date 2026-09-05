@@ -27,6 +27,41 @@ use DFX\CouponAAW\Domain\Coupon\CouponId;
 final class CouponTotals {
 
 	/**
+     * @var CouponId
+     * @readonly
+     */
+    public CouponId $coupon_id;
+    /**
+     * @var int
+     * @readonly
+     */
+    public int $orders;
+    /**
+     * @var Money
+     * @readonly
+     */
+    public Money $net_revenue;
+    /**
+     * @var Money
+     * @readonly
+     */
+    public Money $discount;
+    /**
+     * @var Money
+     * @readonly
+     */
+    public Money $cost;
+    /**
+     * @var int
+     * @readonly
+     */
+    public int $covered_lines;
+    /**
+     * @var int
+     * @readonly
+     */
+    public int $total_lines;
+    /**
 	 * Constructor.
 	 *
 	 * @param CouponId $coupon_id     Which coupon.
@@ -37,15 +72,16 @@ final class CouponTotals {
 	 * @param int      $covered_lines Lines whose cost was known.
 	 * @param int      $total_lines   Lines altogether.
 	 */
-	public function __construct(
-		public readonly CouponId $coupon_id,
-		public readonly int $orders,
-		public readonly Money $net_revenue,
-		public readonly Money $discount,
-		public readonly Money $cost,
-		public readonly int $covered_lines,
-		public readonly int $total_lines
-	) {}
+	public function __construct(CouponId $coupon_id, int $orders, Money $net_revenue, Money $discount, Money $cost, int $covered_lines, int $total_lines)
+    {
+        $this->coupon_id = $coupon_id;
+        $this->orders = $orders;
+        $this->net_revenue = $net_revenue;
+        $this->discount = $discount;
+        $this->cost = $cost;
+        $this->covered_lines = $covered_lines;
+        $this->total_lines = $total_lines;
+    }
 
 	/**
 	 * The currency these figures are in.

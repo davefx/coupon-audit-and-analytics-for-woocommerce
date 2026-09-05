@@ -39,6 +39,36 @@ use DFX\CouponAAW\Repository\CouponRepositoryInterface;
 final class InventoryService {
 
 	/**
+     * @var CouponRepositoryInterface
+     * @readonly
+     */
+    private CouponRepositoryInterface $coupons;
+    /**
+     * @var StatusResolver
+     * @readonly
+     */
+    private StatusResolver $status;
+    /**
+     * @var OrphanDetector
+     * @readonly
+     */
+    private OrphanDetector $orphans;
+    /**
+     * @var OverlapDetector
+     * @readonly
+     */
+    private OverlapDetector $overlaps;
+    /**
+     * @var ConfigurationAuditor
+     * @readonly
+     */
+    private ConfigurationAuditor $auditor;
+    /**
+     * @var CatalogRepositoryInterface
+     * @readonly
+     */
+    private CatalogRepositoryInterface $catalog;
+    /**
 	 * How many coupons an export builds at a time.
 	 *
 	 * Large enough that the catalogue is priced in useful batches, small enough
@@ -57,14 +87,15 @@ final class InventoryService {
 	 * @param ConfigurationAuditor       $auditor  Checks each coupon's own terms.
 	 * @param CatalogRepositoryInterface $catalog Supplies the cheapest reachable price.
 	 */
-	public function __construct(
-		private readonly CouponRepositoryInterface $coupons,
-		private readonly StatusResolver $status,
-		private readonly OrphanDetector $orphans,
-		private readonly OverlapDetector $overlaps,
-		private readonly ConfigurationAuditor $auditor,
-		private readonly CatalogRepositoryInterface $catalog
-	) {}
+	public function __construct(CouponRepositoryInterface $coupons, StatusResolver $status, OrphanDetector $orphans, OverlapDetector $overlaps, ConfigurationAuditor $auditor, CatalogRepositoryInterface $catalog)
+    {
+        $this->coupons = $coupons;
+        $this->status = $status;
+        $this->orphans = $orphans;
+        $this->overlaps = $overlaps;
+        $this->auditor = $auditor;
+        $this->catalog = $catalog;
+    }
 
 	/**
 	 * The figures above the table, without loading the table.
@@ -320,8 +351,8 @@ final class InventoryService {
 			usort(
 				$coupons,
 				static fn ( CouponProjection $a, CouponProjection $b ): int => (
-					( $a->last_used_at?->getTimestamp() ?? PHP_INT_MIN )
-						<=> ( $b->last_used_at?->getTimestamp() ?? PHP_INT_MIN )
+					( (($nullsafeVariable1 = $a->last_used_at) ? $nullsafeVariable1->getTimestamp() : null) ?? PHP_INT_MIN )
+						<=> ( (($nullsafeVariable2 = $b->last_used_at) ? $nullsafeVariable2->getTimestamp() : null) ?? PHP_INT_MIN )
 				) * $direction
 			);
 
@@ -332,7 +363,7 @@ final class InventoryService {
 			usort(
 				$coupons,
 				static fn ( CouponProjection $a, CouponProjection $b ): int => (
-					( $a->expires_at?->getTimestamp() ?? PHP_INT_MAX ) <=> ( $b->expires_at?->getTimestamp() ?? PHP_INT_MAX )
+					( (($nullsafeVariable3 = $a->expires_at) ? $nullsafeVariable3->getTimestamp() : null) ?? PHP_INT_MAX ) <=> ( (($nullsafeVariable4 = $b->expires_at) ? $nullsafeVariable4->getTimestamp() : null) ?? PHP_INT_MAX )
 				) * $direction
 			);
 

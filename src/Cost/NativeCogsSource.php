@@ -40,6 +40,16 @@ use DFX\CouponAAW\Domain\Profit\Money;
 final class NativeCogsSource implements CostSourceInterface {
 
 	/**
+     * @var string
+     * @readonly
+     */
+    private string $currency;
+    /**
+     * @var int
+     * @readonly
+     */
+    private int $decimals;
+    /**
 	 * The core feature this source depends on.
 	 */
 	private const FEATURE = 'cost_of_goods_sold';
@@ -58,10 +68,11 @@ final class NativeCogsSource implements CostSourceInterface {
 	 * @param string $currency The store's currency.
 	 * @param int    $decimals Places in the currency's minor unit.
 	 */
-	public function __construct(
-		private readonly string $currency,
-		private readonly int $decimals
-	) {}
+	public function __construct(string $currency, int $decimals)
+    {
+        $this->currency = $currency;
+        $this->decimals = $decimals;
+    }
 
 	/**
 	 * Whether core's cost feature is switched on.

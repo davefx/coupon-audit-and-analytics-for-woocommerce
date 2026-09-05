@@ -19,6 +19,26 @@ namespace DFX\CouponAAW\Service;
 final class InventoryScreen {
 
 	/**
+     * @var InventorySummary
+     * @readonly
+     */
+    public InventorySummary $summary;
+    /**
+     * @var list<InventoryEntry>
+     * @readonly
+     */
+    public array $entries;
+    /**
+     * @var int
+     * @readonly
+     */
+    public int $total;
+    /**
+     * @var bool
+     * @readonly
+     */
+    public bool $overlaps_known = true;
+    /**
 	 * Constructor.
 	 *
 	 * @param InventorySummary     $summary        The figures, describing the whole shop.
@@ -26,10 +46,11 @@ final class InventoryScreen {
 	 * @param int                  $total          How many coupons matched the filter.
 	 * @param bool                 $overlaps_known Whether overlap detection ran at all.
 	 */
-	public function __construct(
-		public readonly InventorySummary $summary,
-		public readonly array $entries,
-		public readonly int $total,
-		public readonly bool $overlaps_known = true
-	) {}
+	public function __construct(InventorySummary $summary, array $entries, int $total, bool $overlaps_known = true)
+    {
+        $this->summary = $summary;
+        $this->entries = $entries;
+        $this->total = $total;
+        $this->overlaps_known = $overlaps_known;
+    }
 }

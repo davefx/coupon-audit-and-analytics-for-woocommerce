@@ -31,15 +31,26 @@ use WP_Term;
 final class WcCatalogRepository implements CatalogRepositoryInterface {
 
 	/**
+     * @var string
+     * @readonly
+     */
+    private string $currency;
+    /**
+     * @var int
+     * @readonly
+     */
+    private int $decimals;
+    /**
 	 * Constructor.
 	 *
 	 * @param string $currency The store's currency.
 	 * @param int    $decimals Places in the currency's minor unit.
 	 */
-	public function __construct(
-		private readonly string $currency,
-		private readonly int $decimals
-	) {}
+	public function __construct(string $currency, int $decimals)
+    {
+        $this->currency = $currency;
+        $this->decimals = $decimals;
+    }
 
 	/**
 	 * Describe the given products.

@@ -21,6 +21,31 @@ use DFX\CouponAAW\Domain\Coupon\CouponStatus;
 final class InventorySummary {
 
 	/**
+     * @var int
+     * @readonly
+     */
+    public int $total;
+    /**
+     * @var array<string, int>
+     * @readonly
+     */
+    public array $by_status;
+    /**
+     * @var int
+     * @readonly
+     */
+    public int $orphans;
+    /**
+     * @var int
+     * @readonly
+     */
+    public int $unrestricted;
+    /**
+     * @var int|null
+     * @readonly
+     */
+    public ?int $overlaps = null;
+    /**
 	 * Constructor.
 	 *
 	 * @param int                $total        Coupons in the store.
@@ -29,13 +54,14 @@ final class InventorySummary {
 	 * @param int                $unrestricted Live coupons that apply to the whole catalogue.
 	 * @param int|null           $overlaps     Colliding pairs, or null when the inventory was too large to check.
 	 */
-	public function __construct(
-		public readonly int $total,
-		public readonly array $by_status,
-		public readonly int $orphans,
-		public readonly int $unrestricted,
-		public readonly ?int $overlaps = null
-	) {}
+	public function __construct(int $total, array $by_status, int $orphans, int $unrestricted, ?int $overlaps = null)
+    {
+        $this->total = $total;
+        $this->by_status = $by_status;
+        $this->orphans = $orphans;
+        $this->unrestricted = $unrestricted;
+        $this->overlaps = $overlaps;
+    }
 
 	/**
 	 * How many coupons are in a given status.

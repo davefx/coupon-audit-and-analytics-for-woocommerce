@@ -27,6 +27,11 @@ namespace DFX\CouponAAW\Install;
 final class Uninstaller {
 
 	/**
+     * @var \wpdb
+     * @readonly
+     */
+    private \wpdb $wpdb;
+    /**
 	 * The option holding the user's settings, the tick box among them.
 	 */
 	private const SETTINGS_OPTION = 'dfxcaaw_settings';
@@ -41,7 +46,10 @@ final class Uninstaller {
 	 *
 	 * @param \wpdb $wpdb The database.
 	 */
-	public function __construct( private readonly \wpdb $wpdb ) {}
+	public function __construct(\wpdb $wpdb)
+    {
+        $this->wpdb = $wpdb;
+    }
 
 	/**
 	 * Remove everything, if the user asked for that.

@@ -23,6 +23,16 @@ use DFX\CouponAAW\Support\SettingsInterface;
 final class SettingsPage {
 
 	/**
+     * @var SettingsInterface
+     * @readonly
+     */
+    private SettingsInterface $settings;
+    /**
+     * @var CostSourceRegistry
+     * @readonly
+     */
+    private CostSourceRegistry $costs;
+    /**
 	 * The screen's page slug.
 	 */
 	public const PAGE_SLUG = 'dfxcaaw-settings';
@@ -38,10 +48,11 @@ final class SettingsPage {
 	 * @param SettingsInterface  $settings Where choices are stored.
 	 * @param CostSourceRegistry $costs    Lists the systems available to choose from.
 	 */
-	public function __construct(
-		private readonly SettingsInterface $settings,
-		private readonly CostSourceRegistry $costs
-	) {}
+	public function __construct(SettingsInterface $settings, CostSourceRegistry $costs)
+    {
+        $this->settings = $settings;
+        $this->costs = $costs;
+    }
 
 	/**
 	 * Render the screen, saving first if something was submitted.

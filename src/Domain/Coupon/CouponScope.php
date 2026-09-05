@@ -21,32 +21,41 @@ namespace DFX\CouponAAW\Domain\Coupon;
 final class CouponScope {
 
 	/**
-	 * Included product IDs, deduplicated and sorted.
-	 *
-	 * @var list<int>
-	 */
-	public readonly array $included_products;
+     * @var bool
+     * @readonly
+     */
+    public bool $excludes_sale_items = false;
+    /**
+     * Included product IDs, deduplicated and sorted.
+     *
+     * @var list<int>
+     * @readonly
+     */
+    public array $included_products;
 
 	/**
-	 * Excluded product IDs, deduplicated and sorted.
-	 *
-	 * @var list<int>
-	 */
-	public readonly array $excluded_products;
+     * Excluded product IDs, deduplicated and sorted.
+     *
+     * @var list<int>
+     * @readonly
+     */
+    public array $excluded_products;
 
 	/**
-	 * Included category term IDs, deduplicated and sorted.
-	 *
-	 * @var list<int>
-	 */
-	public readonly array $included_categories;
+     * Included category term IDs, deduplicated and sorted.
+     *
+     * @var list<int>
+     * @readonly
+     */
+    public array $included_categories;
 
 	/**
-	 * Excluded category term IDs, deduplicated and sorted.
-	 *
-	 * @var list<int>
-	 */
-	public readonly array $excluded_categories;
+     * Excluded category term IDs, deduplicated and sorted.
+     *
+     * @var list<int>
+     * @readonly
+     */
+    public array $excluded_categories;
 
 	/**
 	 * Constructor.
@@ -62,9 +71,10 @@ final class CouponScope {
 		array $excluded_products = array(),
 		array $included_categories = array(),
 		array $excluded_categories = array(),
-		public readonly bool $excludes_sale_items = false
+		bool $excludes_sale_items = false
 	) {
-		$this->included_products   = self::normalise( $included_products );
+		$this->excludes_sale_items = $excludes_sale_items;
+        $this->included_products   = self::normalise( $included_products );
 		$this->excluded_products   = self::normalise( $excluded_products );
 		$this->included_categories = self::normalise( $included_categories );
 		$this->excluded_categories = self::normalise( $excluded_categories );

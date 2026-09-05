@@ -27,11 +27,19 @@ use DFX\CouponAAW\Domain\Profit\Money;
 final class CouponTermsFormatter {
 
 	/**
+     * @var CatalogRepositoryInterface
+     * @readonly
+     */
+    private CatalogRepositoryInterface $catalog;
+    /**
 	 * Constructor.
 	 *
 	 * @param CatalogRepositoryInterface $catalog Resolves product and category names.
 	 */
-	public function __construct( private readonly CatalogRepositoryInterface $catalog ) {}
+	public function __construct(CatalogRepositoryInterface $catalog)
+    {
+        $this->catalog = $catalog;
+    }
 
 	/**
 	 * The discount itself, as a percentage or a sum.

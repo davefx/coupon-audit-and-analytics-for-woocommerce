@@ -23,6 +23,24 @@ use DFX\CouponAAW\Service\MarginService;
  */
 final class MarginPage {
     /**
+     * @var MarginService
+     * @readonly
+     */
+    private MarginService $margins;
+
+    /**
+     * @var MarginListTable
+     * @readonly
+     */
+    private MarginListTable $table;
+
+    /**
+     * @var Aggregator
+     * @readonly
+     */
+    private Aggregator $aggregator;
+
+    /**
      * The screen's page slug.
      */
     public const PAGE_SLUG = 'dfxcaaw-margins';
@@ -34,7 +52,10 @@ final class MarginPage {
      * @param MarginListTable $table      Renders the rows.
      * @param Aggregator      $aggregator Reports backfill progress.
      */
-    public function __construct( private readonly MarginService $margins, private readonly MarginListTable $table, private readonly Aggregator $aggregator ) {
+    public function __construct( MarginService $margins, MarginListTable $table, Aggregator $aggregator ) {
+        $this->margins = $margins;
+        $this->table = $table;
+        $this->aggregator = $aggregator;
     }
 
     /**

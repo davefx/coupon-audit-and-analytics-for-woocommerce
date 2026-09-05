@@ -52,6 +52,7 @@ return array(
     'DFX\\CouponAAW\\Domain\\Coupon\\OrphanReason' => $baseDir . '/src/Domain/Coupon/OrphanReason.php',
     'DFX\\CouponAAW\\Domain\\Coupon\\ProductRef' => $baseDir . '/src/Domain/Coupon/ProductRef.php',
     'DFX\\CouponAAW\\Domain\\Coupon\\StatusResolver' => $baseDir . '/src/Domain/Coupon/StatusResolver.php',
+    'DFX\\CouponAAW\\Domain\\EnumType' => $baseDir . '/src/Domain/EnumType.php',
     'DFX\\CouponAAW\\Domain\\Overlap\\Overlap' => $baseDir . '/src/Domain/Overlap/Overlap.php',
     'DFX\\CouponAAW\\Domain\\Overlap\\OverlapDetector' => $baseDir . '/src/Domain/Overlap/OverlapDetector.php',
     'DFX\\CouponAAW\\Domain\\Overlap\\OverlapSeverity' => $baseDir . '/src/Domain/Overlap/OverlapSeverity.php',

@@ -19,12 +19,13 @@ namespace DFX\CouponAAW\Support;
 interface SettingsInterface {
 
 	/**
-	 * Read one setting.
-	 *
-	 * @param string $key      Setting name, without the plugin prefix.
-	 * @param mixed  $fallback Value to return when the setting is unset.
-	 */
-	public function get( string $key, mixed $fallback = null ): mixed;
+     * Read one setting.
+     *
+     * @param string $key      Setting name, without the plugin prefix.
+     * @param mixed  $fallback Value to return when the setting is unset.
+     * @return mixed
+     */
+    public function get( string $key, $fallback = null );
 
 	/**
 	 * Read one setting as a string, or null when unset or empty.
@@ -39,5 +40,5 @@ interface SettingsInterface {
 	 * @param string $key   Setting name, without the plugin prefix.
 	 * @param mixed  $value The value to store.
 	 */
-	public function set( string $key, mixed $value ): void;
+	public function set( string $key, $value ): void;
 }

@@ -29,11 +29,17 @@ use InvalidArgumentException;
 final class CostSourceRegistry {
 
 	/**
-	 * Every registered source, in priority order.
-	 *
-	 * @var list<CostSourceInterface>
-	 */
-	private readonly array $sources;
+     * @var string|null
+     * @readonly
+     */
+    private ?string $chosen = null;
+    /**
+     * Every registered source, in priority order.
+     *
+     * @var list<CostSourceInterface>
+     * @readonly
+     */
+    private array $sources;
 
 	/**
 	 * Constructor.
@@ -43,8 +49,9 @@ final class CostSourceRegistry {
 	 *
 	 * @throws InvalidArgumentException When two sources claim the same identifier.
 	 */
-	public function __construct( array $sources, private readonly ?string $chosen = null ) {
-		$seen = array();
+	public function __construct( array $sources, ?string $chosen = null ) {
+		$this->chosen = $chosen;
+        $seen = array();
 
 		foreach ( $sources as $source ) {
 			$identifier = $source->get_identifier();

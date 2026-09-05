@@ -58,12 +58,13 @@ interface ContainerInterface {
 	public function has( string $id ): bool;
 
 	/**
-	 * Resolve a service.
-	 *
-	 * @param string $id Service identifier.
-	 *
-	 * @throws ServiceNotFoundException     When the identifier was never registered.
-	 * @throws CircularDependencyException  When resolving the identifier requires itself.
-	 */
-	public function get( string $id ): mixed;
+     * Resolve a service.
+     *
+     * @param string $id Service identifier.
+     *
+     * @throws ServiceNotFoundException     When the identifier was never registered.
+     * @throws CircularDependencyException  When resolving the identifier requires itself.
+     * @return mixed
+     */
+    public function get( string $id );
 }

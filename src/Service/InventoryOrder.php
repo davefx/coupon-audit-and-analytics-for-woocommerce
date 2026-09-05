@@ -24,6 +24,11 @@ namespace DFX\CouponAAW\Service;
 final class InventoryOrder {
 
 	/**
+     * @var bool
+     * @readonly
+     */
+    public bool $descending = false;
+    /**
 	 * Order by the coupon's code.
 	 */
 	public const BY_CODE = 'code';
@@ -55,11 +60,12 @@ final class InventoryOrder {
 	public const BY_LAST_USED = 'last_used';
 
 	/**
-	 * The column being sorted on.
-	 *
-	 * @var string
-	 */
-	public readonly string $by;
+     * The column being sorted on.
+     *
+     * @var string
+     * @readonly
+     */
+    public string $by;
 
 	/**
 	 * Constructor.
@@ -67,8 +73,9 @@ final class InventoryOrder {
 	 * @param string $by         One of the class constants; anything else means the code.
 	 * @param bool   $descending Whether to reverse the order.
 	 */
-	public function __construct( string $by = self::BY_CODE, public readonly bool $descending = false ) {
-		$this->by = in_array(
+	public function __construct( string $by = self::BY_CODE, bool $descending = false ) {
+		$this->descending = $descending;
+        $this->by = in_array(
 			$by,
 			array( self::BY_CODE, self::BY_STATUS, self::BY_EXPIRES, self::BY_CREATED, self::BY_LAST_USED ),
 			true

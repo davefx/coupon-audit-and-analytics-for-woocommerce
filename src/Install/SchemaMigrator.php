@@ -33,6 +33,16 @@ use wpdb;
 final class SchemaMigrator {
 
 	/**
+     * @var wpdb
+     * @readonly
+     */
+    private wpdb $wpdb;
+    /**
+     * @var SettingsInterface
+     * @readonly
+     */
+    private SettingsInterface $settings;
+    /**
 	 * The schema version this code expects.
 	 *
 	 * Bumped whenever the table below changes, and compared against what is
@@ -51,10 +61,11 @@ final class SchemaMigrator {
 	 * @param wpdb              $wpdb     WordPress database handle.
 	 * @param SettingsInterface $settings Where the installed version is recorded.
 	 */
-	public function __construct(
-		private readonly wpdb $wpdb,
-		private readonly SettingsInterface $settings
-	) {}
+	public function __construct(wpdb $wpdb, SettingsInterface $settings)
+    {
+        $this->wpdb = $wpdb;
+        $this->settings = $settings;
+    }
 
 	/**
 	 * The aggregates table name.

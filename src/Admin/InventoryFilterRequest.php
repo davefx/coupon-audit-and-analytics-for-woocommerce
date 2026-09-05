@@ -106,7 +106,7 @@ final class InventoryFilterRequest {
 
 		$status = CouponStatus::tryFrom( $asked );
 
-		return array( $status ?? CouponStatus::ACTIVE );
+		return array( $status ?? CouponStatus::ACTIVE() );
 	}
 
 	/**
@@ -156,10 +156,13 @@ final class InventoryFilterRequest {
 	private static function has_expiry( array $query ): ?bool {
 		$expiry = isset( $query[ self::EXPIRY_ARG ] ) ? sanitize_key( wp_unslash( $query[ self::EXPIRY_ARG ] ) ) : '';
 
-		return match ( $expiry ) {
-			self::EXPIRY_WITH => true,
-			self::EXPIRY_WITHOUT => false,
-			default => null,
-		};
+		switch ( $expiry ) {
+			case self::EXPIRY_WITH:
+				return true;
+			case self::EXPIRY_WITHOUT:
+				return false;
+			default:
+				return null;
+		}
 	}
 }

@@ -30,15 +30,26 @@ use WC_Order_Item_Product;
 abstract class ProductMetaCostSource implements CostSourceInterface {
 
 	/**
+     * @var string
+     * @readonly
+     */
+    protected string $currency;
+    /**
+     * @var int
+     * @readonly
+     */
+    protected int $decimals;
+    /**
 	 * Constructor.
 	 *
 	 * @param string $currency The store's currency.
 	 * @param int    $decimals Places in the currency's minor unit.
 	 */
-	public function __construct(
-		protected readonly string $currency,
-		protected readonly int $decimals
-	) {}
+	public function __construct(string $currency, int $decimals)
+    {
+        $this->currency = $currency;
+        $this->decimals = $decimals;
+    }
 
 	/**
 	 * The meta key this system keeps a product's unit cost under.

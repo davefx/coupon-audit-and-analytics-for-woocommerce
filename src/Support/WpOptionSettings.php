@@ -25,12 +25,13 @@ final class WpOptionSettings implements SettingsInterface {
 	private const OPTION = 'dfxcaaw_settings';
 
 	/**
-	 * Read one setting.
-	 *
-	 * @param string $key      Setting name, without the plugin prefix.
-	 * @param mixed  $fallback Value to return when the setting is unset.
-	 */
-	public function get( string $key, mixed $fallback = null ): mixed {
+     * Read one setting.
+     *
+     * @param string $key      Setting name, without the plugin prefix.
+     * @param mixed  $fallback Value to return when the setting is unset.
+     * @return mixed
+     */
+    public function get( string $key, $fallback = null ) {
 		$settings = get_option( self::OPTION );
 
 		if ( ! is_array( $settings ) || ! array_key_exists( $key, $settings ) ) {
@@ -61,7 +62,7 @@ final class WpOptionSettings implements SettingsInterface {
 	 * @param string $key   Setting name, without the plugin prefix.
 	 * @param mixed  $value The value to store.
 	 */
-	public function set( string $key, mixed $value ): void {
+	public function set( string $key, $value ): void {
 		$settings = get_option( self::OPTION );
 		$settings = is_array( $settings ) ? $settings : array();
 

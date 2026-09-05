@@ -21,6 +21,11 @@ use DFX\CouponAAW\Support\PluginContext;
 final class AssetLoader {
 
 	/**
+     * @var PluginContext
+     * @readonly
+     */
+    private PluginContext $context;
+    /**
 	 * Handle for the inventory stylesheet.
 	 */
 	private const STYLE_HANDLE = 'dfxcaaw-inventory-page';
@@ -30,7 +35,10 @@ final class AssetLoader {
 	 *
 	 * @param PluginContext $context Supplies the plugin's URL and version.
 	 */
-	public function __construct( private readonly PluginContext $context ) {}
+	public function __construct(PluginContext $context)
+    {
+        $this->context = $context;
+    }
 
 	/**
 	 * Enqueue assets when the current screen is ours.
@@ -59,8 +67,8 @@ final class AssetLoader {
 	 * @param string $hook_suffix The screen currently being loaded.
 	 */
 	private function is_inventory_screen( string $hook_suffix ): bool {
-		return str_ends_with( $hook_suffix, '_page_' . MenuRegistrar::PAGE_SLUG )
-			|| str_ends_with( $hook_suffix, '_page_' . MarginPage::PAGE_SLUG )
-			|| str_ends_with( $hook_suffix, '_page_' . SettingsPage::PAGE_SLUG );
+		return substr_compare($hook_suffix, '_page_' . MenuRegistrar::PAGE_SLUG, -strlen('_page_' . MenuRegistrar::PAGE_SLUG)) === 0
+			|| substr_compare($hook_suffix, '_page_' . MarginPage::PAGE_SLUG, -strlen('_page_' . MarginPage::PAGE_SLUG)) === 0
+			|| substr_compare($hook_suffix, '_page_' . SettingsPage::PAGE_SLUG, -strlen('_page_' . SettingsPage::PAGE_SLUG)) === 0;
 	}
 }

@@ -27,6 +27,17 @@ use WP_List_Table;
  */
 final class InventoryListTable extends WP_List_Table {
     /**
+     * @var CouponTermsFormatter
+     * @readonly
+     */
+    private CouponTermsFormatter $formatter;
+
+    /**
+     * @var CouponFilter
+     */
+    private CouponFilter $filter;
+
+    /**
      * Coupons shown per page.
      *
      * Public because the screen has to know it before the table does: it is the
@@ -62,7 +73,10 @@ final class InventoryListTable extends WP_List_Table {
      * @param CouponTermsFormatter $formatter Puts terms and scope into words.
      * @param CouponFilter         $filter    Which coupons the rows were narrowed to.
      */
-    public function __construct( private readonly CouponTermsFormatter $formatter, private CouponFilter $filter = new CouponFilter() ) {
+    public function __construct( CouponTermsFormatter $formatter, ?CouponFilter $filter = null ) {
+        $filter ??= new CouponFilter();
+        $this->formatter = $formatter;
+        $this->filter = $filter;
         parent::__construct( array(
             'singular' => 'coupon',
             'plural'   => 'coupons',
@@ -162,17 +176,17 @@ final class InventoryListTable extends WP_List_Table {
         $views = array(
             'in-force'     => $this->view(
                 __( 'In force', 'coupon-audit-and-analytics-for-woocommerce' ),
-                $this->summary->of( CouponStatus::ACTIVE ),
+                $this->summary->of( CouponStatus::ACTIVE() ),
                 array(),
-                null === $this->filter->finding && array(CouponStatus::ACTIVE) === $this->filter->statuses
+                null === $this->filter->finding && array(CouponStatus::ACTIVE()) === $this->filter->statuses
             ),
             'scheduled'    => $this->view(
                 __( 'Scheduled', 'coupon-audit-and-analytics-for-woocommerce' ),
-                $this->summary->of( CouponStatus::SCHEDULED ),
+                $this->summary->of( CouponStatus::SCHEDULED() ),
                 array(
-                    InventoryFilterRequest::STATUS_ARG => CouponStatus::SCHEDULED->value,
+                    InventoryFilterRequest::STATUS_ARG => CouponStatus::SCHEDULED()->value,
                 ),
-                null === $this->filter->finding && array(CouponStatus::SCHEDULED) === $this->filter->statuses
+                null === $this->filter->finding && array(CouponStatus::SCHEDULED()) === $this->filter->statuses
             ),
             'attention'    => $this->view(
                 __( 'Needs attention', 'coupon-audit-and-analytics-for-woocommerce' ),
@@ -490,26 +504,40 @@ final class InventoryListTable extends WP_List_Table {
      * The human-readable name of a fault in a coupon's terms.
      *
      * @param ConfigurationIssue $issue The fault to label.
+     *
+     * @throws \InvalidArgumentException When the issue is not one this method knows.
      */
     private static function issue_label( ConfigurationIssue $issue ) : string {
-        return match ($issue) {
-            ConfigurationIssue::DISCOUNT_EXCEEDS_MINIMUM_SPEND => __( 'Discount exceeds minimum spend', 'coupon-audit-and-analytics-for-woocommerce' ),
-            ConfigurationIssue::DISCOUNT_EXCEEDS_PRODUCT_PRICE => __( 'Discount exceeds a product price', 'coupon-audit-and-analytics-for-woocommerce' ),
-            ConfigurationIssue::UNBOUNDED_FIXED_DISCOUNT => __( 'Fixed discount with no minimum', 'coupon-audit-and-analytics-for-woocommerce' ),
-        };
+        if ( ConfigurationIssue::DISCOUNT_EXCEEDS_MINIMUM_SPEND() === $issue ) {
+            return __( 'Discount exceeds minimum spend', 'coupon-audit-and-analytics-for-woocommerce' );
+        }
+        if ( ConfigurationIssue::DISCOUNT_EXCEEDS_PRODUCT_PRICE() === $issue ) {
+            return __( 'Discount exceeds a product price', 'coupon-audit-and-analytics-for-woocommerce' );
+        }
+        if ( ConfigurationIssue::UNBOUNDED_FIXED_DISCOUNT() === $issue ) {
+            return __( 'Fixed discount with no minimum', 'coupon-audit-and-analytics-for-woocommerce' );
+        }
+        throw new \InvalidArgumentException('Unhandled configuration issue.');
     }
 
     /**
      * The human-readable name of an overlap severity.
      *
      * @param OverlapSeverity $severity The severity to label.
+     *
+     * @throws \InvalidArgumentException When the severity is not one this method knows.
      */
     private static function severity_label( OverlapSeverity $severity ) : string {
-        return match ($severity) {
-            OverlapSeverity::HIGH => __( 'high', 'coupon-audit-and-analytics-for-woocommerce' ),
-            OverlapSeverity::MEDIUM => __( 'medium', 'coupon-audit-and-analytics-for-woocommerce' ),
-            OverlapSeverity::LOW => __( 'low', 'coupon-audit-and-analytics-for-woocommerce' ),
-        };
+        if ( OverlapSeverity::HIGH() === $severity ) {
+            return __( 'high', 'coupon-audit-and-analytics-for-woocommerce' );
+        }
+        if ( OverlapSeverity::MEDIUM() === $severity ) {
+            return __( 'medium', 'coupon-audit-and-analytics-for-woocommerce' );
+        }
+        if ( OverlapSeverity::LOW() === $severity ) {
+            return __( 'low', 'coupon-audit-and-analytics-for-woocommerce' );
+        }
+        throw new \InvalidArgumentException('Unhandled overlap severity.');
     }
 
     /**
@@ -519,28 +547,46 @@ final class InventoryListTable extends WP_List_Table {
      * drag WordPress into the domain (§5). Presentation belongs here.
      *
      * @param CouponStatus $status The status to label.
+     *
+     * @throws \InvalidArgumentException When the status is not one this method knows.
      */
     private static function status_label( CouponStatus $status ) : string {
-        return match ($status) {
-            CouponStatus::ACTIVE => __( 'Active', 'coupon-audit-and-analytics-for-woocommerce' ),
-            CouponStatus::SCHEDULED => __( 'Scheduled', 'coupon-audit-and-analytics-for-woocommerce' ),
-            CouponStatus::EXPIRED => __( 'Expired', 'coupon-audit-and-analytics-for-woocommerce' ),
-            CouponStatus::EXHAUSTED => __( 'Exhausted', 'coupon-audit-and-analytics-for-woocommerce' ),
-            CouponStatus::INACTIVE => __( 'Inactive', 'coupon-audit-and-analytics-for-woocommerce' ),
-        };
+        if ( CouponStatus::ACTIVE() === $status ) {
+            return __( 'Active', 'coupon-audit-and-analytics-for-woocommerce' );
+        }
+        if ( CouponStatus::SCHEDULED() === $status ) {
+            return __( 'Scheduled', 'coupon-audit-and-analytics-for-woocommerce' );
+        }
+        if ( CouponStatus::EXPIRED() === $status ) {
+            return __( 'Expired', 'coupon-audit-and-analytics-for-woocommerce' );
+        }
+        if ( CouponStatus::EXHAUSTED() === $status ) {
+            return __( 'Exhausted', 'coupon-audit-and-analytics-for-woocommerce' );
+        }
+        if ( CouponStatus::INACTIVE() === $status ) {
+            return __( 'Inactive', 'coupon-audit-and-analytics-for-woocommerce' );
+        }
+        throw new \InvalidArgumentException('Unhandled coupon status.');
     }
 
     /**
      * The human-readable name of an orphan finding.
      *
      * @param OrphanReason $reason The finding to label.
+     *
+     * @throws \InvalidArgumentException When the reason is not one this method knows.
      */
     private static function orphan_label( OrphanReason $reason ) : string {
-        return match ($reason) {
-            OrphanReason::NO_EXPIRY_DATE => __( 'No expiry date', 'coupon-audit-and-analytics-for-woocommerce' ),
-            OrphanReason::DORMANT => __( 'Dormant', 'coupon-audit-and-analytics-for-woocommerce' ),
-            OrphanReason::DEAD_CAMPAIGN => __( 'Dead campaign', 'coupon-audit-and-analytics-for-woocommerce' ),
-        };
+        if ( OrphanReason::NO_EXPIRY_DATE() === $reason ) {
+            return __( 'No expiry date', 'coupon-audit-and-analytics-for-woocommerce' );
+        }
+        if ( OrphanReason::DORMANT() === $reason ) {
+            return __( 'Dormant', 'coupon-audit-and-analytics-for-woocommerce' );
+        }
+        if ( OrphanReason::DEAD_CAMPAIGN() === $reason ) {
+            return __( 'Dead campaign', 'coupon-audit-and-analytics-for-woocommerce' );
+        }
+        throw new \InvalidArgumentException('Unhandled orphan reason.');
     }
 
 }

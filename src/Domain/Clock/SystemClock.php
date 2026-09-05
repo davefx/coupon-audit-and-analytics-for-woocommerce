@@ -23,11 +23,19 @@ use DateTimeZone;
 final class SystemClock implements ClockInterface {
 
 	/**
+     * @var DateTimeZone
+     * @readonly
+     */
+    private DateTimeZone $timezone;
+    /**
 	 * Constructor.
 	 *
 	 * @param DateTimeZone $timezone The zone to report times in.
 	 */
-	public function __construct( private readonly DateTimeZone $timezone ) {}
+	public function __construct(DateTimeZone $timezone)
+    {
+        $this->timezone = $timezone;
+    }
 
 	/**
 	 * The current instant.

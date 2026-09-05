@@ -56,6 +56,16 @@ use wpdb;
 final class CoreServiceProvider implements ServiceProviderInterface {
 
 	/**
+     * @var PluginContext
+     * @readonly
+     */
+    private PluginContext $context;
+    /**
+     * @var DateTimeZone
+     * @readonly
+     */
+    private DateTimeZone $timezone;
+    /**
 	 * Days without a redemption before a coupon counts as dormant.
 	 *
 	 * §8.4 requires this to be configurable. Until the settings wrapper exists
@@ -70,10 +80,11 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 	 * @param PluginContext $context  Values supplied by the main plugin file.
 	 * @param DateTimeZone  $timezone The site's timezone.
 	 */
-	public function __construct(
-		private readonly PluginContext $context,
-		private readonly DateTimeZone $timezone
-	) {}
+	public function __construct(PluginContext $context, DateTimeZone $timezone)
+    {
+        $this->context = $context;
+        $this->timezone = $timezone;
+    }
 
 	/**
 	 * Register bindings.

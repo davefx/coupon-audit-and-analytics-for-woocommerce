@@ -30,6 +30,26 @@ namespace DFX\CouponAAW\Domain\Coupon;
 final class CouponFilter {
 
 	/**
+     * @var string|null
+     * @readonly
+     */
+    public ?string $discount_type = null;
+    /**
+     * @var bool|null
+     * @readonly
+     */
+    public ?bool $has_expiry = null;
+    /**
+     * @var string|null
+     * @readonly
+     */
+    public ?string $finding = null;
+    /**
+     * @var list<CouponStatus>|null
+     * @readonly
+     */
+    public ?array $statuses = null;
+    /**
 	 * Coupons something was found against.
 	 *
 	 * The same rule the "needs attention" tile counts by, so the number above the
@@ -50,12 +70,13 @@ final class CouponFilter {
 	 * @param string|null             $finding       One of the FINDING_ constants, or null for any coupon.
 	 * @param list<CouponStatus>|null $statuses     The statuses wanted, or null for every status.
 	 */
-	public function __construct(
-		public readonly ?string $discount_type = null,
-		public readonly ?bool $has_expiry = null,
-		public readonly ?string $finding = null,
-		public readonly ?array $statuses = null
-	) {}
+	public function __construct(?string $discount_type = null, ?bool $has_expiry = null, ?string $finding = null, ?array $statuses = null)
+    {
+        $this->discount_type = $discount_type;
+        $this->has_expiry = $has_expiry;
+        $this->finding = $finding;
+        $this->statuses = $statuses;
+    }
 
 	/**
 	 * Whether this asks for anything at all.
@@ -114,10 +135,13 @@ final class CouponFilter {
 	 * @param list<OrphanReason> $reasons What was found against it.
 	 */
 	private function finds( CouponStatus $status, Judgeable $coupon, array $reasons ): bool {
-		return match ( $this->finding ) {
-			self::FINDING_ATTENTION    => array() !== $reasons,
-			self::FINDING_UNRESTRICTED => $status->is_usable() && $coupon->is_universal(),
-			default                    => true,
-		};
+		switch ( $this->finding ) {
+			case self::FINDING_ATTENTION:
+				return array() !== $reasons;
+			case self::FINDING_UNRESTRICTED:
+				return $status->is_usable() && $coupon->is_universal();
+			default:
+				return true;
+		}
 	}
 }

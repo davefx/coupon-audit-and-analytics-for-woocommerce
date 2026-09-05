@@ -46,15 +46,15 @@ final class ConfigurationAuditor {
 		$minimum = $coupon->terms->minimum_spend;
 
 		if ( null !== $minimum && ! $minimum->is_zero() && $this->exceeds( $discount, $minimum ) ) {
-			$issues[] = ConfigurationIssue::DISCOUNT_EXCEEDS_MINIMUM_SPEND;
+			$issues[] = ConfigurationIssue::DISCOUNT_EXCEEDS_MINIMUM_SPEND();
 		}
 
 		if ( null !== $cheapest && $this->exceeds( $discount, $cheapest ) ) {
-			$issues[] = ConfigurationIssue::DISCOUNT_EXCEEDS_PRODUCT_PRICE;
+			$issues[] = ConfigurationIssue::DISCOUNT_EXCEEDS_PRODUCT_PRICE();
 		}
 
 		if ( array() === $issues && null === $minimum && $coupon->scope->is_universal() ) {
-			$issues[] = ConfigurationIssue::UNBOUNDED_FIXED_DISCOUNT;
+			$issues[] = ConfigurationIssue::UNBOUNDED_FIXED_DISCOUNT();
 		}
 
 		return $issues;

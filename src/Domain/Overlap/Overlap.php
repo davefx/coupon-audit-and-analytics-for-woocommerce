@@ -21,17 +21,33 @@ use DFX\CouponAAW\Domain\Coupon\CouponSnapshot;
 final class Overlap {
 
 	/**
+     * @var CouponSnapshot
+     * @readonly
+     */
+    public CouponSnapshot $one;
+    /**
+     * @var CouponSnapshot
+     * @readonly
+     */
+    public CouponSnapshot $other;
+    /**
+     * @var OverlapSeverity
+     * @readonly
+     */
+    public OverlapSeverity $severity;
+    /**
 	 * Constructor.
 	 *
 	 * @param CouponSnapshot  $one      The lower-numbered coupon.
 	 * @param CouponSnapshot  $other    The higher-numbered coupon.
 	 * @param OverlapSeverity $severity How likely the collision is to happen.
 	 */
-	public function __construct(
-		public readonly CouponSnapshot $one,
-		public readonly CouponSnapshot $other,
-		public readonly OverlapSeverity $severity
-	) {}
+	public function __construct(CouponSnapshot $one, CouponSnapshot $other, OverlapSeverity $severity)
+    {
+        $this->one = $one;
+        $this->other = $other;
+        $this->severity = $severity;
+    }
 
 	/**
 	 * Build an overlap with its pair in a stable order.

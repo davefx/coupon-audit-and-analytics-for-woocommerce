@@ -18,11 +18,19 @@ namespace DFX\CouponAAW\Integration;
 final class IntegrationRegistry {
 
 	/**
+     * @var list<IntegrationInterface>
+     * @readonly
+     */
+    private array $integrations = array();
+    /**
 	 * Constructor.
 	 *
 	 * @param list<IntegrationInterface> $integrations Every integration this plugin knows.
 	 */
-	public function __construct( private readonly array $integrations = array() ) {}
+	public function __construct(array $integrations = array())
+    {
+        $this->integrations = $integrations;
+    }
 
 	/**
 	 * The integrations whose plugins are running.

@@ -7,14 +7,14 @@ namespace Composer\Autoload;
 class ComposerStaticInit8f5de6229158b913cb87740431bc1fdc
 {
     public static $prefixLengthsPsr4 = array (
-        'D' =>
+        'D' => 
         array (
             'DFX\\CouponAAW\\' => 14,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'DFX\\CouponAAW\\' =>
+        'DFX\\CouponAAW\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
         ),
@@ -67,6 +67,7 @@ class ComposerStaticInit8f5de6229158b913cb87740431bc1fdc
         'DFX\\CouponAAW\\Domain\\Coupon\\OrphanReason' => __DIR__ . '/../..' . '/src/Domain/Coupon/OrphanReason.php',
         'DFX\\CouponAAW\\Domain\\Coupon\\ProductRef' => __DIR__ . '/../..' . '/src/Domain/Coupon/ProductRef.php',
         'DFX\\CouponAAW\\Domain\\Coupon\\StatusResolver' => __DIR__ . '/../..' . '/src/Domain/Coupon/StatusResolver.php',
+        'DFX\\CouponAAW\\Domain\\EnumType' => __DIR__ . '/../..' . '/src/Domain/EnumType.php',
         'DFX\\CouponAAW\\Domain\\Overlap\\Overlap' => __DIR__ . '/../..' . '/src/Domain/Overlap/Overlap.php',
         'DFX\\CouponAAW\\Domain\\Overlap\\OverlapDetector' => __DIR__ . '/../..' . '/src/Domain/Overlap/OverlapDetector.php',
         'DFX\\CouponAAW\\Domain\\Overlap\\OverlapSeverity' => __DIR__ . '/../..' . '/src/Domain/Overlap/OverlapSeverity.php',

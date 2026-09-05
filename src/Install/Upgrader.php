@@ -28,6 +28,21 @@ use DFX\CouponAAW\Support\SettingsInterface;
 final class Upgrader {
 
 	/**
+     * @var SettingsInterface
+     * @readonly
+     */
+    private SettingsInterface $settings;
+    /**
+     * @var SchemaMigrator
+     * @readonly
+     */
+    private SchemaMigrator $schema;
+    /**
+     * @var Aggregator
+     * @readonly
+     */
+    private Aggregator $aggregator;
+    /**
 	 * Where the version last seen is remembered.
 	 */
 	private const VERSION_KEY = 'plugin_version';
@@ -39,11 +54,12 @@ final class Upgrader {
 	 * @param SchemaMigrator    $schema     Creates or upgrades the aggregates table.
 	 * @param Aggregator        $aggregator Holds the days that would not aggregate.
 	 */
-	public function __construct(
-		private readonly SettingsInterface $settings,
-		private readonly SchemaMigrator $schema,
-		private readonly Aggregator $aggregator
-	) {}
+	public function __construct(SettingsInterface $settings, SchemaMigrator $schema, Aggregator $aggregator)
+    {
+        $this->settings = $settings;
+        $this->schema = $schema;
+        $this->aggregator = $aggregator;
+    }
 
 	/**
 	 * Bring the store up to date with the version now running.

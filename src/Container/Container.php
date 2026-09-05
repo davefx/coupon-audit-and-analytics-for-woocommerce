@@ -110,14 +110,15 @@ final class Container implements ContainerInterface {
 	}
 
 	/**
-	 * Resolve a service.
-	 *
-	 * @param string $id Service identifier.
-	 *
-	 * @throws ServiceNotFoundException    When the identifier was never registered.
-	 * @throws CircularDependencyException When resolving the identifier requires itself.
-	 */
-	public function get( string $id ): mixed {
+     * Resolve a service.
+     *
+     * @param string $id Service identifier.
+     *
+     * @throws ServiceNotFoundException    When the identifier was never registered.
+     * @throws CircularDependencyException When resolving the identifier requires itself.
+     * @return mixed
+     */
+    public function get( string $id ) {
 		if ( array_key_exists( $id, $this->resolved ) ) {
 			return $this->resolved[ $id ];
 		}

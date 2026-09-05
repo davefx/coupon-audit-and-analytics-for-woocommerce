@@ -34,25 +34,28 @@ use DFX\CouponAAW\Domain\Profit\Money;
 final class ScopePricing {
 
 	/**
-	 * Price of every product any coupon names, keyed by ID.
-	 *
-	 * @var array<int, Money>
-	 */
-	private readonly array $product_prices;
+     * Price of every product any coupon names, keyed by ID.
+     *
+     * @var array<int, Money>
+     * @readonly
+     */
+    private array $product_prices;
 
 	/**
-	 * Cheapest product in each category any coupon names, keyed by term ID.
-	 *
-	 * @var array<int, Money>
-	 */
-	private readonly array $category_prices;
+     * Cheapest product in each category any coupon names, keyed by term ID.
+     *
+     * @var array<int, Money>
+     * @readonly
+     */
+    private array $category_prices;
 
 	/**
-	 * Cheapest product in the shop, or null if nothing is priced.
-	 *
-	 * @var Money|null
-	 */
-	private readonly ?Money $cheapest_overall;
+     * Cheapest product in the shop, or null if nothing is priced.
+     *
+     * @var Money|null
+     * @readonly
+     */
+    private ?Money $cheapest_overall;
 
 	/**
 	 * Fetch everything the given coupons could possibly need.

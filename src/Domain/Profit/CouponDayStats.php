@@ -22,6 +22,46 @@ use InvalidArgumentException;
 final class CouponDayStats {
 
 	/**
+     * @var CouponId
+     * @readonly
+     */
+    public CouponId $coupon_id;
+    /**
+     * @var DateTimeImmutable
+     * @readonly
+     */
+    public DateTimeImmutable $date;
+    /**
+     * @var int
+     * @readonly
+     */
+    public int $orders;
+    /**
+     * @var Money
+     * @readonly
+     */
+    public Money $net_revenue;
+    /**
+     * @var Money
+     * @readonly
+     */
+    public Money $discount;
+    /**
+     * @var Money
+     * @readonly
+     */
+    public Money $cost;
+    /**
+     * @var int
+     * @readonly
+     */
+    public int $covered_lines;
+    /**
+     * @var int
+     * @readonly
+     */
+    public int $total_lines;
+    /**
 	 * Constructor.
 	 *
 	 * @param CouponId          $coupon_id     The coupon.
@@ -36,16 +76,24 @@ final class CouponDayStats {
 	 * @throws InvalidArgumentException When the figures could not describe a real day.
 	 */
 	public function __construct(
-		public readonly CouponId $coupon_id,
-		public readonly DateTimeImmutable $date,
-		public readonly int $orders,
-		public readonly Money $net_revenue,
-		public readonly Money $discount,
-		public readonly Money $cost,
-		public readonly int $covered_lines,
-		public readonly int $total_lines
+		CouponId $coupon_id,
+		DateTimeImmutable $date,
+		int $orders,
+		Money $net_revenue,
+		Money $discount,
+		Money $cost,
+		int $covered_lines,
+		int $total_lines
 	) {
-		if ( $net_revenue->currency !== $discount->currency || $net_revenue->currency !== $cost->currency ) {
+		$this->coupon_id = $coupon_id;
+        $this->date = $date;
+        $this->orders = $orders;
+        $this->net_revenue = $net_revenue;
+        $this->discount = $discount;
+        $this->cost = $cost;
+        $this->covered_lines = $covered_lines;
+        $this->total_lines = $total_lines;
+        if ( $net_revenue->currency !== $discount->currency || $net_revenue->currency !== $cost->currency ) {
 			throw new InvalidArgumentException(
 				'A day\'s figures must all be in one currency; currencies are aggregated separately.'
 			);

@@ -31,17 +31,33 @@ use DFX\CouponAAW\Repository\OrderStatsRepositoryInterface;
 final class AggregationService implements AggregationInterface {
 
 	/**
+     * @var OrderStatsRepositoryInterface
+     * @readonly
+     */
+    private OrderStatsRepositoryInterface $orders;
+    /**
+     * @var CouponStatsRepositoryInterface
+     * @readonly
+     */
+    private CouponStatsRepositoryInterface $stats;
+    /**
+     * @var CostSourceRegistry
+     * @readonly
+     */
+    private CostSourceRegistry $costs;
+    /**
 	 * Constructor.
 	 *
 	 * @param OrderStatsRepositoryInterface  $orders Source of orders.
 	 * @param CouponStatsRepositoryInterface $stats  Where aggregates are written.
 	 * @param CostSourceRegistry             $costs  Selects the one cost system to read.
 	 */
-	public function __construct(
-		private readonly OrderStatsRepositoryInterface $orders,
-		private readonly CouponStatsRepositoryInterface $stats,
-		private readonly CostSourceRegistry $costs
-	) {}
+	public function __construct(OrderStatsRepositoryInterface $orders, CouponStatsRepositoryInterface $stats, CostSourceRegistry $costs)
+    {
+        $this->orders = $orders;
+        $this->stats = $stats;
+        $this->costs = $costs;
+    }
 
 	/**
 	 * Recompute one day, replacing whatever was stored for it.

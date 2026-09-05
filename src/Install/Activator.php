@@ -20,15 +20,26 @@ namespace DFX\CouponAAW\Install;
 final class Activator {
 
 	/**
+     * @var SchemaMigrator
+     * @readonly
+     */
+    private SchemaMigrator $schema;
+    /**
+     * @var Aggregator
+     * @readonly
+     */
+    private Aggregator $aggregator;
+    /**
 	 * Constructor.
 	 *
 	 * @param SchemaMigrator $schema     Creates or upgrades the aggregates table.
 	 * @param Aggregator     $aggregator Queues the retroactive backfill.
 	 */
-	public function __construct(
-		private readonly SchemaMigrator $schema,
-		private readonly Aggregator $aggregator
-	) {}
+	public function __construct(SchemaMigrator $schema, Aggregator $aggregator)
+    {
+        $this->schema = $schema;
+        $this->aggregator = $aggregator;
+    }
 
 	/**
 	 * Prepare the store.

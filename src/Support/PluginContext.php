@@ -20,6 +20,31 @@ namespace DFX\CouponAAW\Support;
 final class PluginContext {
 
 	/**
+     * @var string
+     * @readonly
+     */
+    public string $version;
+    /**
+     * @var string
+     * @readonly
+     */
+    public string $main_file;
+    /**
+     * @var string
+     * @readonly
+     */
+    public string $directory;
+    /**
+     * @var string
+     * @readonly
+     */
+    public string $base_url;
+    /**
+     * @var string
+     * @readonly
+     */
+    public string $slug;
+    /**
 	 * Constructor.
 	 *
 	 * Readonly properties rather than a readonly class, which is PHP 8.2 and
@@ -31,13 +56,14 @@ final class PluginContext {
 	 * @param string $base_url  Public URL of the plugin directory.
 	 * @param string $slug      Plugin slug, which is also the text domain (§12).
 	 */
-	public function __construct(
-		public readonly string $version,
-		public readonly string $main_file,
-		public readonly string $directory,
-		public readonly string $base_url,
-		public readonly string $slug
-	) {}
+	public function __construct(string $version, string $main_file, string $directory, string $base_url, string $slug)
+    {
+        $this->version = $version;
+        $this->main_file = $main_file;
+        $this->directory = $directory;
+        $this->base_url = $base_url;
+        $this->slug = $slug;
+    }
 
 	/**
 	 * Absolute path to a file inside the plugin.

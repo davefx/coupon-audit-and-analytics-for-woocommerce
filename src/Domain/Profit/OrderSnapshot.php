@@ -23,6 +23,31 @@ use DFX\CouponAAW\Domain\Coupon\CouponId;
 final class OrderSnapshot {
 
 	/**
+     * @var int
+     * @readonly
+     */
+    public int $id;
+    /**
+     * @var DateTimeImmutable
+     * @readonly
+     */
+    public DateTimeImmutable $date;
+    /**
+     * @var Money
+     * @readonly
+     */
+    public Money $net_revenue;
+    /**
+     * @var list<int>
+     * @readonly
+     */
+    public array $line_item_ids;
+    /**
+     * @var array<int, Money>
+     * @readonly
+     */
+    public array $coupon_discounts;
+    /**
 	 * Constructor.
 	 *
 	 * @param int               $id               The order ID.
@@ -31,13 +56,14 @@ final class OrderSnapshot {
 	 * @param list<int>         $line_item_ids    The order's line items.
 	 * @param array<int, Money> $coupon_discounts What each coupon gave away, keyed by coupon ID.
 	 */
-	public function __construct(
-		public readonly int $id,
-		public readonly DateTimeImmutable $date,
-		public readonly Money $net_revenue,
-		public readonly array $line_item_ids,
-		public readonly array $coupon_discounts
-	) {}
+	public function __construct(int $id, DateTimeImmutable $date, Money $net_revenue, array $line_item_ids, array $coupon_discounts)
+    {
+        $this->id = $id;
+        $this->date = $date;
+        $this->net_revenue = $net_revenue;
+        $this->line_item_ids = $line_item_ids;
+        $this->coupon_discounts = $coupon_discounts;
+    }
 
 	/**
 	 * The day this order belongs to.

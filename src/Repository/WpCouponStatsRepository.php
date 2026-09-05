@@ -26,6 +26,21 @@ use DFX\CouponAAW\Install\SchemaMigrator;
 final class WpCouponStatsRepository implements CouponStatsRepositoryInterface {
 
 	/**
+     * @var \wpdb
+     * @readonly
+     */
+    private \wpdb $wpdb;
+    /**
+     * @var SchemaMigrator
+     * @readonly
+     */
+    private SchemaMigrator $schema;
+    /**
+     * @var DateTimeZone
+     * @readonly
+     */
+    private DateTimeZone $timezone;
+    /**
 	 * How many rows one INSERT carries.
 	 *
 	 * Large enough that a normal day is one statement, small enough that an
@@ -41,11 +56,12 @@ final class WpCouponStatsRepository implements CouponStatsRepositoryInterface {
 	 * @param SchemaMigrator $schema   Knows the table name.
 	 * @param DateTimeZone   $timezone The store's timezone.
 	 */
-	public function __construct(
-		private readonly \wpdb $wpdb,
-		private readonly SchemaMigrator $schema,
-		private readonly DateTimeZone $timezone
-	) {}
+	public function __construct(\wpdb $wpdb, SchemaMigrator $schema, DateTimeZone $timezone)
+    {
+        $this->wpdb = $wpdb;
+        $this->schema = $schema;
+        $this->timezone = $timezone;
+    }
 
 	/**
 	 * Replace everything stored for one day.

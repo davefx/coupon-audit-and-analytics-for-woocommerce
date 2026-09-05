@@ -28,6 +28,11 @@ use LogicException;
 final class Plugin {
 
 	/**
+     * @var ContainerInterface
+     * @readonly
+     */
+    private ContainerInterface $container;
+    /**
 	 * The canonical plugin, created on first access.
 	 *
 	 * @var self|null
@@ -53,7 +58,10 @@ final class Plugin {
 	 *
 	 * @param ContainerInterface $container Service container.
 	 */
-	public function __construct( private readonly ContainerInterface $container ) {}
+	public function __construct(ContainerInterface $container)
+    {
+        $this->container = $container;
+    }
 
 	/**
 	 * The canonical plugin, wired to the canonical container.
@@ -86,7 +94,7 @@ final class Plugin {
 			throw new LogicException(
 				sprintf(
 					'Service provider "%s" was added after the plugin booted; it would never run.',
-					$provider::class
+					get_class($provider)
 				)
 			);
 		}

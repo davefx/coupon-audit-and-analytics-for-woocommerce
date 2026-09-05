@@ -20,14 +20,20 @@ use InvalidArgumentException;
 final class CouponId {
 
 	/**
+     * @var int
+     * @readonly
+     */
+    public int $value;
+    /**
 	 * Constructor.
 	 *
 	 * @param int $value The post ID.
 	 *
 	 * @throws InvalidArgumentException When the value is not a possible post ID.
 	 */
-	public function __construct( public readonly int $value ) {
-		if ( $value < 1 ) {
+	public function __construct( int $value ) {
+		$this->value = $value;
+        if ( $value < 1 ) {
 			throw new InvalidArgumentException( 'A coupon ID must be a positive integer.' );
 		}
 	}

@@ -26,6 +26,31 @@ use DFX\CouponAAW\Domain\Overlap\OverlapSeverity;
 final class InventoryEntry {
 
 	/**
+     * @var CouponSnapshot
+     * @readonly
+     */
+    public CouponSnapshot $coupon;
+    /**
+     * @var CouponStatus
+     * @readonly
+     */
+    public CouponStatus $status;
+    /**
+     * @var list<OrphanReason>
+     * @readonly
+     */
+    public array $orphan_reasons;
+    /**
+     * @var list<Overlap>
+     * @readonly
+     */
+    public array $overlaps = array();
+    /**
+     * @var list<ConfigurationIssue>
+     * @readonly
+     */
+    public array $issues = array();
+    /**
 	 * Constructor.
 	 *
 	 * @param CouponSnapshot           $coupon         The coupon as stored.
@@ -34,13 +59,14 @@ final class InventoryEntry {
 	 * @param list<Overlap>            $overlaps  Collisions this coupon takes part in.
 	 * @param list<ConfigurationIssue> $issues   Faults in the coupon's own terms.
 	 */
-	public function __construct(
-		public readonly CouponSnapshot $coupon,
-		public readonly CouponStatus $status,
-		public readonly array $orphan_reasons,
-		public readonly array $overlaps = array(),
-		public readonly array $issues = array()
-	) {}
+	public function __construct(CouponSnapshot $coupon, CouponStatus $status, array $orphan_reasons, array $overlaps = array(), array $issues = array())
+    {
+        $this->coupon = $coupon;
+        $this->status = $status;
+        $this->orphan_reasons = $orphan_reasons;
+        $this->overlaps = $overlaps;
+        $this->issues = $issues;
+    }
 
 	/**
 	 * Whether anything at all was found against this coupon.

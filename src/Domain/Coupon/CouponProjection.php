@@ -31,6 +31,61 @@ use DateTimeImmutable;
 final class CouponProjection implements Judgeable {
 
 	/**
+     * @var CouponId
+     * @readonly
+     */
+    public CouponId $id;
+    /**
+     * @var string
+     * @readonly
+     */
+    public string $code;
+    /**
+     * @var bool
+     * @readonly
+     */
+    public bool $is_published;
+    /**
+     * @var DateTimeImmutable
+     * @readonly
+     */
+    public DateTimeImmutable $created_at;
+    /**
+     * @var DateTimeImmutable|null
+     * @readonly
+     */
+    public ?DateTimeImmutable $starts_at;
+    /**
+     * @var DateTimeImmutable|null
+     * @readonly
+     */
+    public ?DateTimeImmutable $expires_at;
+    /**
+     * @var int|null
+     * @readonly
+     */
+    public ?int $usage_limit;
+    /**
+     * @var int
+     * @readonly
+     */
+    public int $usage_count;
+    /**
+     * @var DateTimeImmutable|null
+     * @readonly
+     */
+    public ?DateTimeImmutable $last_used_at;
+    /**
+     * @var bool
+     * @readonly
+     */
+    public bool $is_universal;
+    /**
+     * @var string
+     * @readonly
+     */
+    public string $discount_type;
+    /**
 	 * Constructor.
 	 *
 	 * @param CouponId               $id            The coupon.
@@ -45,19 +100,20 @@ final class CouponProjection implements Judgeable {
 	 * @param bool                   $is_universal  Whether it applies to the whole catalogue.
 	 * @param string                 $discount_type Its discount type, for filtering.
 	 */
-	public function __construct(
-		public readonly CouponId $id,
-		public readonly string $code,
-		public readonly bool $is_published,
-		public readonly DateTimeImmutable $created_at,
-		public readonly ?DateTimeImmutable $starts_at,
-		public readonly ?DateTimeImmutable $expires_at,
-		public readonly ?int $usage_limit,
-		public readonly int $usage_count,
-		public readonly ?DateTimeImmutable $last_used_at,
-		public readonly bool $is_universal,
-		public readonly string $discount_type
-	) {}
+	public function __construct(CouponId $id, string $code, bool $is_published, DateTimeImmutable $created_at, ?DateTimeImmutable $starts_at, ?DateTimeImmutable $expires_at, ?int $usage_limit, int $usage_count, ?DateTimeImmutable $last_used_at, bool $is_universal, string $discount_type)
+    {
+        $this->id = $id;
+        $this->code = $code;
+        $this->is_published = $is_published;
+        $this->created_at = $created_at;
+        $this->starts_at = $starts_at;
+        $this->expires_at = $expires_at;
+        $this->usage_limit = $usage_limit;
+        $this->usage_count = $usage_count;
+        $this->last_used_at = $last_used_at;
+        $this->is_universal = $is_universal;
+        $this->discount_type = $discount_type;
+    }
 
 	/**
 	 * Which coupon this is.

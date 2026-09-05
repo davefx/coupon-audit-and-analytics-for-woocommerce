@@ -22,6 +22,16 @@ use DFX\CouponAAW\Domain\Coupon\StatusResolver;
 final class OverlapDetector {
 
 	/**
+     * @var StatusResolver
+     * @readonly
+     */
+    private StatusResolver $status;
+    /**
+     * @var ScopeIndex
+     * @readonly
+     */
+    private ScopeIndex $index;
+    /**
 	 * The largest inventory worth comparing while somebody waits.
 	 *
 	 * §8.3 requires overlap detection to run in the background rather than on
@@ -38,10 +48,11 @@ final class OverlapDetector {
 	 * @param StatusResolver $status Decides which coupons are worth comparing.
 	 * @param ScopeIndex     $index  Narrows the pairs to compare.
 	 */
-	public function __construct(
-		private readonly StatusResolver $status,
-		private readonly ScopeIndex $index
-	) {}
+	public function __construct(StatusResolver $status, ScopeIndex $index)
+    {
+        $this->status = $status;
+        $this->index = $index;
+    }
 
 	/**
 	 * Every overlap in the given inventory.
@@ -83,7 +94,7 @@ final class OverlapDetector {
 	private function is_live( CouponSnapshot $coupon ): bool {
 		$status = $this->status->resolve( $coupon );
 
-		return CouponStatus::ACTIVE === $status || CouponStatus::SCHEDULED === $status;
+		return CouponStatus::ACTIVE() === $status || CouponStatus::SCHEDULED() === $status;
 	}
 
 	/**
@@ -99,14 +110,14 @@ final class OverlapDetector {
 	 */
 	private function severity( CouponSnapshot $one, CouponSnapshot $other ): OverlapSeverity {
 		if ( ! $this->windows_overlap( $one, $other ) ) {
-			return OverlapSeverity::LOW;
+			return OverlapSeverity::LOW();
 		}
 
 		if ( $one->is_auto_applied && $other->is_auto_applied ) {
-			return OverlapSeverity::HIGH;
+			return OverlapSeverity::HIGH();
 		}
 
-		return OverlapSeverity::MEDIUM;
+		return OverlapSeverity::MEDIUM();
 	}
 
 	/**
@@ -119,10 +130,10 @@ final class OverlapDetector {
 	 * @param CouponSnapshot $other The other.
 	 */
 	private function windows_overlap( CouponSnapshot $one, CouponSnapshot $other ): bool {
-		$one_start   = $one->starts_at?->getTimestamp() ?? PHP_INT_MIN;
-		$one_end     = $one->expires_at?->getTimestamp() ?? PHP_INT_MAX;
-		$other_start = $other->starts_at?->getTimestamp() ?? PHP_INT_MIN;
-		$other_end   = $other->expires_at?->getTimestamp() ?? PHP_INT_MAX;
+		$one_start   = (($nullsafeVariable1 = $one->starts_at) ? $nullsafeVariable1->getTimestamp() : null) ?? PHP_INT_MIN;
+		$one_end     = (($nullsafeVariable2 = $one->expires_at) ? $nullsafeVariable2->getTimestamp() : null) ?? PHP_INT_MAX;
+		$other_start = (($nullsafeVariable3 = $other->starts_at) ? $nullsafeVariable3->getTimestamp() : null) ?? PHP_INT_MIN;
+		$other_end   = (($nullsafeVariable4 = $other->expires_at) ? $nullsafeVariable4->getTimestamp() : null) ?? PHP_INT_MAX;
 
 		return $one_start <= $other_end && $other_start <= $one_end;
 	}

@@ -31,6 +31,26 @@ use DFX\CouponAAW\Repository\CouponStatsRepositoryInterface;
 final class MarginService {
 
 	/**
+     * @var CouponStatsRepositoryInterface
+     * @readonly
+     */
+    private CouponStatsRepositoryInterface $stats;
+    /**
+     * @var CouponRepositoryInterface
+     * @readonly
+     */
+    private CouponRepositoryInterface $coupons;
+    /**
+     * @var ClockInterface
+     * @readonly
+     */
+    private ClockInterface $clock;
+    /**
+     * @var int
+     * @readonly
+     */
+    private int $window_days = self::WINDOW_DAYS;
+    /**
 	 * How many lines an export reads at a time.
 	 *
 	 * Each is a coupon and a currency, so a chunk is also how many coupon codes
@@ -56,12 +76,13 @@ final class MarginService {
 	 * @param ClockInterface                 $clock       Supplies today.
 	 * @param int                            $window_days How far back to look.
 	 */
-	public function __construct(
-		private readonly CouponStatsRepositoryInterface $stats,
-		private readonly CouponRepositoryInterface $coupons,
-		private readonly ClockInterface $clock,
-		private readonly int $window_days = self::WINDOW_DAYS
-	) {}
+	public function __construct(CouponStatsRepositoryInterface $stats, CouponRepositoryInterface $coupons, ClockInterface $clock, int $window_days = self::WINDOW_DAYS)
+    {
+        $this->stats = $stats;
+        $this->coupons = $coupons;
+        $this->clock = $clock;
+        $this->window_days = $window_days;
+    }
 
 	/**
 	 * How many days back the screen looks.
@@ -281,7 +302,7 @@ final class MarginService {
 
 		return new CouponMargin(
 			$id,
-			$coupon?->code,
+			($nullsafeVariable1 = $coupon) ? $nullsafeVariable1->code : null,
 			$bucket['orders'],
 			$bucket['net_revenue'],
 			$bucket['discount'],
