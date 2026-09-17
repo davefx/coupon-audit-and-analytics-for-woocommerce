@@ -130,6 +130,10 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 			return null;
 		}
 
+		if ( ! self::has_code( $post ) ) {
+			return null;
+		}
+
 		return $this->to_snapshot( $post, $this->last_used( array( $id->value ) ) );
 	}
 
@@ -140,15 +144,17 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 	 */
 	public function all(): array {
 		/*
-		 * Only real posts survive. The query arguments are filterable, so a
+		 * Only real coupons survive. The query arguments are filterable, so a
 		 * plugin could set `fields` and hand back bare IDs; dropping anything
 		 * that is not a post keeps that from becoming a fatal error deep in the
-		 * mapping.
+		 * mapping. Posts without a code are dropped for the same reason — a
+		 * snapshot requires one by construction, and a code-less row is not a
+		 * coupon the shop can apply (see `has_code()`).
 		 */
 		$posts = array_values(
 			array_filter(
 				$this->excluding( fn (): array => get_posts( $this->query_args() ) ),
-				static fn ( $post ): bool => $post instanceof WP_Post
+				static fn ( $post ): bool => $post instanceof WP_Post && self::has_code( $post )
 			)
 		);
 
@@ -210,7 +216,7 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 					'suppress_filters' => false,
 				)
 			),
-			static fn ( $post ): bool => $post instanceof WP_Post
+			static fn ( $post ): bool => $post instanceof WP_Post && self::has_code( $post )
 		);
 
 		if ( array() === $posts ) {
@@ -945,6 +951,24 @@ final class WpCouponRepository implements CouponRepositoryInterface {
 		foreach ( $meta as $id => $rows_for_coupon ) {
 			wp_cache_set( $keys[ $id ], $rows_for_coupon, self::CACHE_GROUP );
 		}
+	}
+
+	/**
+	 * Whether a coupon post carries a code at all.
+	 *
+	 * A coupon's code is its `post_title`, and WooCommerce resolves coupons by
+	 * that code, so a row without one is not a coupon the shop can ever apply:
+	 * it cannot be typed at the basket, cannot be auto-applied, and cannot
+	 * collide with anything. WordPress mints exactly such a row — an empty
+	 * `auto-draft` — the instant "Add coupon" is clicked, and stray drafts left
+	 * without a code accumulate over a shop's life. A `CouponSnapshot` requires
+	 * a code by construction and throws without one, so the reads that build
+	 * snapshots drop these first rather than fatal deep in the mapping.
+	 *
+	 * @param WP_Post $post The coupon post.
+	 */
+	private static function has_code( WP_Post $post ): bool {
+		return '' !== trim( (string) $post->post_title );
 	}
 
 	/**

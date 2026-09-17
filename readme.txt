@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, coupon analytics, profit margin, coupon report
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.9.1
+Stable tag: 0.9.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -137,6 +137,9 @@ No coupon, order, customer or revenue data. Every figure this plugin reports is 
 4. Settings: which cost-of-goods system to read, and whether uninstalling should take the data with it.
 
 == Changelog ==
+
+= 0.9.2 =
+* Fixes a fatal error that could take the coupon editor down. A coupon left in the database with no code — the empty draft WooCommerce creates the instant you click "Add coupon", or an old one saved without a code and forgotten — made the overlap check fail; and because that check runs while the editor loads, the whole screen went white. Coupons without a code are stepped over now: they can never be entered or applied, so they were never part of what the audit is about.
 
 = 0.9.1 =
 * Now runs on PHP 7.4. The plugin used to require PHP 8.1, which shut it out of the many shops — most of them on managed hosting that chooses the PHP for them — still on 7.4. It installs and runs there now. Nothing about what it does has changed.
