@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, coupon analytics, profit margin, coupon report
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.9.2
+Stable tag: 0.9.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -137,6 +137,9 @@ No coupon, order, customer or revenue data. Every figure this plugin reports is 
 4. Settings: which cost-of-goods system to read, and whether uninstalling should take the data with it.
 
 == Changelog ==
+
+= 0.9.3 =
+* Security: updates the bundled Freemius SDK to 2.13.5, which fixes several low-severity issues in how it escapes what it prints and who may opt in. Nothing about what the plugin does has changed.
 
 = 0.9.2 =
 * Fixes a fatal error that could take the coupon editor down. A coupon left in the database with no code — the empty draft WooCommerce creates the instant you click "Add coupon", or an old one saved without a code and forgotten — made the overlap check fail; and because that check runs while the editor loads, the whole screen went white. Coupons without a code are stepped over now: they can never be entered or applied, so they were never part of what the audit is about.
