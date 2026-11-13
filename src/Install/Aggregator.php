@@ -132,10 +132,19 @@ final class Aggregator {
 	 * which is also how a refund is accounted for: the refund is not aggregated
 	 * itself, the day that produced it is done again.
 	 *
-	 * @param int $order_id The order that changed.
+	 * A refund may be passed in its own right — analytics reports the refund's
+	 * ID when it writes the refund's row — and stands for the order it refunds.
+	 * Its own date is the day the money went back, which holds nothing of its
+	 * order's figures.
+	 *
+	 * @param int $order_id The order that changed, or a refund of one.
 	 */
 	public function queue_order( int $order_id ): void {
 		$order = wc_get_order( $order_id );
+
+		if ( $order instanceof WC_Abstract_Order && 'shop_order_refund' === $order->get_type() ) {
+			$order = wc_get_order( $order->get_parent_id() );
+		}
 
 		if ( ! $order instanceof WC_Abstract_Order ) {
 			return;

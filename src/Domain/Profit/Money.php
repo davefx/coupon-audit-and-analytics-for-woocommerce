@@ -123,6 +123,25 @@ final class Money {
 	}
 
 	/**
+	 * The part of this amount that `$part` of `$whole` units account for, which
+	 * is how a line's cost becomes the cost of the units that were kept.
+	 *
+	 * Rounded to the nearest minor unit, because a share of a cent is not an
+	 * amount anybody was charged. A whole of nothing leaves the amount as it is:
+	 * there is no share of zero units to take.
+	 *
+	 * @param int $part  How many of the units.
+	 * @param int $whole Out of how many.
+	 */
+	public function share( int $part, int $whole ): self {
+		if ( $whole < 1 ) {
+			return $this;
+		}
+
+		return new self( (int) round( $this->amount * $part / $whole ), $this->currency );
+	}
+
+	/**
 	 * Whether this is less than nothing. Costs cannot be; margins can.
 	 */
 	public function is_negative(): bool {

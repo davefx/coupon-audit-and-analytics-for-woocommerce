@@ -102,6 +102,13 @@ final class MarginPage {
             $this->date( $from ),
             $this->date( $to )
          ) ) );
+        /*
+         * Said on the screen rather than left to the readme, because the mistake
+         * it heads off is made with the numbers in front of you: each row is
+         * what orders using that coupon earned, so an order with two coupons is
+         * in both rows, and a column total would count it twice.
+         */
+        printf( '<p class="description">%s</p>', esc_html__( 'Each row covers the orders that used that coupon. An order that used more than one coupon is counted in full under each of them, so adding the rows together counts it more than once. Refunds are taken off the order they belong to.', 'coupon-audit-and-analytics-for-woocommerce' ) );
         $this->render_backfill_notice();
         $this->render_failed_days_notice();
         $this->render_coverage_notice( $result );

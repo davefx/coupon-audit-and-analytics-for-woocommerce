@@ -289,6 +289,21 @@ final class CoreServiceProvider implements ServiceProviderInterface {
 			}
 		);
 
+		/*
+		 * The figures are read from WooCommerce's analytics tables, which it
+		 * fills on its own schedule, so the two hooks above can fire before the
+		 * rows they are about exist — and a refund is only counted once its row
+		 * does. Analytics announces each row it writes, the refund's included,
+		 * and that is the moment the day can actually be got right. Queueing is
+		 * idempotent, so hearing about one order twice costs nothing.
+		 */
+		add_action(
+			'woocommerce_analytics_update_order_stats',
+			static function ( $order_id ) use ( $container ): void {
+				$container->get( Aggregator::class )->queue_order( (int) $order_id );
+			}
+		);
+
 		add_action(
 			Aggregator::AGGREGATE_DAY,
 			static function ( $day ) use ( $container ): void {

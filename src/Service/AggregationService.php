@@ -185,7 +185,13 @@ final class AggregationService implements AggregationInterface {
 				continue;
 			}
 
-			$cost = $cost->plus( $line_cost );
+			// The source answers for the line as ordered. Units refunded against
+			// it are not part of what the order sold, so only the kept share
+			// counts. A line refunded in full still counts as covered: its cost
+			// is known, and it is nothing.
+			[ $kept, $ordered ] = $order->kept_units( $line_item_id );
+
+			$cost = $cost->plus( $line_cost->share( $kept, $ordered ) );
 			++$covered;
 		}
 

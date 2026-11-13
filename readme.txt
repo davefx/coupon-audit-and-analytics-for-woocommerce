@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, coupon analytics, profit margin, coupon report
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.9.3
+Stable tag: 0.9.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -91,6 +91,14 @@ Because none of its orders has a cost recorded against it. The plugin will not g
 
 Either some order lines have no cost recorded, in which case the covered share is stated alongside; or your cost plugin only stores what a product costs today rather than what it cost when each order was placed. Both are useful. Neither is exact, and the screen says so.
 
+= An order used two coupons. Why is it under both? =
+
+Because each row answers "what did the orders using this coupon earn", and that order used both. Its revenue and cost appear in full under each coupon, and each keeps its own discount. Splitting the order between them would give each coupon a figure no order ever earned. It does mean the rows are not meant to be added together: an order with two coupons would be counted twice.
+
+= What happens when an order is refunded? =
+
+A partial refund comes off the order it belongs to, on the day the order was placed: the money refunded is taken off its revenue, and the units sent back are taken off its cost. A refund of money alone, with no items returned, lowers the revenue and leaves the cost as it was, because the goods stayed sold. A fully refunded order drops out of the figures altogether.
+
 = I use two cost plugins. Which one does it read? =
 
 One of them, chosen by you under **WooCommerce → Coupon Audit Settings**. It never mixes them.
@@ -137,6 +145,9 @@ No coupon, order, customer or revenue data. Every figure this plugin reports is 
 4. Settings: which cost-of-goods system to read, and whether uninstalling should take the data with it.
 
 == Changelog ==
+
+= 0.9.4 =
+* Fixes the margin of partially refunded orders. A partial refund used to leave the order's figures untouched, so a returned item still counted as revenue and as cost; the refund now comes off the order it belongs to. Thanks to PeepSo for the two-coupon, partial-refund test case that found it. The margin screen also says plainly that an order with several coupons is counted in full under each.
 
 = 0.9.3 =
 * Security: updates the bundled Freemius SDK to 2.13.5, which fixes several low-severity issues in how it escapes what it prints and who may opt in. Nothing about what the plugin does has changed.

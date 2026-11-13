@@ -22,11 +22,18 @@ use DFX\CouponAAW\Domain\Profit\OrderSnapshot;
  * day boundaries below are local too and match what a shop owner means by
  * "yesterday".
  *
- * Refund rows are excluded: they carry a negative net total and a parent order,
- * and no coupon of their own. Aggregating them here would subtract revenue from
- * a coupon-day the refund does not belong to. Refunds are handled by
- * re-aggregating the original order's day, which is why aggregation replaces a
- * day whole rather than adding to it.
+ * Refund rows are not read as orders: they carry a negative net total and a
+ * parent order, and no coupon of their own, so on their own day they would
+ * subtract revenue from a coupon-day the refund does not belong to. They are
+ * folded into the order they refund instead, on the order's day: its revenue
+ * less what was refunded, and its lines less the units that went back. A
+ * refund re-queues the order's day, which is why aggregation replaces a day
+ * whole rather than adding to it.
+ *
+ * That folding is not optional. The order's own row in the stats table keeps
+ * the total it was placed for; WooCommerce records a partial refund as a row
+ * of its own and never lowers the parent's. Reading only the parent counted a
+ * refunded item as revenue for as long as the order stayed paid.
  */
 final class WcOrderStatsRepository implements OrderStatsRepositoryInterface {
 
@@ -232,19 +239,218 @@ final class WcOrderStatsRepository implements OrderStatsRepositoryInterface {
 		}
 
 		$line_items = $this->line_items_on( $from, $to );
+		$refunded   = $this->refunded_revenue_on( $from, $to );
+		$units      = $this->refunded_units_on( $from, $to );
 		$snapshots  = array();
 
 		foreach ( $orders as $order_id => $order ) {
+			$revenue = $order['revenue'];
+
+			if ( isset( $refunded[ $order_id ] ) ) {
+				// The refund rows' net total is negative, so this is a plus.
+				$revenue = $revenue->plus( Money::from_decimal( $refunded[ $order_id ], $order['currency'], $this->decimals ) );
+			}
+
 			$snapshots[] = new OrderSnapshot(
 				$order_id,
 				$order['date'],
-				$order['revenue'],
+				$revenue,
 				$line_items[ $order_id ] ?? array(),
-				$order['discounts']
+				$order['discounts'],
+				$units[ $order_id ] ?? array()
 			);
 		}
 
 		return $snapshots;
+	}
+
+	/**
+	 * What was refunded on each countable coupon order of a day, as the refunds'
+	 * own net total: negative, and excluding tax and shipping, so that it can be
+	 * added straight onto the order's.
+	 *
+	 * A refund counts once WooCommerce has written its stats row, and not
+	 * before. The units below are read through the same row, so that a refund
+	 * is never half applied, its goods taken off the cost while its money was
+	 * still counted as revenue. A refund analytics has yet to see is picked up
+	 * when it does: that write re-queues the order's day.
+	 *
+	 * The refunds are found through the order storage rather than through the
+	 * stats table's `parent_id`, which has no index of its own; the storage's
+	 * parent column has one in both spellings.
+	 *
+	 * @param string $from Start of the window, as stored.
+	 * @param string $to   End of the window, exclusive.
+	 *
+	 * @return array<int, float> Refunded net total by order ID.
+	 */
+	private function refunded_revenue_on( string $from, string $to ): array {
+		$wpdb = $this->wpdb;
+
+		$statuses     = $this->countable_statuses();
+		$placeholders = self::placeholders( count( $statuses ) );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		$prepared = $this->orders_have_their_own_table()
+			? $wpdb->prepare(
+				"SELECT r.parent_order_id AS order_id, SUM(rs.net_total) AS refunded
+				FROM %i r
+				INNER JOIN %i s ON s.order_id = r.parent_order_id
+				INNER JOIN %i rs ON rs.order_id = r.id
+				WHERE r.type = 'shop_order_refund'
+					AND s.date_created >= %s AND s.date_created < %s
+					AND s.parent_id = 0
+					AND s.status IN ({$placeholders})
+				GROUP BY r.parent_order_id",
+				array_merge(
+					array( $this->orders_table(), $this->order_stats_table(), $this->order_stats_table(), $from, $to ),
+					$statuses
+				)
+			)
+			: $wpdb->prepare(
+				"SELECT r.post_parent AS order_id, SUM(rs.net_total) AS refunded
+				FROM %i r
+				INNER JOIN %i s ON s.order_id = r.post_parent
+				INNER JOIN %i rs ON rs.order_id = r.ID
+				WHERE r.post_type = 'shop_order_refund'
+					AND s.date_created >= %s AND s.date_created < %s
+					AND s.parent_id = 0
+					AND s.status IN ({$placeholders})
+				GROUP BY r.post_parent",
+				array_merge(
+					array( $wpdb->posts, $this->order_stats_table(), $this->order_stats_table(), $from, $to ),
+					$statuses
+				)
+			);
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared just above, in whichever branch applies.
+		$rows = $wpdb->get_results( $prepared, ARRAY_A );
+		// phpcs:enable
+
+		$refunded = array();
+
+		foreach ( (array) $rows as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+
+			$refunded[ (int) ( $row['order_id'] ?? 0 ) ] = (float) ( $row['refunded'] ?? 0 );
+		}
+
+		return $refunded;
+	}
+
+	/**
+	 * The units refunded against each line of a day's countable coupon orders,
+	 * beside the units the line was ordered with.
+	 *
+	 * A refund line points back at the line it refunds through
+	 * `_refunded_item_id`, and records its quantity as a negative `_qty`. A
+	 * refund of money alone has no lines at all, and leaves every unit kept.
+	 *
+	 * Read through the refund's stats row for the reason given on
+	 * refunded_revenue_on(). The original line is joined on a cast of the
+	 * pointer, because the meta value is a string and comparing it as one would
+	 * keep the item meta index from being used.
+	 *
+	 * @param string $from Start of the window, as stored.
+	 * @param string $to   End of the window, exclusive.
+	 *
+	 * @return array<int, array<int, array{ordered: int, refunded: int}>> By order ID, then line item ID.
+	 */
+	private function refunded_units_on( string $from, string $to ): array {
+		$wpdb = $this->wpdb;
+
+		$statuses     = $this->countable_statuses();
+		$placeholders = self::placeholders( count( $statuses ) );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		$prepared = $this->orders_have_their_own_table()
+			? $wpdb->prepare(
+				"SELECT r.parent_order_id AS order_id, ri.meta_value AS line_id,
+					SUM(rq.meta_value) AS refunded, MAX(oq.meta_value) AS ordered
+				FROM %i r
+				INNER JOIN %i s ON s.order_id = r.parent_order_id
+				INNER JOIN %i rs ON rs.order_id = r.id
+				INNER JOIN %i it ON it.order_id = r.id AND it.order_item_type = 'line_item'
+				INNER JOIN %i ri ON ri.order_item_id = it.order_item_id AND ri.meta_key = '_refunded_item_id'
+				INNER JOIN %i rq ON rq.order_item_id = it.order_item_id AND rq.meta_key = '_qty'
+				INNER JOIN %i oq ON oq.order_item_id = CAST(ri.meta_value AS UNSIGNED) AND oq.meta_key = '_qty'
+				WHERE r.type = 'shop_order_refund'
+					AND s.date_created >= %s AND s.date_created < %s
+					AND s.parent_id = 0
+					AND s.status IN ({$placeholders})
+				GROUP BY r.parent_order_id, ri.meta_value",
+				array_merge(
+					array(
+						$this->orders_table(),
+						$this->order_stats_table(),
+						$this->order_stats_table(),
+						$wpdb->prefix . 'woocommerce_order_items',
+						$wpdb->prefix . 'woocommerce_order_itemmeta',
+						$wpdb->prefix . 'woocommerce_order_itemmeta',
+						$wpdb->prefix . 'woocommerce_order_itemmeta',
+						$from,
+						$to,
+					),
+					$statuses
+				)
+			)
+			: $wpdb->prepare(
+				"SELECT r.post_parent AS order_id, ri.meta_value AS line_id,
+					SUM(rq.meta_value) AS refunded, MAX(oq.meta_value) AS ordered
+				FROM %i r
+				INNER JOIN %i s ON s.order_id = r.post_parent
+				INNER JOIN %i rs ON rs.order_id = r.ID
+				INNER JOIN %i it ON it.order_id = r.ID AND it.order_item_type = 'line_item'
+				INNER JOIN %i ri ON ri.order_item_id = it.order_item_id AND ri.meta_key = '_refunded_item_id'
+				INNER JOIN %i rq ON rq.order_item_id = it.order_item_id AND rq.meta_key = '_qty'
+				INNER JOIN %i oq ON oq.order_item_id = CAST(ri.meta_value AS UNSIGNED) AND oq.meta_key = '_qty'
+				WHERE r.post_type = 'shop_order_refund'
+					AND s.date_created >= %s AND s.date_created < %s
+					AND s.parent_id = 0
+					AND s.status IN ({$placeholders})
+				GROUP BY r.post_parent, ri.meta_value",
+				array_merge(
+					array(
+						$wpdb->posts,
+						$this->order_stats_table(),
+						$this->order_stats_table(),
+						$wpdb->prefix . 'woocommerce_order_items',
+						$wpdb->prefix . 'woocommerce_order_itemmeta',
+						$wpdb->prefix . 'woocommerce_order_itemmeta',
+						$wpdb->prefix . 'woocommerce_order_itemmeta',
+						$from,
+						$to,
+					),
+					$statuses
+				)
+			);
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared just above, in whichever branch applies.
+		$rows = $wpdb->get_results( $prepared, ARRAY_A );
+		// phpcs:enable
+
+		$units = array();
+
+		foreach ( (array) $rows as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+
+			$line_id = (int) ( $row['line_id'] ?? 0 );
+
+			if ( $line_id < 1 ) {
+				continue;
+			}
+
+			$units[ (int) ( $row['order_id'] ?? 0 ) ][ $line_id ] = array(
+				'ordered'  => (int) ( $row['ordered'] ?? 0 ),
+				'refunded' => (int) abs( (float) ( $row['refunded'] ?? 0 ) ),
+			);
+		}
+
+		return $units;
 	}
 
 	/**
