@@ -43,6 +43,21 @@ final class SettingsPage {
 	private const NONCE = 'dfxcaaw_save_settings';
 
 	/**
+	 * The query argument naming the tab on screen.
+	 */
+	public const TAB_ARG = 'tab';
+
+	/**
+	 * The tab listing the author's other plugins.
+	 */
+	public const TAB_MORE_PLUGINS = 'more-plugins';
+
+	/**
+	 * This plugin's own entry in the shared catalog, left out of the list.
+	 */
+	private const SHOWCASE_ID = 'coupon-audit';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param SettingsInterface  $settings Where choices are stored.
@@ -68,10 +83,29 @@ final class SettingsPage {
 			);
 		}
 
-		$saved = $this->maybe_save();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Choosing a tab to show, not acting on a submission.
+		$tab = isset( $_GET[ self::TAB_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ self::TAB_ARG ] ) ) : '';
 
 		echo '<div class="wrap dfxcaaw-settings">';
 		printf( '<h1>%s</h1>', esc_html__( 'Coupon Audit Settings', 'coupon-audit-and-analytics-for-woocommerce' ) );
+
+		$this->render_tabs( $tab );
+
+		/*
+		 * The other tab only lists the author's other plugins. Nothing is saved
+		 * from it, so a submission is only looked at on the settings tab.
+		 */
+		if ( self::TAB_MORE_PLUGINS === $tab ) {
+			if ( function_exists( 'dfx_plugin_showcase_render' ) ) {
+				dfx_plugin_showcase_render( array( 'exclude' => self::SHOWCASE_ID ) );
+			}
+
+			echo '</div>';
+
+			return;
+		}
+
+		$saved = $this->maybe_save();
 
 		if ( $saved ) {
 			printf(
@@ -90,6 +124,42 @@ final class SettingsPage {
 
 		submit_button();
 		echo '</form></div>';
+	}
+
+	/**
+	 * The two tabs: the settings, and the author's other plugins.
+	 *
+	 * @param string $current The tab on screen.
+	 */
+	private function render_tabs( string $current ): void {
+		// The screen sits under whichever menu WooCommerce keeps Coupons in, so
+		// its address is asked of WordPress rather than assumed.
+		$base = html_entity_decode( menu_page_url( self::PAGE_SLUG, false ) );
+		$base = '' === $base ? admin_url( 'admin.php?page=' . self::PAGE_SLUG ) : $base;
+		$tabs = array(
+			''                     => __( 'Settings', 'coupon-audit-and-analytics-for-woocommerce' ),
+			self::TAB_MORE_PLUGINS => function_exists( 'dfx_plugin_showcase_label' ) ? dfx_plugin_showcase_label() : '',
+		);
+
+		echo '<nav class="nav-tab-wrapper">';
+
+		foreach ( $tabs as $slug => $label ) {
+			if ( '' === $label ) {
+				continue;
+			}
+
+			$active = $slug === $current || ( '' === $slug && self::TAB_MORE_PLUGINS !== $current );
+
+			printf(
+				'<a href="%1$s" class="nav-tab%2$s"%3$s>%4$s</a>',
+				esc_url( '' === $slug ? $base : add_query_arg( self::TAB_ARG, $slug, $base ) ),
+				$active ? ' nav-tab-active' : '',
+				$active ? ' aria-current="page"' : '',
+				esc_html( $label )
+			);
+		}
+
+		echo '</nav>';
 	}
 
 	/**

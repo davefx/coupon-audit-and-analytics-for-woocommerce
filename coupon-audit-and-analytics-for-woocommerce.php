@@ -4,7 +4,7 @@
  * Plugin Name:          Coupon Audit and Analytics for WooCommerce
  * Plugin URI:           https://davefx.com/en/wordpress-plugins/coupon-audit-and-analytics-for-woocommerce/
  * Description:          Audits your coupon inventory — what is live, what it really applies to, what overlaps — and measures what each coupon actually earns.
- * Version:              0.9.4
+ * Version:              0.10.0
  * Requires at least:    6.4
  * Requires PHP:         7.4
  * Requires Plugins:     woocommerce
@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
  * floor this guard enforces — with Rector, so the shipped plugin runs where most
  * WooCommerce shops are while the source stays on the modern language.
  */
-define( 'DFXCAAW_VERSION', '0.9.4' );
+define( 'DFXCAAW_VERSION', '0.10.0' );
 define( 'DFXCAAW_FILE', __FILE__ );
 define( 'DFXCAAW_SLUG', 'coupon-audit-and-analytics-for-woocommerce' );
 define( 'DFXCAAW_MIN_PHP', '7.4' );
@@ -155,6 +155,13 @@ if ( function_exists( 'dfxcaaw_fs' ) ) {
         return;
     }
     require_once __DIR__ . '/vendor/autoload.php';
+    /*
+     * The "More plugins" tab of the settings screen, shared by the author's
+     * plugins. In the free code on purpose: it is part of both builds. The file
+     * only announces this copy's version; the newest copy any active plugin
+     * bundles is the one loaded, so two plugins never declare its class twice.
+     */
+    require_once __DIR__ . '/libraries/dfx-plugin-showcase/load.php';
     /**
      * Declare compatibility with the WooCommerce features this plugin coexists with.
      *

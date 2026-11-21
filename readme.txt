@@ -4,7 +4,7 @@ Tags: woocommerce, coupons, coupon analytics, profit margin, coupon report
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.9.4
+Stable tag: 0.10.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -65,7 +65,7 @@ It is not a licence key that switches on something already sitting here. The pai
 
 It does not track your shoppers, and it does not need an account to work. Your coupons, orders and customers never leave your server: every figure on every screen is computed from your own database, on your own machine.
 
-The plugin itself does talk to one outside service. It checks for updates, and it asks — once, and it takes no for an answer — whether you are willing to send diagnostics about the site. "Third Party Services" below says exactly what that covers.
+The plugin itself does talk to two outside services. It checks for updates, and it asks — once, and it takes no for an answer — whether you are willing to send diagnostics about the site. And the "More plugins" tab of its settings screen fetches a list of the author's other plugins when you open it. "External services" below says exactly what each covers.
 
 == Installation ==
 
@@ -111,9 +111,9 @@ It does not run on the storefront at all. Aggregation happens in the background 
 
 Your shop's data, no — not a coupon, not an order, not a customer. Everything the plugin reports is worked out on your own server and stays there.
 
-The plugin does contact one outside service, Freemius, to check for updates and to license the paid version. It also asks whether you are willing to send diagnostics about the site itself, such as its address and the version of WordPress it runs. It asks before sending anything, you can say no, and saying no changes nothing about how the plugin works. "Third Party Services" below lists every field.
+The plugin contacts Freemius to check for updates and to license the paid version. It also asks whether you are willing to send diagnostics about the site itself, such as its address and the version of WordPress it runs. It asks before sending anything, you can say no, and saying no changes nothing about how the plugin works. The "More plugins" tab of the settings screen also downloads a list of the author's other plugins from davefx.com, sending nothing about your site. "External services" below lists every field.
 
-== Third Party Services ==
+== External services ==
 
 This plugin uses Freemius for software licensing, updates and — only with your agreement — usage diagnostics. Freemius is operated by Freemius, Inc.
 
@@ -133,6 +133,10 @@ If you opt in, Freemius receives:
 
 Separately from the opt-in, the plugin contacts freemius.com to check for plugin updates and, where the paid version is installed, to validate its licence key.
 
+= davefx.com: the "More plugins" tab =
+
+The "More plugins" tab of the settings page downloads the list of the author's other plugins from davefx.com (https://davefx.com/plugins.json) when an administrator opens it, at most once a week. Nothing about the site or its users is sent, not even its URL: the request identifies itself only as DFX-Plugin-Showcase and its version. As with any web request, davefx.com's server receives the IP address of the server making it. Until the tab is opened, no request is made. Privacy policy: https://davefx.com/en/privacy-policy/
+
 = What is never sent =
 
 No coupon, order, customer or revenue data. Every figure this plugin reports is calculated on your own server, from your own database, and stays there.
@@ -145,6 +149,9 @@ No coupon, order, customer or revenue data. Every figure this plugin reports is 
 4. Settings: which cost-of-goods system to read, and whether uninstalling should take the data with it.
 
 == Changelog ==
+
+= 0.10.0 =
+* New: a "More plugins" tab on the settings screen, listing the author's other plugins. It reaches davefx.com only when you open it, at most once a week, and sends nothing about your site or its users; "External services" below says exactly what that request carries. There are no new menus, banners or notices, and the settings themselves are unchanged.
 
 = 0.9.4 =
 * Fixes the margin of partially refunded orders. A partial refund used to leave the order's figures untouched, so a returned item still counted as revenue and as cost; the refund now comes off the order it belongs to. Thanks to PeepSo for the two-coupon, partial-refund test case that found it. The margin screen also says plainly that an order with several coupons is counted in full under each.
@@ -209,7 +216,7 @@ No coupon, order, customer or revenue data. Every figure this plugin reports is 
 
 = 0.5.0 =
 * A paid version is now available: a year of margin history, CSV export, and margin after payment fees. It replaces this plugin rather than sitting beside it; see "The paid version" above.
-* The plugin now asks, once, whether you are willing to share diagnostics about the site. You can decline and everything keeps working. "Third Party Services" below says exactly what that covers.
+* The plugin now asks, once, whether you are willing to share diagnostics about the site. You can decline and everything keeps working. "External services" below says exactly what that covers.
 * No change to what any screen shows, or to any figure it reports.
 
 = 0.4.1 =

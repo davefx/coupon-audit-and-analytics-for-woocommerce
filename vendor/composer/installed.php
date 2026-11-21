@@ -3,7 +3,7 @@
         'name' => 'dfx/coupon-audit-and-analytics-for-woocommerce',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '19942dd8488524b4f4ba637ae794dd203afd9c3e',
+        'reference' => 'c3f260727b1f5149a52187388346612a74e2a1ba',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'dfx/coupon-audit-and-analytics-for-woocommerce' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '19942dd8488524b4f4ba637ae794dd203afd9c3e',
+            'reference' => 'c3f260727b1f5149a52187388346612a74e2a1ba',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
